@@ -43,7 +43,6 @@
 #' @importFrom SingleCellExperiment reducedDim reducedDim<- counts logcounts
 #' @importFrom BiocParallel SerialParam
 #'
-#'
 #' @export
 
 makeGraphsAndClusters <- function(sce,
@@ -142,3 +141,63 @@ makeGraphsAndClusters <- function(sce,
 
   return(sce)
 }
+
+
+#' SCE meta-clustering
+#'
+#' Applies a meta-clustering procedure through cluster linking to identify
+#' consensus clusters
+#'
+#' @param sce a SingleCellExperiment object
+#' @param clusters character, the column names where cluster assignments can be
+#'    found in colData
+#' @param threshold numeric, the score threshold to determine metacluster assignment.
+#'    Default is 0.5, must be between 0 and 1.
+#' @param do_plot logical, should the metacluster plot be printed? Default is TRUE.
+#' @param denominator character, one of "min", "max", "union". Default is "union".
+#'    See ?bluster::linkClusters for details.
+#'
+#' @return a SingleCellExperiment object with three additional columns:
+#'    metacluster_max indicating the most frequent metacluster assignment
+#'    metacluster_score for the assignment score (between 0 and 1)
+#'    metacluster_ok to test whether the score is above threshold
+#'
+#' @importFrom bluster linkClusters
+#' @importFrom igraph cluster_louvain E groups
+#' @importFrom grDevices rainbow
+#' @importFrom graphics legend
+#'
+#' @export
+
+metaCluster <- function(sce,
+                        clusters,
+                        threshold = 0.5,
+                        do_plot = TRUE,
+                        denominator = "union") {
+
+  linked <- linkClusters(colData(sce)[,clusters], denominator = denominator)
+  meta <- cluster_louvain(linked)
+
+  if(do_plot) {
+    pal = rainbow(length(groups(meta)), alpha = 0.3)
+    plot(linked, vertex.color = pal[as.numeric(as.factor(meta$membership))],
+       edge.width = E(linked)$weight * 2, vertex.size = 5, vertex.label.cex = 0.4)
+    legend("topleft", pt.bg = pal, pch = 21, legend = 1:10, bty = "n", title = "Metaclusters")
+  }
+
+  meta_memberships = data.frame(row.names = meta$names, "metacluster" = meta$membership)
+
+  clusterlabels = lapply(clusters, function(x) paste0(x, ".", colData(sce)[,x]))
+
+  metalabels = lapply(clusterlabels, function(x) meta_memberships[x,])
+  metalabeldf = as.data.frame(do.call(cbind, metalabels))
+  colnames(metalabeldf) = clusters
+  metafuzzy = apply(metalabeldf, 1, function(x) max(table(as.numeric(x)))/ncol(metalabeldf))
+
+  sce$metacluster_max = factor(apply(metalabeldf, 1, function(x) names(table(x))[which.max(table(x))]))
+  sce$metacluster_score = metafuzzy
+  sce$metacluster_ok = metafuzzy < threshold
+
+  return(sce)
+}
+

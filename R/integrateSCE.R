@@ -94,9 +94,8 @@ integrateSCE = function(sce,
   } else if(method == "Seurat"){
 
     if(verbose) cat(blue("[INT/Seurat]"), "Converting to Seurat object.\n")
-
+    old_colnames = colnames(sce)
     if(any(duplicated(colnames(sce)))) {
-      old_colnames = colnames(sce)
       colnames(sce) = paste0("cell_", seq_len(ncol(sce)))
     }
     seu <- CreateSeuratObject(counts = counts(sce), meta.data = as.data.frame(colData(sce)))
@@ -150,10 +149,12 @@ integrateSCE = function(sce,
                                            n_neighbors = neighbor_n,
                                            min_dist = 0.7)
     colnames(sce) = old_colnames
+
   } else if(method == "LIGER") {
 
+    old_colnames = colnames(sce)
+
     if(any(duplicated(colnames(sce)))) {
-      old_colnames = colnames(sce)
       colnames(sce) = paste0("cell_", seq_len(ncol(sce)))
     }
 
@@ -162,7 +163,7 @@ integrateSCE = function(sce,
     batches = unique(colData(sce)[,batch])
     countlist = lapply(batches, function(x) counts(sce[,colData(sce)[,batch] == x]))
     names(countlist) = batches
-    l <- (countlist)
+    l <- createLiger(countlist)
     rm(countlist)
 
     if(verbose) cat(blue("[INT/LIGER]"), "Preprocessing.\n")

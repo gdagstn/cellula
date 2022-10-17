@@ -38,6 +38,7 @@ doNormAndReduce <- function(sce, batch, name,
 
   sce_cl <- quickCluster(sce,
                          block = colData(sce)[,batch],
+                         min.size = min(100, min(table(colData(sce)[,batch]))),
                          BPPARAM = parallel_param)
 
   if(verbose) cat(blue("[NORM]"),"   Calculating pooled factors. \n")

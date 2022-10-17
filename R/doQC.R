@@ -77,24 +77,24 @@ doQC <- function(sce,
 
   # Generate QC
   if(subset_mito){
-    if(sum(grepl("^MT", rowData(sce)$Symbol)) == 0) {
+    if(sum(grepl("^MT-", rowData(sce)$Symbol, ignore.case = TRUE)) == 0) {
       cat("   No MT genes found.\n")
       mito = NA
-    } else mito = rownames(sce)[grepl("^MT-", rowData(sce)$Symbol)]
+    } else mito = rownames(sce)[grepl("^MT-", rowData(sce)$Symbol, ignore.case = TRUE)]
   } else mito = NA
 
   if(subset_malat1){
-    if(sum(grepl("^MALAT1", rowData(sce)$Symbol)) == 0) {
+    if(sum(grepl("^MALAT1", rowData(sce)$Symbol, ignore.case = TRUE)) == 0) {
       cat("   No MALAT1 gene found.\n")
       Malat1 = NA
-    } else Malat1 = rownames(sce)[grepl("^MALAT1", rowData(sce)$Symbol)]
+    } else Malat1 = rownames(sce)[grepl("^MALAT1", rowData(sce)$Symbol, ignore.case = TRUE)]
   } else Malat1 = NA
 
   if(subset_ribo){
-    if(sum(grepl("^MRPL|^MRPS|^RPL|^RPS", rowData(sce)$Symbol)) == 0) {
+    if(sum(grepl("^MRPL|^MRPS|^RPL|^RPS", rowData(sce)$Symbol, ignore.case = TRUE)) == 0) {
       cat("   No ribo genes found.\n")
       Ribo = NA
-    } else Ribo = rownames(sce)[grepl("^MRPL|^MRPS|^RPL|^RPS", rowData(sce)$Symbol)]
+    } else Ribo = rownames(sce)[grepl("^MRPL|^MRPS|^RPL|^RPS", rowData(sce)$Symbol, ignore.case = TRUE)]
   } else Ribo = NA
 
   subset_list = list(mito = mito, Malat1 = Malat1, Ribo = Ribo)
@@ -169,6 +169,8 @@ doQC <- function(sce,
     sce$discard[is.na(sce$discard)] = TRUE
 
     if(discard) sce <- sce[, !sce$discard]
+  } else {
+    sce_fqc <- perCellQCMetrics(sce)
   }
 
   # Doublet finding
