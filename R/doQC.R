@@ -56,6 +56,7 @@ doQC <- function(sce,
                  parallel_param = SerialParam()){
 
   if(run_emptydrops){
+
     sce <- doEmptyDrops(sce, batch = batch,
                         emptydrops_cutoff = emptydrops_cutoff,
                         emptydrops_alpha = emptydrops_alpha,
@@ -69,23 +70,23 @@ doQC <- function(sce,
   if(subset_mito){
     if(sum(grepl("^MT-", rowData(sce)$Symbol, ignore.case = TRUE)) == 0) {
       cat("   No MT genes found.\n")
-      mito = NA
+      mito = FALSE
     } else mito = rownames(sce)[grepl("^MT-", rowData(sce)$Symbol, ignore.case = TRUE)]
-  } else mito = NA
+  } else mito = FALSE
 
   if(subset_malat1){
     if(sum(grepl("^MALAT1", rowData(sce)$Symbol, ignore.case = TRUE)) == 0) {
       cat("   No MALAT1 gene found.\n")
-      Malat1 = NA
+      Malat1 = FALSE
     } else Malat1 = rownames(sce)[grepl("^MALAT1", rowData(sce)$Symbol, ignore.case = TRUE)]
-  } else Malat1 = NA
+  } else Malat1 = FALSE
 
   if(subset_ribo){
     if(sum(grepl("^MRPL|^MRPS|^RPL|^RPS", rowData(sce)$Symbol, ignore.case = TRUE)) == 0) {
       cat("   No ribo genes found.\n")
-      Ribo = NA
+      Ribo = FALSE
     } else Ribo = rownames(sce)[grepl("^MRPL|^MRPS|^RPL|^RPS", rowData(sce)$Symbol, ignore.case = TRUE)]
-  } else Ribo = NA
+  } else Ribo = FALSE
 
   subset_list = list(mito = mito, Malat1 = Malat1, Ribo = Ribo)
   subset_list = subset_list[!is.na(subset_list)]
@@ -113,27 +114,27 @@ doQC <- function(sce,
                            batch = qcbatch,
                            type = "higher",
                            nmads = 3)
-    } else high.mt <- NA
+    } else high.mt <- FALSE
 
     if(!all(is.na(Malat1))) {
       high.malat1 <- isOutlier(sce_fqc$subsets_Malat1_percent,
                                batch = qcbatch,
                                type = "higher",
                                nmads = 3)
-    } else high.malat1 <- NA
+    } else high.malat1 <- FALSE
 
     if(!all(is.na(Ribo))) {
       high.ribo <- isOutlier(sce_fqc$subsets_Ribo_percent,
                              batch = qcbatch,
                              type = "higher",
                              nmads = 3)
-    } else high.ribo <- NA
+    } else high.ribo <- FALSE
 
     data.frame(LowLib=sum(low.lib),
                LowNgenes=sum(low.genes),
-               HighMT = ifelse(all(is.na(mito)), FALSE, sum(high.mt)),
-               HighMalat1 = ifelse(all(is.na(Malat1)), FALSE, sum(high.malat1)),
-               HighRibo = ifelse(all(is.na(Ribo)), FALSE, sum(high.ribo)))
+               HighMT = ifelse(all(mito == FALSE), FALSE, sum(high.mt)),
+               HighMalat1 = ifelse(all(Malat1 == FALSE), FALSE, sum(high.malat1)),
+               HighRibo = ifelse(all(Ribo == FALSE), FALSE, sum(high.ribo)))
 
     sce_fqc$discard <- low.lib | low.genes | high.mt | high.malat1 | high.ribo
 

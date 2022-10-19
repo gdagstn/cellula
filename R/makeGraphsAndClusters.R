@@ -175,7 +175,7 @@ metaCluster <- function(sce,
                         denominator = "union") {
 
   if(threshold > 1 | threshold < 0) stop("threshold must be between 0 and 1")
-  if(any(!clusters %in% colnames(colData))) stop("some cluster column names were not found in colData")
+  if(any(!clusters %in% colnames(colData(sce)))) stop("some cluster column names were not found in colData")
   if(class(sce) != "SingleCellExperiment") stop("Must provide a SingleCellExperiment object")
   if((!denominator %in% c("union", "max", "min"))) stop("denominator must be one of \"union\", \"max\", \"min\"")
 
