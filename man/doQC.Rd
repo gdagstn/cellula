@@ -6,7 +6,7 @@
 \usage{
 doQC(
   sce,
-  batch,
+  batch = NULL,
   name,
   discard = TRUE,
   subset_mito = TRUE,
@@ -24,7 +24,9 @@ doQC(
 \arguments{
 \item{sce}{a SingleCellExperiment object}
 
-\item{batch}{character, the name of the column in `colData(sce)` with batch labels}
+\item{batch}{character, the name of the column in `colData(sce)` with batch labels.
+Default is NULL meaning no batches will be considered, and data will be
+processed as a single batch.}
 
 \item{name}{character, the name of the file/folder.}
 

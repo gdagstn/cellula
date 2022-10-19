@@ -1,11 +1,11 @@
-
-
 #' SCE QC sub-pipeline
 #'
 #' Pipeline for automatic processing and integration of SingleCellExperiment objects
 #'
 #' @param sce a SingleCellExperiment object
-#' @param batch character, the name of the column in `colData(sce)` with batch labels
+#' @param batch character, the name of the column in `colData(sce)` with batch labels.
+#'     Default is NULL meaning no batches will be considered, and data will be
+#'     processed as a single batch.
 #' @param name character, the name of the file/folder.
 #' @param discard logical, should values that do not meet QC thresholds be discarded?
 #'     Default is TRUE.
@@ -41,7 +41,7 @@
 #' @export
 
 doQC <- function(sce,
-                 batch,
+                 batch = NULL,
                  name,
                  discard = TRUE,
                  subset_mito = TRUE,
@@ -56,21 +56,11 @@ doQC <- function(sce,
                  parallel_param = SerialParam()){
 
   if(run_emptydrops){
-
-    if(verbose) cat(blue("[QC/EMPTY]"),"Running emptyDrops. \n")
-
-    if(emptydrops_cutoff == "auto") {
-      barcode_ranks <- barcodeRanks(sce)
-      emptydrops_cutoff = metadata(barcode_ranks)$inflection
-    }
-
-    empty_droplets <- emptyDrops(sce, lower = emptydrops_cutoff)
-    keep_droplets <- empty_droplets$FDR <= emptydrops_alpha
-    sce$empty <- factor(ifelse(empty_droplets$FDR <= emptydrops_alpha, "ok", "empty"))
-    sce$empty[which(is.na(sce$empty))] = "empty"
-    if(verbose) print(table(Sig = keep_droplets, Limited = empty_droplets$Limited))
-    if(verbose) cat("Empty cells: ", sum(sce$empty == "empty"), "\n")
-    sce = sce[, which(sce$empty == "ok"), drop = FALSE]
+    sce <- doEmptyDrops(sce, batch = batch,
+                        emptydrops_cutoff = emptydrops_cutoff,
+                        emptydrops_alpha = emptydrops_alpha,
+                        verbose = verbose,
+                        parallel_param = parallel_param)
   }
 
   if(verbose) cat(blue("[QC]"),"Calculating QC metrics. \n")
@@ -100,38 +90,41 @@ doQC <- function(sce,
   subset_list = list(mito = mito, Malat1 = Malat1, Ribo = Ribo)
   subset_list = subset_list[!is.na(subset_list)]
 
-  if(length(subset_list) > 0) {
+  if(length(subset_list) == 0) subset_list = NULL
+
+  if(!is.null(batch)) qcbatch = colData(sce)[,batch] else qcbatch = NULL
+
     sce_fqc <- perCellQCMetrics(sce,
                                 subsets = subset_list,
                                 BPPARAM = parallel_param)
 
     low.lib <- isOutlier(log10(sce_fqc$sum),
-                         batch = colData(sce)[,batch],
+                         batch = qcbatch,
                          type = "lower",
                          nmads=3)
 
     low.genes <- isOutlier(log10(sce_fqc$detected),
-                           batch = colData(sce)[,batch],
+                           batch = qcbatch,
                            type = "lower",
                            nmads=3)
 
     if(!all(is.na(mito))) {
       high.mt <- isOutlier(sce_fqc$subsets_mito_percent,
-                           batch = colData(sce)[,batch],
+                           batch = qcbatch,
                            type = "higher",
                            nmads = 3)
     } else high.mt <- NA
 
     if(!all(is.na(Malat1))) {
       high.malat1 <- isOutlier(sce_fqc$subsets_Malat1_percent,
-                               batch = colData(sce)[,batch],
+                               batch = qcbatch,
                                type = "higher",
                                nmads = 3)
     } else high.malat1 <- NA
 
     if(!all(is.na(Ribo))) {
       high.ribo <- isOutlier(sce_fqc$subsets_Ribo_percent,
-                             batch = colData(sce)[,batch],
+                             batch = qcbatch,
                              type = "higher",
                              nmads = 3)
     } else high.ribo <- NA
@@ -169,14 +162,11 @@ doQC <- function(sce,
     sce$discard[is.na(sce$discard)] = TRUE
 
     if(discard) sce <- sce[, !sce$discard]
-  } else {
-    sce_fqc <- perCellQCMetrics(sce)
-  }
 
   # Doublet finding
   if(detect_doublets){
     if(verbose) cat(blue("[QC/DBL]"), "Finding doublets. \n")
-
+    if(!is.null(batch)) samples = colData(sce)[,batch] else samples = NULL
     sce <- scDblFinder(sce, verbose = verbose,
                        samples = colData(sce)[,batch],
                        BPPARAM = parallel_param)

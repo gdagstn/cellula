@@ -1,5 +1,3 @@
-
-
 #' SCE multi-resolution clustering
 #'
 #' Very simple wrapper to SNN graph and Louvain/Leiden clustering using
@@ -166,6 +164,7 @@ makeGraphsAndClusters <- function(sce,
 #' @importFrom igraph cluster_louvain E groups
 #' @importFrom grDevices rainbow
 #' @importFrom graphics legend
+#' @importFrom S4Vectors metadata metadata<-
 #'
 #' @export
 
@@ -174,6 +173,11 @@ metaCluster <- function(sce,
                         threshold = 0.5,
                         do_plot = TRUE,
                         denominator = "union") {
+
+  if(threshold > 1 | threshold < 0) stop("threshold must be between 0 and 1")
+  if(any(!clusters %in% colnames(colData))) stop("some cluster column names were not found in colData")
+  if(class(sce) != "SingleCellExperiment") stop("Must provide a SingleCellExperiment object")
+  if((!denominator %in% c("union", "max", "min"))) stop("denominator must be one of \"union\", \"max\", \"min\"")
 
   linked <- linkClusters(colData(sce)[,clusters], denominator = denominator)
   meta <- cluster_louvain(linked)
@@ -197,6 +201,7 @@ metaCluster <- function(sce,
   sce$metacluster_max = factor(apply(metalabeldf, 1, function(x) names(table(x))[which.max(table(x))]))
   sce$metacluster_score = metafuzzy
   sce$metacluster_ok = metafuzzy < threshold
+  metadata(sce)$metaclusters <- metalabeldf
 
   return(sce)
 }

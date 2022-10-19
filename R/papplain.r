@@ -59,51 +59,57 @@
 #'
 #' @export
 
-pipeline_integration <- function(sce,
-                                 batch,
-                                 name = NULL,
-                                 do_qc = TRUE,
-                                 do_norm = TRUE,
-                                 geneset_list = NULL,
-                                 discard = TRUE,
-                                 subset_mito = TRUE,
-                                 subset_ribo = TRUE,
-                                 subset_malat1 = TRUE,
-                                 detect_doublets = TRUE,
-                                 run_emptydrops = FALSE,
-                                 emptydrops_cutoff = "auto",
-                                 emptydrops_alpha = 0.01,
-                                 hvg_ntop = 2000,
-                                 integration_method = "fastMNN",
-                                 ndims = 20,
-                                 verbose = FALSE,
-                                 save_plots = TRUE,
-                                 parallel_param = SerialParam()) {
+papplain <- function(sce,
+                     batch = NULL,
+                     name = NULL,
+                     do_qc = TRUE,
+                     do_norm = TRUE,
+                     geneset_list = NULL,
+                     discard = TRUE,
+                     subset_mito = TRUE,
+                     subset_ribo = TRUE,
+                     subset_malat1 = TRUE,
+                     detect_doublets = TRUE,
+                     run_emptydrops = FALSE,
+                     emptydrops_cutoff = "auto",
+                     emptydrops_alpha = 0.01,
+                     hvg_ntop = 2000,
+                     integration_method = "fastMNN",
+                     ndims = 20,
+                     verbose = FALSE,
+                     save_plots = TRUE,
+                     parallel_param = SerialParam()) {
 
-  if(!batch %in% colnames(colData(sce)))
+ if(!is.null(batch)) {
+   if(!batch %in% colnames(colData(sce)))
     stop(paste0("Batch label \"", batch, "\" not found."))
+ }
 
   # Make folder
   if(is.null(name)) {
     name = adjective_animal()
-    warning(paste0("No name selected so your folder name will be: ", name))
+    cat(paste0("No name selected so the randomly assigned name is: ", name, "\n"))
   }
 
   dir.create(name)
-
-  if(!is.factor(colData(sce)[,batch]))
-    colData(sce)[,batch] = as.factor(colData(sce)[,batch])
+ if(!is.null(batch)) {
+   if(!is.factor(colData(sce)[,batch]))
+     colData(sce)[,batch] = as.factor(colData(sce)[,batch])
+ }
 
   if(verbose) {
     cat("Working on object", name, "\n")
     ncells = ncol(sce)
     cat("Input cells: ", ncells, "\n")
-    cat("By batch:\n")
-    print(table(colData(sce)[,batch]))
+    if(!is.null(batch)) {
+      cat("By batch:\n")
+      print(table(colData(sce)[,batch]))
+    }
   }
 
   if(do_qc) {
-    sce <- doQC(sce, batch, discard = discard,
+    sce <- doQC(sce, name = name,
+                batch = batch, discard = discard,
                 subset_mito = subset_mito,
                 subset_ribo = subset_ribo,
                 subset_malat1 = subset_malat1,
@@ -135,14 +141,16 @@ pipeline_integration <- function(sce,
 
   if(verbose) cat(blue("[INT]"), "Integration. \n")
   hvgs = metadata(sce)$hvgs
-  sce = integrateSCE(sce,
-                     batch = batch,
-                     hvgs = hvgs,
-                     hvg_ntop = hvg_ntop,
-                     method = integration_method,
-                     ndims = ndims,
-                     parallel_param = parallel_param,
-                     verbose = verbose)
+  if(!is.null(batch)) {
+    sce = integrateSCE(sce,
+                       batch = batch,
+                       hvgs = hvgs,
+                       hvg_ntop = hvg_ntop,
+                       method = integration_method,
+                       ndims = ndims,
+                       parallel_param = parallel_param,
+                       verbose = verbose)
+  }
 
   if(verbose) cat("Done.\nSaving temporary file. \n")
 
@@ -154,8 +162,8 @@ pipeline_integration <- function(sce,
     if(verbose) cat("Assigning cell labels. \n")
 
     rankings <- AUCell_buildRankings(counts(sce),
-                                     plotStats = FALSE,
-                                     verbose = FALSE)
+                         plotStats = FALSE,
+                         verbose = FALSE)
 
     aucs <- AUCell_calcAUC(geneset_list,
                            rankings,

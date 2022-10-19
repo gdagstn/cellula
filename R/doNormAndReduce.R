@@ -1,10 +1,11 @@
-
 #' SCE Normalization and dimensionality reduction sub-pipeline
 #'
 #' Pipeline for automatic processing and integration of SingleCellExperiment objects
 #'
 #' @param sce a SingleCellExperiment object
-#' @param batch character, the name of the column in `colData(sce)` with batch labels
+#' @param batch character, the name of the column in `colData(sce)` with batch labels.
+#'     Default is NULL meaning no batches will be considered, and data will be
+#'     processed as a single batch.
 #' @param name character, name of the folder and file where results are stored
 #' @param ndims numeric, number of dimensions (PCs) to be used for UMAP construction.
 #'     Default is 20.
@@ -18,14 +19,16 @@
 #'
 #' @importFrom SummarizedExperiment colData rowData assay
 #' @importFrom scran quickCluster computeSumFactors modelGeneVar getTopHVGs
+#' @importFrom scuttle logNormCounts
 #' @importFrom batchelor multiBatchNorm
 #' @importFrom crayon blue
 #' @importFrom uwot umap
 #' @importFrom SingleCellExperiment reducedDim reducedDim<- counts logcounts
 #' @importFrom BiocParallel SerialParam
 #' @importFrom S4Vectors metadata metadata<-
-
-doNormAndReduce <- function(sce, batch, name,
+#'
+#' @export
+doNormAndReduce <- function(sce, batch = NULL, name,
                             ndims = 20,
                             hvg_ntop = 2000,
                             verbose = TRUE,
@@ -36,10 +39,16 @@ doNormAndReduce <- function(sce, batch, name,
   # Size factors
   if(verbose) cat(blue("[NORM]"),"   Preclustering. \n")
 
-  sce_cl <- quickCluster(sce,
+  if(!is.null(batch)) {
+    sce_cl <- quickCluster(sce,
                          block = colData(sce)[,batch],
-                         min.size = min(100, min(table(colData(sce)[,batch]))),
+                         min.size = floor(sqrt(min(table(colData(sce)[,batch])))),
                          BPPARAM = parallel_param)
+  } else {
+    sce_cl <- quickCluster(sce,
+                           min.size = floor(sqrt(ncol(sce))),
+                           BPPARAM = parallel_param)
+  }
 
   if(verbose) cat(blue("[NORM]"),"   Calculating pooled factors. \n")
   sce <- computeSumFactors(sce,
@@ -48,10 +57,12 @@ doNormAndReduce <- function(sce, batch, name,
 
   # Normalization
   if(verbose) cat(blue("[NORM]"),"   Log-normalization. \n")
-
-  sce <- multiBatchNorm(sce,
-                        batch = colData(sce)[,batch])
-
+  if(!is.null(batch)) {
+    sce <- multiBatchNorm(sce,
+                          batch = colData(sce)[,batch])
+  } else {
+    sce <- logNormCounts(sce)
+  }
   if(verbose) cat("Saving temporary file. \n")
 
   saveRDS(sce, file = paste0("./", name, "/", name, "_tempSCE.RDS"))
@@ -62,7 +73,12 @@ doNormAndReduce <- function(sce, batch, name,
 
   if(verbose) cat(blue("[DR]"), "Selecting HVGs. \n")
 
-  vargenes <- modelGeneVar(sce, block = colData(sce)[,batch])
+  if(!is.null(batch)) {
+    vargenes <- modelGeneVar(sce,
+                        block = colData(sce)[,batch])
+  } else {
+    vargenes <- modelGeneVar(sce)
+  }
 
   hvgs <- getTopHVGs(vargenes, n = hvg_ntop)
   metadata(sce)$hvgs <- hvgs

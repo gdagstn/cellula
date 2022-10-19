@@ -1,4 +1,3 @@
-
 #' SCE Integration pipeline
 #'
 #' Pipeline for automatic processing and integration of SingleCellExperiment objects
@@ -178,10 +177,11 @@ integrateSCE = function(sce,
     l <- quantile_norm(l, verbose = verbose)
 
     if(verbose) cat(blue("[INT/LIGER]"), "Transferring to SCE object.\n")
-    reducedDim(sce, type = "LIGER") = l@H.norm
+    reducedDim(sce, type = "LIGER") = do.call(rbind, l@H)
+    reducedDim(sce, type = "LIGER_NORM") = l@H.norm
 
-    if(verbose) cat(blue("[LIGER]"), "Running UMAP on LIGER factorization.\n")
-    reducedDim(sce, "UMAP_LIGER") <- umap(reducedDim(sce, "LIGER")[,seq_len(ndims)],
+    if(verbose) cat(blue("[INT/LIGER]"), "Running UMAP on LIGER factorization.\n")
+    reducedDim(sce, "UMAP_LIGER") <- umap(reducedDim(sce, "LIGER_NORM")[,seq_len(ndims)],
                                           n_neighbors = neighbor_n,
                                           min_dist = 0.7)
 
