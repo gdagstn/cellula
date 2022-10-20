@@ -58,6 +58,7 @@ makeGraphsAndClusters <- function(sce,
                                   verbose = FALSE,
                                   BPPARAM = SerialParam()) {
 
+  match.arg(method, c("leiden", "louvain"))
   if(is.null(space)) space = reducedDim(sce, "PCA")[,seq_len(ndims)]
 
 
@@ -78,7 +79,7 @@ makeGraphsAndClusters <- function(sce,
       if(method == "louvain") {
         cl = factor(cluster_louvain(g, resolution = i)$membership)
       } else if(method == "leiden") {
-        cl = factor(cluster_leiden(g, objective_function = "CPM",
+        cl = factor(cluster_leiden(g, objective_function = "modularity",
                                    n_iterations = leiden_iterations,
                                    resolution_parameter = i)$membership)
       }
@@ -115,7 +116,7 @@ makeGraphsAndClusters <- function(sce,
       if(method == "louvain") {
         cl = factor(cluster_louvain(g)$membership)
       } else if(method == "leiden") {
-        cl = factor(cluster_leiden(g, objective_function = "CPM",
+        cl = factor(cluster_leiden(g, objective_function = "modularity",
                                    n_iterations = leiden_iterations)$membership)
       }
       gname = paste0(prefix, i)

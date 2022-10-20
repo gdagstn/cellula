@@ -8,25 +8,42 @@
 #' @param sce a SingleCellExperiment object
 #' @param name character, the name in the metadata slot of the SCE object, e.g.
 #'     "modularity_SNN_100"
+#' @param type character, one of "heatmap" or "graph" for different plot types
 #'
 #' @return a heatmap of pairwise modularity
 #'
 #' @importFrom pheatmap pheatmap
 #' @importFrom colorspace sequential_hcl
+#' @importFrom igraph graph_from_adjacency_matrix E layout_with_lgl
 #' @importFrom S4Vectors metadata metadata<-
 #'
 #' @export
 
 
-plotModularity <- function(sce, name) {
+plotModularity <- function(sce, name, type = "heatmap") {
   name = paste0("modularity_", name)
-  pheatmap(mat = log2(metadata(sce)[[name]] + 1),
+  modmat = log2(metadata(sce)[[name]] + 1)
+  if(type == "heatmap"){
+  pheatmap(mat = modmat,
            cluster_rows = FALSE,
            cluster_cols = FALSE,
            color = sequential_hcl(palette = "Sunset", n = 25),
            main = "log2(modularity ratio + 1)",
            border_color = NA
   )
+  } else if(type == "graph") {
+
+    cgr <- graph_from_adjacency_matrix(modmat,
+                                       mode="upper",
+                                       weighted=TRUE,
+                                       diag=FALSE)
+
+    set.seed(420)
+    plot(cgr,
+         edge.width=E(cgr)$weight*5,
+         layout=igraph::layout_with_lgl,
+         main = name)
+  }
 }
 
 
