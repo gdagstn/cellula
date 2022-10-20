@@ -8,7 +8,7 @@ doEmptyDrops(
   sce,
   batch = NULL,
   emptydrops_cutoff = "auto",
-  emtydrops_alpha = 0.01,
+  emptydrops_alpha = 0.01,
   verbose = TRUE,
   parallel_param = SerialParam()
 )
@@ -24,12 +24,12 @@ processed as a single batch.}
 or a numeric. Cells with total reads below this cutoff are used to calculate
 ambient RNA profiles and are removed.}
 
+\item{emptydrops_alpha}{numeric, the FDR threshold to call an empty barcode.}
+
 \item{verbose}{logical, display messages on progress? Default is FALSE.}
 
 \item{parallel_param}{a BiocParallel object specifying the parallelization backend
 to be used in some steps of the pipeline.}
-
-\item{emptydrops_alpha}{numeric, the FDR threshold to call an empty barcode.}
 }
 \value{
 a SingleCellExperiment object without empty droplets as assigned by emptyDrops

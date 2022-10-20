@@ -4,13 +4,15 @@
 \alias{plotModularity}
 \title{Plot cluster modularity}
 \usage{
-plotModularity(sce, name)
+plotModularity(sce, name, type = "heatmap")
 }
 \arguments{
 \item{sce}{a SingleCellExperiment object}
 
 \item{name}{character, the name in the metadata slot of the SCE object, e.g.
 "modularity_SNN_100"}
+
+\item{type}{character, one of "heatmap" or "graph" for different plot types}
 }
 \value{
 a heatmap of pairwise modularity
