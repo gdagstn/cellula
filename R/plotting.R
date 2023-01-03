@@ -1,6 +1,3 @@
-
-
-
 #' Plot cluster modularity
 #'
 #' Plots a heatmap showing pairwise cluster modularity from a SCE object
@@ -23,14 +20,15 @@
 plotModularity <- function(sce, name, type = "heatmap") {
   name = paste0("modularity_", name)
   modmat = log2(metadata(sce)[[name]] + 1)
+
   if(type == "heatmap"){
-  pheatmap(mat = modmat,
-           cluster_rows = FALSE,
-           cluster_cols = FALSE,
-           color = sequential_hcl(palette = "Sunset", n = 25),
-           main = "log2(modularity ratio + 1)",
-           border_color = NA
-  )
+    pheatmap(mat = modmat,
+             cluster_rows = FALSE,
+             cluster_cols = FALSE,
+             color = sequential_hcl(palette = "Sunset", n = 25),
+             main = "log2(modularity ratio + 1)",
+             border_color = NA
+    )
   } else if(type == "graph") {
 
     cgr <- graph_from_adjacency_matrix(modmat,
@@ -61,6 +59,9 @@ plotModularity <- function(sce, name, type = "heatmap") {
 #' @importFrom ggplot2 ggplot aes_string theme_bw
 #' @importFrom ggbeeswarm geom_quasirandom
 #' @importFrom S4Vectors metadata metadata<-
+#'
+#' @details This plotting function has been directly taken from the OSCA book
+#'     ("Orchestrating Single Cell Analysis with Bioconductor").
 #'
 #' @export
 

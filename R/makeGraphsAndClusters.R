@@ -44,21 +44,22 @@
 #' @export
 
 makeGraphsAndClusters <- function(sce,
-                                  neighbors = 10,
+                                  neighbors = 10L,
                                   weighting_scheme = "jaccard",
                                   sweep_on = "clustering",
                                   method = "louvain",
                                   k = seq(0.1, 1, length.out = 6),
                                   space = NULL,
-                                  ndims = 20,
+                                  ndims = 20L,
                                   calculate_modularity = TRUE,
                                   calculate_silhouette = TRUE,
-                                  leiden_iterations = 5,
+                                  leiden_iterations = 5L,
                                   prefix = "SNN_",
-                                  verbose = FALSE,
-                                  BPPARAM = SerialParam()) {
+                                  verbose = FALSE) {
 
   match.arg(method, c("leiden", "louvain"))
+  match.arg(weighting_scheme, c("jaccard", "rank", "number"))
+
   if(is.null(space)) space = reducedDim(sce, "PCA")[,seq_len(ndims)]
 
 
@@ -70,8 +71,7 @@ makeGraphsAndClusters <- function(sce,
 
     g = makeSNNGraph(space,
                      k = neighbors,
-                     type = weighting_scheme,
-                     BPPARAM = BPPARAM)
+                     type = weighting_scheme)
     for(i in k){
 
       if(verbose) cat(blue("[CLU]"), "Clustering at resolution ", i, ".\n")
@@ -111,8 +111,7 @@ makeGraphsAndClusters <- function(sce,
       if(verbose) cat(blue("[CLU]"), "Creating SNN graph with k =", i, "neighbors.\n")
       g = makeSNNGraph(space,
                        k = i,
-                       type = weighting_scheme,
-                       BPPARAM = BPPARAM)
+                       type = weighting_scheme)
       if(method == "louvain") {
         cl = factor(cluster_louvain(g)$membership)
       } else if(method == "leiden") {
