@@ -65,14 +65,14 @@ papplain
     |    |    ├── NMF
     |    |    ├── quantile normalization
     |    |    └── UMAP
-    |    ├──▷ Harmony [INT/HARMONY]
+    |    ├── Harmony [INT/HARMONY]
     |    |    ├── Harmony matrix (on PCA)
     |    |    └── UMAP
     |    ├── Regression [INT/regression]
     |    |    ├── regression on logcounts
     |    |    ├── PCA
     |    |    └── UMAP
-    ├── Cell type annotation (optional/in development)
+    └── Cell type annotation (optional/in development)
               ├── rank genes
               ├── AUCell
               └── best score assignment
