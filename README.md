@@ -1,8 +1,14 @@
 # papplain
 
-**`papplain`** is a simple R-based pipeline for single cell RNA-seq processing with a focus on integration. `papplain` follows the practices outlined in the [OSCA book](https://bioconductor.org/books/release/OSCA/), with some additional options for integration/batch effect correction methods. 
+**`papplain`** is a simple R-based pipeline for single cell RNA-seq processing with a focus on integration. 
 
-As a one-stop solution, this package tends to make choices in lieu of the users, with the proviso that these choices follow either defaults or sensible implementations. However, this means that a certain degree of freedom is removed from the end user. This philosophy posits that users who desire total control on the process (or granular specification of parameters) do not need `papplain` and would be more comfortable setting up their own pipelines. Thus `papplain` exists to automate routine analyses the way I usually do them, and offer "quick and dirty" access for exploratory data analysis.
+`papplain` follows the practices outlined in the [OSCA book](https://bioconductor.org/books/release/OSCA/), with some additional options for integration/batch effect correction methods. 
+
+As a one-stop solution, this package tends to make choices for the users, with the caveat that these choices follow either defaults or sensible implementations. 
+However, this means that a certain degree of freedom is removed from the end user. 
+This assumes that users who desire total control on the process (or granular specification of parameters) do not need `papplain` and would be more comfortable setting up their own analysis pipelines. 
+
+`papplain` exists to automate and share routine analyses the way I usually do them, and offer "quick and dirty" access for exploratory data analysis.
 
 *Where does the name "papplain" come from?* it's an inside joke with some friends and ex colleagues.
 
