@@ -1,5 +1,10 @@
 # papplain
-This is the my papplain!
+
+**`papplain`** is a simple R-based pipeline for single cell RNA-seq processing with a focus on integration. `papplain` follows the practices outlined in the [OSCA book](https://bioconductor.org/books/release/OSCA/), with some additional options for integration/batch effect correction methods. 
+
+As a one-stop solution, this package tends to make choices in lieu of the users, with the proviso that these choices follow either defaults or sensible implementations. However, this means that a certain degree of freedom is removed from the end user. This philosophy posits that users who desire total control on the process (or granular specification of parameters) do not need `papplain` and would be more comfortable setting up their own pipelines. Thus `papplain` exists to automate routine analyses the way I usually do them, and offer "quick and dirty" access for exploratory data analysis.
+
+*Where does the name "papplain" come from?* it's an inside joke with some friends and ex colleagues.
 
 # Install
 
@@ -9,11 +14,17 @@ For the time being, clone the repo and install:
 devtools::install("path/to/cloned/git")
 ```
 
+The package will require a number of `BioConductor` dependencies. You can install them as follows:
+
+```{r}
+BiocManager::install(c("scran", "scuttle", "bluster", "scater", "batchelor", "DropletUtils", "AUCell", "harmony"))
+```
+
 # Usage
 
 The pipelines in `papplain` assume that you are working with the output of CellRanger (or something similar) and you imported it into a `SingleCellExperiment` object (hereafter SCE) using `DropletUtils::read10Xcounts()`. This is relevant for gene identifiers, since the `rowData` slot of the SCE will have a "Symbol" and a "ID" column. 
 
-For demo purposes we can use a publicly available dataset, Segerstolpe et al. 2016 [ref](https://pubmed.ncbi.nlm.nih.gov/27667667/), which we retrieve using the `scRNAseq` package:
+For demo purposes we can use a publicly available dataset, XXXXXX et al. 20XX, which we retrieve using the `scRNAseq` package:
 
 ```{r}
 sce <- scRNAseq::SegerstolpePancreasData()
@@ -65,14 +76,14 @@ papplain
     |    |    ├── NMF
     |    |    ├── quantile normalization
     |    |    └── UMAP
-    |    ├── Harmony [INT/HARMONY]
+    |    ├──▷ Harmony [INT/HARMONY]
     |    |    ├── Harmony matrix (on PCA)
     |    |    └── UMAP
     |    ├── Regression [INT/regression]
     |    |    ├── regression on logcounts
     |    |    ├── PCA
     |    |    └── UMAP
-    └── Cell type annotation (optional/in development)
+    ├── Cell type annotation (optional/in development)
               ├── rank genes
               ├── AUCell
               └── best score assignment
@@ -80,7 +91,7 @@ papplain
 
 Most of the choices can be made around the integration method. `papplain` has implemented 5 methods: `fastMNN` and `regressBatches` from the `batchelor` package, `Harmony`, the CCA-based `Seurat` method, and non-negative matrix factorization (NMF) from `LIGER` through the `rliger` package. 
 
-`LIGER` and `Seurat` integratiom methods require an intermediate step where package-specific objects are created and some pre-processing steps are repeated again according to the best practices published by the authors of those packages. 
+`LIGER` and `Seurat` integration methods require an intermediate step where package-specific objects are created and some pre-processing steps are repeated again according to the best practices published by the authors of those packages. 
 
 Each step of the pipeline can be called independently on the object:
 
@@ -88,6 +99,16 @@ Each step of the pipeline can be called independently on the object:
 sce <- doQC(sce, name = "segerstolpe", batch = "individual", save_plots = FALSE)
 sce <- doNormAndReduce(sce, name = "segerstolpe", batch = "individual")
 sce <- integrateSCE(sce, batch = "individual", method = "Seurat")
+```
+
+## Parallelization
+
+Since `papplain` is mostly based on R/Bioconductor packages, it offers the `BiocParallel` parallelization backend through its `parallel_param` argument. In some cases, e.g. the Seurat integration, another type of backend has to be set up separately outside of the function call. 
+
+BiocParallel parallelization is implemented where possible, i.e. all the steps of the pipeline where it is sensible to use them (PCA, clustering, integration...). 
+
+```{r}
+sce <- integrateSCE(sce, batch = "individual", method = "fastMNN", parallel_param = MulticoreParam(workers = 4))
 ```
 
 # Clustering
@@ -103,7 +124,7 @@ sce <- makeGraphsAndClusters(sce, k = c(0.1, 0.25, 0.5, 0.75, 1),
                             verbose = TRUE)
 ```
 
-If another integration method has been run on the same object (e.g. Seurat integration),  then the clustering can be performed on that integrated space by specifying the `space` argument (in this case, `reducedDim(sce, "PCA_Seurat")`):
+If another integration method has been run on the same object (e.g. Seurat integration), then the clustering can be performed on that integrated space by specifying the `space` argument (in this case, `reducedDim(sce, "PCA_Seurat")`):
 
 ```
 sce <- makeGraphsAndClusters(sce, k = c(0.1, 0.25, 0.5, 0.75, 1), 
@@ -113,9 +134,10 @@ sce <- makeGraphsAndClusters(sce, k = c(0.1, 0.25, 0.5, 0.75, 1),
                             verbose = TRUE)
 ```
 
-The default value for `space` is `NULL` and will use the PCA slot 
+The default value for `space` is `NULL` and will use the `"PCA"` slot from the `reducedDim()` accessor.  
 
-## Plotting clusters
+## Plotting clustering results
+
 If using `clustree`, the clustering tree can be visualized by using the same prefix defined in `makeGraphsAndClusters()`:
 
 ```{r}
@@ -123,7 +145,7 @@ library(clustree)
 clustree(sce, prefix = "SNN_")
 ```
 
-The default arguments to the clustering wrapper include the generation of modularity and approximate silhouette scores for every clustering round. These will be stored in the `metadata` of the SCE, named according to the prefix, the resolution, and the "modularity_" and "silhouette_" prefixes. 
+The default arguments to the clustering wrapper include the generation of modularity and approximate silhouette scores for every clustering round. These will be stored in the `metadata` of the SCE, named according to the prefix, the resolution, and the `"modularity_"` and `"silhouette_"` prefixes. 
 Silhouette and modularity can be visualized by using the dedicated functions:
 
 ```{r}
@@ -131,6 +153,7 @@ plotSilhouette(sce, "SNN_0.82")
 
 plotModularity(sce, "SNN_0.82")
 ```
+
 ## Metaclusters
 Aditionally, *metaclusters* can also be identified. A metacluster is a cluster of clusters obtained by different clustering methods. Clusters across methods are linked acording to how many cells they share, and these links become edges of a graph. Then, Louvain clustering is run on the graph and the communities that are identified are metaclusters. These metaclusters show the relationship between clustering methods. Moreover, they can be used to understand cluster stability along different parameters and/or integration methods. A cell can belong to different clusters according to the clustering method (i.e. to the resolution or to the space that was used). If a cell belongs to clusters that are consistently included in a metacluster, then that cell belongs to a "stable" cluster. If instead the cell belongs to clusters that have different metacluster assignments, then it's in an "unstable" position, meaning it may be clustered differently according to integration methods and/or resolutions.
 
