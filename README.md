@@ -30,7 +30,7 @@ BiocManager::install(c("scran", "scuttle", "bluster", "scater", "batchelor", "Dr
 
 The pipelines in `papplain` assume that you are working with the output of CellRanger (or something similar) and you imported it into a `SingleCellExperiment` object (hereafter SCE) using `DropletUtils::read10Xcounts()`. This is relevant for gene identifiers, since the `rowData` slot of the SCE will have a "Symbol" and a "ID" column. 
 
-For demo purposes we can use a publicly available dataset, XXXXXX et al. 20XX, which we retrieve using the `scRNAseq` package:
+For demo purposes we can use a publicly available dataset, Segerstolpe et al. 2016 [ref](https://pubmed.ncbi.nlm.nih.gov/27667667/), which we retrieve using the `scRNAseq` package:
 
 ```{r}
 sce <- scRNAseq::SegerstolpePancreasData()
