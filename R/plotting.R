@@ -102,9 +102,9 @@ plotSilhouette <- function(sce, name) {
 #' @importFrom SummarizedExperiment colData
 #' @importFrom colorspace sequential_hcl
 #' @importFrom qualpalr qualpal
-#' @importFrom ggplot2 ggplot aes scale_colour_gradientn guides geom_point 
+#' @importFrom ggplot2 ggplot aes scale_colour_gradientn guides geom_point plot.margin
 #' @importFrom ggplot2 guide_legend .data theme_void geom_segment geom_text coord_fixed 
-#' @importFrom ggplot2 facet_wrap vars arrow unit geom_label scale_colour_manual
+#' @importFrom ggplot2 facet_wrap vars arrow unit geom_label scale_colour_manual theme
 #' @importFrom rlang sym 
 #' @importFrom stats median
 #' @importFrom methods is
@@ -141,13 +141,13 @@ plot_UMAP <- function(sce,
   if(!is.null(label_by)){
     if(!label_by %in% colnames(colData(sce))) 
       stop(paste0(label_by, " column not found in the colData of the SingleCellExperiment object"))
-    if(!is(colData(sce)[,label_by], "character") | !is(colData(sce)[,label_by], "factor"))
+    if(!is(colData(sce)[,label_by], "character") & !is(colData(sce)[,label_by], "factor"))
       stop(paste0(ep, "Cannot label by a numeric value, convert it to factor first."))
   }
   if(!is.null(group_by)){
     if(!group_by %in% colnames(colData(sce))) 
       stop(paste0(ep, group_by, " column not found in the colData of the SingleCellExperiment object"))
-    if(!is(colData(sce)[,group_by], "character") | !is(colData(sce)[,group_by], "factor"))
+    if(!is(colData(sce)[,group_by], "character") & !is(colData(sce)[,group_by], "factor"))
       stop(paste0(ep, "Cannot group by a numeric value, convert it to factor first."))
   }
   
@@ -232,26 +232,27 @@ plot_UMAP <- function(sce,
   p = ggplot(udf, mapping = aes_umap) + 
     geom_point(size = 0.7, shape = 16) + 
     theme_void() + 
+    theme(plot.margin = margin(1, 1, 1, 1, "cm")) + 
     geom_segment(aes(x = 0, xend = 0.15, y = 0, yend = 0), 
                  color = "black",
-                 linewidth = 0.5,
-                 arrow = arrow(length=unit(0.15,"cm"), 
+                 linewidth = 0.3,
+                 arrow = arrow(length=unit(0.1,"cm"), 
                                type = "closed")) + 
     geom_segment(aes(x = 0, xend = 0, y = 0, yend = 0.15), 
                  color = "black",
-                 linewidth = 0.5,
-                 arrow = arrow(length=unit(0.15,"cm"), 
+                 linewidth = 0.3,
+                 arrow = arrow(length=unit(0.1,"cm"), 
                                type = "closed")) + 
     geom_text(aes(x = -0.03, y = 0.02), 
               label = "UMAP 2", 
               angle = 90, 
-              size = 2.5,
+              size = 2,
               hjust = "left",
               vjust = "top",
               color = "black") +
     geom_text(aes(x = 0.02, y = -0.03), 
               label = "UMAP 1", 
-              size = 2.5,
+              size = 2,
               hjust = "left",
               vjust = "bottom",
               color = "black") +

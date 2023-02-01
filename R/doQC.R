@@ -37,6 +37,7 @@
 #' @importFrom ggplot2 scale_y_log10 ggtitle ggsave
 #' @importFrom scDblFinder scDblFinder
 #' @importFrom BiocParallel SerialParam
+#' @importFrom alamak alamak
 #'
 #' @export
 
@@ -143,22 +144,9 @@ doQC <- function(sce,
     if(save_plots){
 
       if(verbose) cat(blue("[QC]"),"   Saving QC plots. \n")
-
-      p1 <- grid.arrange(
-        plotColData(sce, y="sum", x = batch, colour_by="discard") +
-          scale_y_log10() + ggtitle("Total count"),
-        plotColData(sce, y="detected", x = batch, colour_by="discard") +
-          scale_y_log10() + ggtitle("Detected features"),
-        plotColData(sce, y="subsets_Malat1_percent", x = batch,
-                    colour_by="discard") + ggtitle("Malat1 percent"),
-        plotColData(sce, y="subsets_Ribo_percent", x = batch,
-                    colour_by="discard") + ggtitle("Ribo percent"),
-        plotColData(sce, y="subsets_mito_percent", x = batch,
-                    colour_by="discard") + ggtitle("Mito percent"),
-        ncol=2
-      )
-      ggsave(p1, filename = paste0("./", name, "/QC_plot.png"), width =  6, height = 6, device = "png")
-    }
+        
+      alamak(stop("Someone did not code plotting yet so I'm a placeholder!"), pixpal = "Oniji", compress = FALSE)
+     }
 
     sce$discard[is.na(sce$discard)] = TRUE
 
@@ -169,7 +157,7 @@ doQC <- function(sce,
     if(verbose) cat(blue("[QC/DBL]"), "Finding doublets. \n")
     if(!is.null(batch)) samples = colData(sce)[,batch] else samples = NULL
     sce <- scDblFinder(sce, verbose = verbose,
-                       samples = colData(sce)[,batch],
+                       samples = samples,
                        BPPARAM = parallel_param)
     if(save_plots) {
       p2 <- plotColData(sce, x="scDblFinder.class", y = "sum", colour_by="scDblFinder.class") +
