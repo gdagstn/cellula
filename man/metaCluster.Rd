@@ -28,9 +28,9 @@ See ?bluster::linkClusters for details.}
 }
 \value{
 a SingleCellExperiment object with three additional columns:
-   metacluster_max indicating the most frequent metacluster assignment
-   metacluster_score for the assignment score (between 0 and 1)
-   metacluster_ok to test whether the score is above threshold
+   - metacluster_max indicating the most frequent metacluster assignment
+   - metacluster_score for the assignment score (between 0 and 1)
+   - metacluster_ok to test whether the score is above threshold
 }
 \description{
 Applies a meta-clustering procedure through cluster linking to identify

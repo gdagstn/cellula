@@ -13,9 +13,13 @@ plotSilhouette(sce, name)
 "silhouette_SNN_100"}
 }
 \value{
-a beeswarm plot of silhouette widhts
+a beeswarm plot of silhouette widths
 }
 \description{
 Plots a beesswarm plot showing the approximate width of each cell within
 each cluster
+}
+\details{
+This plotting function has been directly taken from the OSCA book
+    ("Orchestrating Single Cell Analysis with Bioconductor").
 }

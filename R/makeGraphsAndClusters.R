@@ -27,7 +27,6 @@
 #' @param prefix character, the prefix of the column names on `colData`
 #'     where clustering results are stored. Default is "SNN_".
 #' @param verbose logical, should messages be written? Default is FALSE
-#' @param BPPARAM a `BiocParallel` parameter object for graph construction
 #'
 #' @return a `SingleCellExperiment` object with cluster memberships in the
 #'     `colData` table, named according to prefix and respective value of `k`.
@@ -39,7 +38,6 @@
 #' @importFrom bluster makeSNNGraph pairwiseModularity approxSilhouette
 #' @importFrom igraph cluster_louvain cluster_leiden
 #' @importFrom SingleCellExperiment reducedDim reducedDim<- counts logcounts
-#' @importFrom BiocParallel SerialParam
 #'
 #' @export
 
@@ -56,12 +54,20 @@ makeGraphsAndClusters <- function(sce,
                                   leiden_iterations = 5L,
                                   prefix = "SNN_",
                                   verbose = FALSE) {
+  
+  #Error prefix
+  ep = "{papplain::makeGraphsAndClusters} - "
+  
+  if(!is(sce, "SingleCellExperiment")) 
+    stop(paste0(ep, "Must provide a SingleCellExperiment object"))
 
   match.arg(method, c("leiden", "louvain"))
   match.arg(weighting_scheme, c("jaccard", "rank", "number"))
 
-  if(is.null(space)) space = reducedDim(sce, "PCA")[,seq_len(ndims)]
-
+  if(is.null(space)) {
+    if(length(reducedDim(sce)) == 0) stop(paste0(ep, " there are no dimensionality reductions in the SingleCellExperiment object."))
+    space = reducedDim(sce, "PCA")[,seq_len(ndims)]
+  }
 
   # Case 1: parameter sweep on clustering resolution
 
@@ -156,9 +162,9 @@ makeGraphsAndClusters <- function(sce,
 #'    See ?bluster::linkClusters for details.
 #'
 #' @return a SingleCellExperiment object with three additional columns:
-#'    metacluster_max indicating the most frequent metacluster assignment
-#'    metacluster_score for the assignment score (between 0 and 1)
-#'    metacluster_ok to test whether the score is above threshold
+#'    - metacluster_max indicating the most frequent metacluster assignment
+#'    - metacluster_score for the assignment score (between 0 and 1)
+#'    - metacluster_ok to test whether the score is above threshold
 #'
 #' @importFrom bluster linkClusters
 #' @importFrom igraph cluster_louvain E groups
@@ -174,10 +180,13 @@ metaCluster <- function(sce,
                         do_plot = TRUE,
                         denominator = "union") {
 
-  if(threshold > 1 | threshold < 0) stop("threshold must be between 0 and 1")
-  if(any(!clusters %in% colnames(colData(sce)))) stop("some cluster column names were not found in colData")
-  if(class(sce) != "SingleCellExperiment") stop("Must provide a SingleCellExperiment object")
-  if((!denominator %in% c("union", "max", "min"))) stop("denominator must be one of \"union\", \"max\", \"min\"")
+  #Error prefix
+  ep = "{papplain::metaCluster} - "
+  
+  if(threshold > 1 | threshold < 0) stop(paste0(ep, "threshold must be between 0 and 1"))
+  if(any(!clusters %in% colnames(colData(sce)))) stop(paste0(ep, "some cluster column names were not found in colData"))
+  if(!is(sce, "SingleCellExperiment")) stop(paste0(ep, "Must provide a SingleCellExperiment object"))
+  if((!denominator %in% c("union", "max", "min"))) stop(paste0(ep, "denominator must be one of \"union\", \"max\", \"min\""))
 
   linked <- linkClusters(colData(sce)[,clusters], denominator = denominator)
   meta <- cluster_louvain(linked)

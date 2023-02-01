@@ -6,19 +6,18 @@
 \usage{
 makeGraphsAndClusters(
   sce,
-  neighbors = 10,
+  neighbors = 10L,
   weighting_scheme = "jaccard",
   sweep_on = "clustering",
   method = "louvain",
   k = seq(0.1, 1, length.out = 6),
   space = NULL,
-  ndims = 20,
+  ndims = 20L,
   calculate_modularity = TRUE,
   calculate_silhouette = TRUE,
-  leiden_iterations = 5,
+  leiden_iterations = 5L,
   prefix = "SNN_",
-  verbose = FALSE,
-  BPPARAM = SerialParam()
+  verbose = FALSE
 )
 }
 \arguments{
@@ -58,8 +57,6 @@ Default is 5.}
 where clustering results are stored. Default is "SNN_".}
 
 \item{verbose}{logical, should messages be written? Default is FALSE}
-
-\item{BPPARAM}{a `BiocParallel` parameter object for graph construction}
 }
 \value{
 a `SingleCellExperiment` object with cluster memberships in the
