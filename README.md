@@ -117,13 +117,12 @@ You can choose point color using the `color_by` argument, and facetting is suppo
 plot_UMAP(sce, umap_slot = "UMAP_Harmony", color_by = "individual", group_by = "disease")
 ```
 
-![UMAP coloured by individual and facetted by disease status](https://user-images.githubusercontent.com/21171362/216002545-43210b08-5919-49ce-8688-e42b8bf70a64.png){width="800"}
+<img src="https://user-images.githubusercontent.com/21171362/216002545-43210b08-5919-49ce-8688-e42b8bf70a64.png" width="800">
 
 ```{r}
 plot_UMAP(sce, umap_slot = "UMAP_Harmony", color_by = "sum")
 ```
-
-![UMAP coloured by total read counts per cell](https://user-images.githubusercontent.com/21171362/216003504-32242a1e-bf33-4479-b525-c29a6569d64f.png){width="300"}
+<img src="https://user-images.githubusercontent.com/21171362/216003504-32242a1e-bf33-4479-b525-c29a6569d64f.png" width="300">
 
 ## Parallelization
 
@@ -167,7 +166,7 @@ You can visualize clustering results on the UMAP using the `plot_UMAP()` functio
 plot_UMAP(sce, umap_slot = "UMAP_Harmony", color_by = "SNN_0.5", label_by = "SNN_0.5")
 ```
 
-![](https://user-images.githubusercontent.com/21171362/216006173-db0a4ebf-702e-4bac-a25c-e789ee675e03.png){width="400"}
+<img src="https://user-images.githubusercontent.com/21171362/216006173-db0a4ebf-702e-4bac-a25c-e789ee675e03.png" width="400">
 
 If using `clustree`, the clustering tree can be visualized by using the same prefix defined in `makeGraphsAndClusters()`:
 
@@ -176,7 +175,7 @@ library(clustree)
 clustree(sce, prefix = "SNN_")
 ```
 
-![Clustering tree](https://user-images.githubusercontent.com/21171362/216004500-88ec933a-3fc4-486b-bdfa-ba5aae2092ad.png){width="329"}
+<img src = "https://user-images.githubusercontent.com/21171362/216004500-88ec933a-3fc4-486b-bdfa-ba5aae2092ad.png" width="329">
 
 The default arguments to the clustering wrapper include the generation of modularity and approximate silhouette scores for every clustering round. These will be stored in the `metadata` of the SCE, named according to the prefix, the resolution, and the `"modularity_"` and `"silhouette_"` prefixes. Silhouette and modularity can be visualized by using the dedicated functions:
 
@@ -186,7 +185,8 @@ plotSilhouette(sce, "SNN_0.5")
 plotModularity(sce, "SNN_0.5")
 ```
 
-![](https://user-images.githubusercontent.com/21171362/216005004-41ae56a0-adae-40f3-8154-6ce59ae7a3ed.png){width="400"} ![](https://user-images.githubusercontent.com/21171362/216005131-d7a639e1-928c-4dcd-b695-573427a4d14f.png){width="400"}
+<img src="https://user-images.githubusercontent.com/21171362/216005004-41ae56a0-adae-40f3-8154-6ce59ae7a3ed.png" width="400"> 
+<img src="https://user-images.githubusercontent.com/21171362/216005131-d7a639e1-928c-4dcd-b695-573427a4d14f.png" width="400">
 
 ## Metaclusters
 
@@ -199,7 +199,7 @@ clusterlabels <- colnames(colData(sce))[grep("SNN_", colnames(colData(sce)))]
 sce <- metaCluster(sce, clusters = clusterlabels)
 ```
 
-![](https://user-images.githubusercontent.com/21171362/216005406-369d20fb-5696-4d91-ba0a-b5e450d8db86.png){width="400"}
+<img src="https://user-images.githubusercontent.com/21171362/216005406-369d20fb-5696-4d91-ba0a-b5e450d8db86.png" width="400">
 
 Every cell will belong to a series of clusters, which in turn belong to a metacluster. For every cell, we count how many times they are assigned to a particular metacluster, and the maximum metacluster is assigned, together with a "metacluster score" (i.e. the frequency of assignment to the maximum metacluster) and whether this score is above or below a certain threshold (0.5 by default). These columns are saved in the colData slot of the SCE.
 
@@ -207,4 +207,4 @@ Every cell will belong to a series of clusters, which in turn belong to a metacl
 plot_UMAP(sce, umap_slot = "UMAP_Harmony", color_by = "metacluster_score", label_by = "SNN_0.5")
 ```
 
-![](https://user-images.githubusercontent.com/21171362/216006433-2b39bf37-a9f4-49e4-be97-ec17ac690297.png){width="400"}
+<img src="https://user-images.githubusercontent.com/21171362/216006433-2b39bf37-a9f4-49e4-be97-ec17ac690297.png" width="400">
