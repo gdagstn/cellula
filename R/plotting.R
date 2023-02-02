@@ -102,7 +102,7 @@ plotSilhouette <- function(sce, name) {
 #' @importFrom SummarizedExperiment colData
 #' @importFrom colorspace sequential_hcl
 #' @importFrom qualpalr qualpal
-#' @importFrom ggplot2 ggplot aes scale_colour_gradientn guides geom_point plot.margin
+#' @importFrom ggplot2 ggplot aes scale_colour_gradientn guides geom_point
 #' @importFrom ggplot2 guide_legend .data theme_void geom_segment geom_text coord_fixed 
 #' @importFrom ggplot2 facet_wrap vars arrow unit geom_label scale_colour_manual theme
 #' @importFrom rlang sym 
@@ -118,9 +118,7 @@ plot_UMAP <- function(sce,
                       group_by = NULL, 
                       label_by = NULL,
                       color_palette = NULL) {
-  
-
-  
+ 
   ## Sanity checks
   # Error prefix
   ep = "{papplain::plot_UMAP()} - "
@@ -275,5 +273,136 @@ plot_UMAP <- function(sce,
   return(p)
 }
 
+#' Plot a dot plot
+#'
+#' Plots a dot plot with gene expression from a SingleCellExperiment object 
+#'
+#' @param sce a SingleCellExperiment object
+#' @param genes character string, the genes to be plotted (matched with rownames)
+#' @param group_by character, column name in the colData slot of the SCE object, 
+#'     e.g. "cluster". Will be used to assign calculate proportions. 
+#'     Must be categorical (factor or coercible character). 
+#' @param cluster_genes logical, should genes be clustered? Default is TRUE
+#' @param cluster_groups logical, should groups be clustered? Default is TRUE
+#' @param expres_use character, name of the `assay` slot in the SingleCellExperiment
+#' @param color_palette a character string containing colors to be used. Default
+#'     is NULL, meaning an automatic palette will be generated.
+#' @param format character, one of "wide" (genes are columns, groups are rows) 
+#'     or "tall" (genes are rows, grups are columns)
+#' 
+#' @return a ggplot object showing average gene expression and proportion of 
+#'    expressing cells grouped by a grouping variable such as cluster.
+#'
+#' @importFrom SummarizedExperiment assay colData assayNames
+#' @importFrom colorspace sequential_hcl
+#' @importFrom stats dist hclust
+#' @importFrom ggthemes theme_few
+#' @importFrom ggplot2 ggplot aes scale_colour_gradientn geom_point 
+#' @importFrom ggplot2 theme element_text labs element_blank element_line
+#' @importFrom methods is
+#'
+#' @export
 
+plot_dots <- function(sce, 
+                     genes, 
+                     group_by, 
+                     cluster_genes = TRUE, 
+                     cluster_groups = TRUE, 
+                     exprs_use = "logcounts",
+                     threshold = 0,
+                     color_palette = NULL,
+                     format = "wide") {
+  
+  
+  ## Sanity checks
+  # Error prefix
+  ep = "{papplain::plot_Dots()} - "
+  
+  # Checks
+  if(!is(sce, "SingleCellExperiment")) 
+    stop(paste0(ep, "Must provide a SingleCellExperiment object"))
+  if(!exprs_use %in% assayNames(sce)) 
+    stop(paste0(ep, "Could not find an assay named \"", exprs_use, "\" in the SingleCellExperiment object"))
+  if(is.null(group_by))
+    stop(paste0(ep, "You must define a variable in group_by"))
+  if(!group_by %in% colnames(colData(sce))) 
+      stop(paste0(ep, group_by, " column not found in the colData of the SingleCellExperiment object"))
+  if(!is(threshold, "numeric"))
+      stop(paste0(ep, "Threshold must be numeric"))
+  if(!is(colData(sce)[,group_by], "character") & !is(colData(sce)[,group_by], "factor"))
+      stop(paste0(ep, "Cannot group by a numeric value, convert it to factor first."))
+  if(any(!genes %in% rownames(sce))){
+    found = intersect(genes, rownames(sce))
+    if(length(found) == 0) {
+      stop(paste0(ep, "None of the genes were found in the SingleCellExperiment object"))
+    } else {
+      message(paste0(ep, "Warning: some genes (", (length(genes) -length(found)), ") were not found in the dataset."))
+      genes = found
+    }
+  }
+  
+  sce_red  = sce[genes,]
+  
+  sce_byclust = lapply(unique(colData(sce)[,group_by]), function(x) {
+    cur = sce_red[,colData(sce)[,group_by] == x]
+    props = apply(assay(cur, exprs_use), 1, function(x) sum(x > threshold))/ncol(cur)
+    aves = apply(assay(cur, exprs_use), 1, function(x) mean(x))
+    final_df = data.frame("proportion" = props, 
+                          "mean_expression" = aves, 
+                          "cluster" = x,
+                          "gene" = genes)
+    return(final_df)
+  })
+  
+  if(cluster_genes) {
+    scdf_props_genes = do.call(cbind, lapply(sce_byclust, function(x) x$proportion))
+    scdf_exp_genes = do.call(cbind, lapply(sce_byclust, function(x) x$mean_expression))
+    hc_props_genes = hclust(dist(scdf_props_genes))$order
+    hc_exp_genes = hclust(dist(scdf_exp_genes))$order
+  }
+  
+  if(cluster_groups) {
+    scdf_props_clusters = do.call(rbind, lapply(sce_byclust, function(x) x$proportion))
+    scdf_exp_clusters = do.call(rbind, lapply(sce_byclust, function(x) x$mean_expression))
+    hc_props_clusters = hclust(dist(scdf_props_clusters))$order
+    hc_exp_clusters = hclust(dist(scdf_exp_clusters))$order
+  }
+  
+  scdf = do.call(rbind, sce_byclust)
+  
+  if(cluster_genes) scdf$gene = factor(scdf$gene, levels = genes[hc_exp_genes])
+  if(cluster_groups) scdf$cluster = factor(scdf$cluster, levels = unique(colData(sce_red)[,group_by])[hc_exp_clusters])
+  
+  scdf$mean_expression[scdf$mean_expression == 0] <- NA
+  scdf$proportion[scdf$proportion == 0] <- NA
+  
+  if(is.null(color_palette)) {
+    pal = rev(sequential_hcl(n = 40, palette = "YlGnBu"))[10:40]
+  } else {
+    pal = color_palette
+  }
+  cscale = scale_colour_gradientn(colours = pal) 
+  
+  if(format == "wide") {
+    p = ggplot(scdf, aes(y = cluster, x = gene, size = proportion, colour = mean_expression)) +
+      geom_point(shape = 16, na.rm = TRUE) + 
+      cscale + 
+      theme_few() + 
+      theme(axis.text.x = element_text(angle = 45, hjust = 1, face = "italic"),
+            panel.border = element_blank(), 
+            axis.line = element_line(colour = "black")) + 
+      labs(colour = "Mean expression", size = "Proportion")
+  } else if(format == "tall") {
+    p = ggplot(scdf, aes(y = gene, x = cluster, size = proportion, colour = mean_expression)) +
+      geom_point(shape = 16, na.rm = TRUE) + 
+      cscale + 
+      theme_few() + 
+      theme(axis.text.y = element_text(face = "italic"),
+            panel.border = element_blank(), 
+            axis.line = element_line(colour = "black")) + 
+      labs(colour = "Mean expression", size = "Proportion")
+  }
+  
+  return(p)
+}
 

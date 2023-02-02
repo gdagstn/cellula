@@ -38,4 +38,5 @@ Imports:
     S4Vectors,
     qualpalr,
     rlang,
-    methods
+    methods,
+    alamak
