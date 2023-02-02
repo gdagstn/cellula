@@ -190,26 +190,7 @@ plotModularity(sce, "SNN_0.5")
 
 <img src="https://user-images.githubusercontent.com/21171362/216005004-41ae56a0-adae-40f3-8154-6ce59ae7a3ed.png" width="400"/> <img src="https://user-images.githubusercontent.com/21171362/216005131-d7a639e1-928c-4dcd-b695-573427a4d14f.png" width="400"/>
 
-## Metaclusters
-
-Aditionally, *metaclusters* can also be identified. A metacluster is a cluster of clusters obtained by different clustering methods. Clusters across methods are linked acording to how many cells they share, and these links become edges of a graph. Then, Louvain clustering is run on the graph and the communities that are identified are metaclusters. These metaclusters show the relationship between clustering methods. Moreover, they can be used to understand cluster stability along different parameters and/or integration methods. A cell can belong to different clusters according to the clustering method (i.e. to the resolution or to the space that was used). If a cell belongs to clusters that are consistently included in a metacluster, then that cell belongs to a "stable" cluster. If instead the cell belongs to clusters that have different metacluster assignments, then it's in an "unstable" position, meaning it may be clustered differently according to integration methods and/or resolutions.
-
-The `metaClusters()` function takes a `clusters` argument, which is a vector of column names from the colData of the SCE where clustering results are stored. In this example it is easy to isolate by using `grep()` and searching for the prefix "SNN\_".
-
-```{r}
-clusterlabels <- colnames(colData(sce))[grep("SNN_", colnames(colData(sce)))]
-sce <- metaCluster(sce, clusters = clusterlabels)
-```
-
-<img src="https://user-images.githubusercontent.com/21171362/216005406-369d20fb-5696-4d91-ba0a-b5e450d8db86.png" width="400"/>
-
-Every cell will belong to a series of clusters, which in turn belong to a metacluster. For every cell, we count how many times they are assigned to a particular metacluster, and the maximum metacluster is assigned, together with a "metacluster score" (i.e. the frequency of assignment to the maximum metacluster) and whether this score is above or below a certain threshold (0.5 by default). These columns are saved in the colData slot of the SCE.
-
-```{r}
-plot_UMAP(sce, umap_slot = "UMAP_Harmony", color_by = "metacluster_score", label_by = "SNN_0.5")
-```
-
-<img src="https://user-images.githubusercontent.com/21171362/216006433-2b39bf37-a9f4-49e4-be97-ec17ac690297.png" width="400"/>
+## Gene dot plot
 
 You can also use the `plot_dots()` function to plot the popular dot-plot for marker genes.
 
@@ -232,3 +213,25 @@ plot_dots(sce, genes = top5, group_by = "SNN_0.5")
 ```
 
 <img src="https://user-images.githubusercontent.com/21171362/216310875-a06081b7-e9bf-404a-99f3-ef1291555ad3.png" width="600"/>
+
+
+## Metaclusters
+
+Aditionally, *metaclusters* can also be identified. A metacluster is a cluster of clusters obtained by different clustering methods. Clusters across methods are linked acording to how many cells they share, and these links become edges of a graph. Then, Louvain clustering is run on the graph and the communities that are identified are metaclusters. These metaclusters show the relationship between clustering methods. Moreover, they can be used to understand cluster stability along different parameters and/or integration methods. A cell can belong to different clusters according to the clustering method (i.e. to the resolution or to the space that was used). If a cell belongs to clusters that are consistently included in a metacluster, then that cell belongs to a "stable" cluster. If instead the cell belongs to clusters that have different metacluster assignments, then it's in an "unstable" position, meaning it may be clustered differently according to integration methods and/or resolutions.
+
+The `metaClusters()` function takes a `clusters` argument, which is a vector of column names from the colData of the SCE where clustering results are stored. In this example it is easy to isolate by using `grep()` and searching for the prefix "SNN\_".
+
+```{r}
+clusterlabels <- colnames(colData(sce))[grep("SNN_", colnames(colData(sce)))]
+sce <- metaCluster(sce, clusters = clusterlabels)
+```
+
+<img src="https://user-images.githubusercontent.com/21171362/216005406-369d20fb-5696-4d91-ba0a-b5e450d8db86.png" width="400"/>
+
+Every cell will belong to a series of clusters, which in turn belong to a metacluster. For every cell, we count how many times they are assigned to a particular metacluster, and the maximum metacluster is assigned, together with a "metacluster score" (i.e. the frequency of assignment to the maximum metacluster) and whether this score is above or below a certain threshold (0.5 by default). These columns are saved in the colData slot of the SCE.
+
+```{r}
+plot_UMAP(sce, umap_slot = "UMAP_Harmony", color_by = "metacluster_score", label_by = "SNN_0.5")
+```
+
+<img src="https://user-images.githubusercontent.com/21171362/216006433-2b39bf37-a9f4-49e4-be97-ec17ac690297.png" width="400"/>
