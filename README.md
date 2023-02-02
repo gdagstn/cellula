@@ -210,3 +210,25 @@ plot_UMAP(sce, umap_slot = "UMAP_Harmony", color_by = "metacluster_score", label
 ```
 
 <img src="https://user-images.githubusercontent.com/21171362/216006433-2b39bf37-a9f4-49e4-be97-ec17ac690297.png" width="400"/>
+
+You can also use the `plot_dots()` function to plot the popular dot-plot for marker genes.
+
+This function takes in a `SingleCellExperiment` object, together with a vector of genes (matched to the `rownames` of the object), and a grouping variable specified by the `group_by` argument. Additionally, dots can be ordered by hierarchical clustering on either genes, groups, or both (set `cluster_genes` and/or `cluster_groups` to `TRUE`, which is the default). Colors can also be customized via the `color_palette` argument. Finally, the user can choose whether they want genes to be columns (`format = "wide"`, the default) or rows (`format = "tall"`).
+
+```{r}
+# Quick and dirty marker calculation
+markers = presto::wilcoxauc(sce, group_by = "SNN_0.5")
+markerlist = split(markers, markers$group)
+
+for(i in seq_len(length(markerlist))) {
+  markerlist[[i]]$deltapct = markerlist[[i]]$pct_in - markerlist[[i]]$pct_out
+  markerlist[[i]] = markerlist[[i]][order(markerlist[[i]]$deltapct, decreasing = TRUE),]
+}
+
+top5 = lapply(markerlist, function(x) x$feature[1:5])
+markergenes =  Reduce(union, top5)
+
+plot_dots(sce, genes = top5, group_by = "SNN_0.5")
+```
+
+<img src="https://user-images.githubusercontent.com/21171362/216310875-a06081b7-e9bf-404a-99f3-ef1291555ad3.png" width="600"/>

@@ -321,6 +321,7 @@ plot_dots <- function(sce,
   # Checks
   if(!is(sce, "SingleCellExperiment")) 
     stop(paste0(ep, "Must provide a SingleCellExperiment object"))
+  if(is.null(genes)) stop(paste0(ep, "Must provide genes"))
   if(!exprs_use %in% assayNames(sce)) 
     stop(paste0(ep, "Could not find an assay named \"", exprs_use, "\" in the SingleCellExperiment object"))
   if(is.null(group_by))
@@ -341,12 +342,10 @@ plot_dots <- function(sce,
     }
   }
   
-  sce_red  = sce[genes,]
-  
   sce_byclust = lapply(unique(colData(sce)[,group_by]), function(x) {
-    cur = sce_red[,colData(sce)[,group_by] == x]
-    props = apply(assay(cur, exprs_use), 1, function(x) sum(x > threshold))/ncol(cur)
-    aves = apply(assay(cur, exprs_use), 1, function(x) mean(x))
+    cur = assay(sce, exprs_use)[genes, which(colData(sce)[,group_by] == x)]
+    props = apply(cur, 1, function(x) sum(x > threshold))/ncol(cur)
+    aves = apply(cur, 1, function(x) mean(x))
     final_df = data.frame("proportion" = props, 
                           "mean_expression" = aves, 
                           "cluster" = x,
@@ -371,7 +370,7 @@ plot_dots <- function(sce,
   scdf = do.call(rbind, sce_byclust)
   
   if(cluster_genes) scdf$gene = factor(scdf$gene, levels = genes[hc_exp_genes])
-  if(cluster_groups) scdf$cluster = factor(scdf$cluster, levels = unique(colData(sce_red)[,group_by])[hc_exp_clusters])
+  if(cluster_groups) scdf$cluster = factor(scdf$cluster, levels = unique(colData(sce)[,group_by])[hc_exp_clusters])
   
   scdf$mean_expression[scdf$mean_expression == 0] <- NA
   scdf$proportion[scdf$proportion == 0] <- NA
