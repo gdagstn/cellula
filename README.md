@@ -90,10 +90,10 @@ The scheme is:
         |    |    ├── regression on logcounts
         |    |    ├── PCA
         |    |    └── UMAP
-        ├── Cell type annotation (optional/in development)
-                  ├── rank genes
-                  ├── AUCell
-                  └── best score assignment
+        └── Cell type annotation - choose one method
+                  ├── Seurat AddModuleScore
+                  └── AUCell
+                 
 
 Most of the choices can be made around the integration method. `papplain` has implemented 5 methods: `fastMNN` and `regressBatches` from the `batchelor` package, `Harmony`, the CCA-based `Seurat` method, and non-negative matrix factorization (NMF) from `LIGER` through the `rliger` package.
 
@@ -235,3 +235,34 @@ plot_UMAP(sce, umap_slot = "UMAP_Harmony", color_by = "metacluster_score", label
 ```
 
 <img src="https://user-images.githubusercontent.com/21171362/216006433-2b39bf37-a9f4-49e4-be97-ec17ac690297.png" width="400"/>
+
+## Assigning cell identities
+
+`papplain` implements two methods for automated cell identity assignment, based on the Bioconductor `AUCell` package or the `Seurat` `AddModuleScore()` function.
+
+The function requires a `genesets` named list containing genes to be used for scoring every single cell. These can be obtained through other packages, e.g. `msigdbr`. For instance, if we wanted to take all the Muraro et al. signature genes, present in the C8 collection, we would do:
+
+```{r}
+library(msigdbr)
+
+type_genes = msigdbr("Homo sapiens", category = "C8")
+genesets = lapply(split(type_genes, type_genes$gs_name), function(x) x$gene_symbol)
+muraro_genes = genesets[grep("MURARO", names(genesets))]
+```
+
+Then, we would use the `assignIdentities()` function from `papplain` to calculate signature scores:
+
+```{r}
+sce = assignIdentities(sce, 
+                       genesets = muraro_genes, 
+                       method = "AUC")
+```
+
+This will create a column named "labels_AUC" (or anything else the user determines using the `name` argument) in the `colData(sce)`. Assignments can be plotted:
+
+```{r}
+plot_UMAP(sce, umap_slot = "UMAP_Harmony", color_by = "labels_AUC")
+```
+
+<img src="https://user-images.githubusercontent.com/21171362/217058249-6bcc821a-22cb-4aa1-88d1-d21e33fc63e7.png" width = "800"/>
+
