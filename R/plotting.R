@@ -296,7 +296,6 @@ plot_UMAP <- function(sce,
 #' @importFrom SummarizedExperiment assay colData assayNames
 #' @importFrom colorspace sequential_hcl
 #' @importFrom stats dist hclust
-#' @importFrom ggthemes theme_few
 #' @importFrom ggplot2 ggplot aes scale_colour_gradientn geom_point 
 #' @importFrom ggplot2 theme element_text labs element_blank element_line
 #' @importFrom methods is
@@ -386,7 +385,7 @@ plot_dots <- function(sce,
     p = ggplot(scdf, aes(y = cluster, x = gene, size = proportion, colour = mean_expression)) +
       geom_point(shape = 16, na.rm = TRUE) + 
       cscale + 
-      theme_few() + 
+      theme_minimal() + 
       theme(axis.text.x = element_text(angle = 45, hjust = 1, face = "italic"),
             panel.border = element_blank(), 
             axis.line = element_line(colour = "black")) + 
