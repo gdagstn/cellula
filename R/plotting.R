@@ -105,6 +105,7 @@ plotSilhouette <- function(sce, name) {
 #' @importFrom ggplot2 ggplot aes scale_colour_gradientn guides geom_point
 #' @importFrom ggplot2 guide_legend .data theme_void geom_segment geom_text coord_fixed 
 #' @importFrom ggplot2 facet_wrap vars arrow unit geom_label scale_colour_manual theme
+#' @importFrom ggplot2 margin theme_minimal
 #' @importFrom rlang sym 
 #' @importFrom stats median
 #' @importFrom methods is
@@ -382,22 +383,32 @@ plot_dots <- function(sce,
   cscale = scale_colour_gradientn(colours = pal) 
   
   if(format == "wide") {
-    p = ggplot(scdf, aes(y = cluster, x = gene, size = proportion, colour = mean_expression)) +
+    p = ggplot(scdf, aes(y = .data[["cluster"]], 
+                         x = .data[["gene"]], 
+                         size = .data[["proportion"]], 
+                         colour = .data[["mean_expression"]])
+               ) +
       geom_point(shape = 16, na.rm = TRUE) + 
       cscale + 
       theme_minimal() + 
       theme(axis.text.x = element_text(angle = 45, hjust = 1, face = "italic"),
             panel.border = element_blank(), 
-            axis.line = element_line(colour = "black")) + 
+            axis.line = element_line(colour = "black")
+            ) + 
       labs(colour = "Mean expression", size = "Proportion")
   } else if(format == "tall") {
-    p = ggplot(scdf, aes(y = gene, x = cluster, size = proportion, colour = mean_expression)) +
+    p = ggplot(scdf, aes(y = .data[["gene"]], 
+                         x = .data[["cluster"]], 
+                         size = .data[["proportion"]], 
+                         colour = .data[["mean_expression"]])
+               ) +
       geom_point(shape = 16, na.rm = TRUE) + 
       cscale + 
-      theme_few() + 
+      theme_minimal() +
       theme(axis.text.y = element_text(face = "italic"),
             panel.border = element_blank(), 
-            axis.line = element_line(colour = "black")) + 
+            axis.line = element_line(colour = "black")
+            ) + 
       labs(colour = "Mean expression", size = "Proportion")
   }
   

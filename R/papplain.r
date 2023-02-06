@@ -156,45 +156,8 @@ papplain <- function(sce,
 
   saveRDS(sce, file = paste0("./", name, "/", name, "_tempSCE.RDS"))
 
-  # AUCell
-  if(!is.null(geneset_list)) {
 
-    if(verbose) cat("Assigning cell labels. \n")
-
-    rankings <- AUCell_buildRankings(counts(sce),
-                         plotStats = FALSE,
-                         verbose = FALSE)
-
-    aucs <- AUCell_calcAUC(geneset_list,
-                           rankings,
-                           aucMaxRank = ceiling(0.2 * nrow(rankings)))
-    # All assignments
-
-    assigned <- as.data.frame(t(assay(aucs)))
-
-
-    # Best overall score
-    assigned$first_max_score <- apply(assigned, 1, max)
-
-    # Second best score
-    assigned$second_max_score <- apply(assigned[,1:(ncol(assigned) - 1)], 1, function(x) {
-      return(max(x[x != max(x)]))
-    })
-
-    # Ambiguous labels
-    assigned$ambiguous <- (assigned$first_max_score - assigned$second_max_score)/(assigned$first_max_score + assigned$second_max_score) <= 0.2
-
-    assigned$best_label = colnames(assigned)[apply(assigned[,1:(ncol(assigned) - 3)], 1, which.max)]
-
-    colData(sce)$labels <- factor(assigned$best_label)
-
-
-    p3 <- plotReducedDim(sce, dimred = "UMAP", colour_by = "labels") + ggtitle("Labels")
-
-    ggsave(p3, filename = paste0("./", name, "/UMAP_labels_plot.png"), width =  6, height = 6, device = "png")
-
-  }
-  if(verbose) cat("Saving final object.\n")
+    if(verbose) cat("Saving final object.\n")
   saveRDS(sce, file = paste0("./", name, "/", name, "_PS_INT_SCE.RDS"))
 
   if(verbose) cat("Deleting temporary file. \n")
