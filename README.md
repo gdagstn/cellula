@@ -87,11 +87,12 @@ The scheme is:
         |    |    ├── Harmony matrix (on PCA)
         |    |    └── UMAP
         |    ├── Regression [INT/regression]
-        |    |    ├── regression on logcounts
-        |    |    ├── PCA
-        |    |    └── UMAP
-        └── Cell type annotation - choose one method
+        |         ├── regression on logcounts
+        |         ├── PCA
+        |         └── UMAP
+        └── Cell type annotation [ANNO] (optional) - choose one method
                   ├── Seurat AddModuleScore
+                  ├── ssGSEA
                   └── AUCell
                  
 
@@ -268,4 +269,3 @@ plot_UMAP(sce, umap_slot = "UMAP_Harmony", color_by = "labels_AUC")
 
 
 <img src="https://user-images.githubusercontent.com/21171362/217058249-6bcc821a-22cb-4aa1-88d1-d21e33fc63e7.png" width = "800"/>
-
