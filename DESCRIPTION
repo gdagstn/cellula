@@ -39,4 +39,5 @@ Imports:
     qualpalr,
     rlang,
     methods,
-    alamak
+    alamak,
+    GSVA

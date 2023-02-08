@@ -9,24 +9,32 @@
 #' @param verbose logical, should messages on progress be printed? Default is TRUE
 #' @param name character, the name of the column in the colData of sce where final
 #'     labels will be stored
+#' @param return_scores logical, should the scores for each cell and each geneset
+#'     be saved in the object metadata slot? Default is FALSE.
+#' @param kcdf character, which kernel to use for the CDF. One of "Poisson" or 
+#'     "Gaussian". Only used when method = "ssGSEA".
+#' @param annotation character, which assay name to use for rank calculation. 
+#'     Only used when method = "ssGSEA". 
 #' @param ... other arguments passed internally to \code{AUCell::AUCell_calcAUC()} 
-#'     ("AUC" method) or \code{Seurat::AddModuleScore()} ("Seurat" method)
+#'     ("AUC" method) or \code{Seurat::AddModuleScore()} ("Seurat" method) or
+#'     \code{GSVA::gsva}("ssGSEA" method)
 #'     
 #' @return  a `SingleCellExperiment` object with a column named `"name"` containing
-#'     the highest scoring label for a method, and other method-specific columns
-#'     such as AUC values or score values per geneset.
+#'     the highest scoring label for a method. Optionally, the single scores from
+#'     each method for each geneset are saved in the `metadata` slot. 
 #'     
 #' @details This is a wrapper around two method for assigning to each cell a 
 #'    score for the expression of a given geneset. The "AUC" method calculates
 #'    the Area Under the Curve of the ranked expression of genes in each geneset,
 #'    whereas the "Seurat" function uses the \code{Seurat::AddModuleScore()}
-#'    function. Both methods result in a final label assignment (i.e. the names
+#'    function. The "ssGSEA" method calculates an enrichment score in each cell.
+#'    All methods result in a final label assignment (i.e. the names
 #'    of the user-provided geneset for which each single cell has the highest 
-#'    score), although scores are not comparable between themselves - AUC is
-#'    strictly positive, whereas the Module Score can also be negative. 
+#'    score), although scores are not comparable between themselves - AUC and 
+#'    ssGSEA are strictly positive, whereas the Module Score can also be negative. 
 #'    The user can pass additional arguments to each function using the `...` 
 #'    argument.
-#'     
+#'    
 #' @export     
 
 assignIdentities <- function(sce, 
@@ -34,33 +42,50 @@ assignIdentities <- function(sce,
                              method, 
                              verbose = TRUE,
                              name = NULL,
+                             return_scores = FALSE,
+                             kcdf = "Gaussian", 
+                             annotation = "logcounts",
                              ...) {
   
-  switch(method, 
+  switch(method, #'    of the user-provided geneset #'    of the user-provided geneset 
          "AUC" = {sce = .assignIdentities_AUC(sce, 
                                               genesets, 
                                               verbose, 
-                                              name,
+                                              name = name,
+                                              return_scores = return_scores,
                                               ...)},
          "Seurat" = {sce = .assignIdentities_Seurat(sce, 
                                                     genesets, 
                                                     verbose, 
-                                                    name,
-                                                    ...)})
+                                                    name = name,
+                                                    return_scores = return_scores,
+                                                    ...)},
+         "ssGSEA" = {sce = .assignIdentities_ssGSEA(sce, 
+                                                    genesets,
+                                                    verbose,
+                                                    name = name,
+                                                    return_scores = return_scores,
+                                                    annotation = annotation,
+                                                    kcdf = kcdf,
+                                                    ...)}
+         )
+  
   return(sce)
 }
   
 #' @importFrom AUCell AUCell_buildRankings AUCell_calcAUC
 #' @importFrom SummarizedExperiment colData
 #' @importFrom utils tail
+#' @importFrom S4Vectors metadata
 
 .assignIdentities_AUC <- function(sce, 
                                   genesets, 
                                   verbose, 
                                   name = NULL, 
-                                  AUC_threshold = 0.2, ...){
+                                  return_scores = FALSE,
+                                  ...){
   
-    if(is.null(name)) labelname = "labels_AUC"
+    if(is.null(name)) labelname = "labels_AUC" else labelname = name
     if(verbose) cat(blue("[ANNO/AUC]"), "Assigning cell labels \n")
     
     rankings <- AUCell_buildRankings(counts(sce),
@@ -85,11 +110,13 @@ assignIdentities <- function(sce,
     })
     
     # Ambiguous labels
-    assigned$ambiguous <- (assigned$first_max_score - assigned$second_max_score)/(assigned$first_max_score + assigned$second_max_score) <= AUC_threshold
+    assigned$ambiguous <- (assigned$first_max_score - assigned$second_max_score)/(assigned$first_max_score + assigned$second_max_score) <= 0.2
     
     assigned$best_label = colnames(assigned)[apply(assigned[,1:(ncol(assigned) - 3)], 1, which.max)]
     
     colData(sce)[,labelname] <- factor(assigned$best_label)
+    
+    if(return_scores) metadata(sce)$AUC_Scores = assigned
     
     return(sce)
 }
@@ -99,10 +126,17 @@ assignIdentities <- function(sce,
 #' @importFrom SummarizedExperiment colData
 #' @importFrom SingleCellExperiment logcounts counts
 #' @importFrom utils tail
+#' @importFrom crayon blue
+#' @importFrom S4Vectors metadata
 
-.assignIdentities_Seurat <- function(sce, genesets, verbose, name = NULL, ...){
+.assignIdentities_Seurat <- function(sce, 
+                                     genesets, 
+                                     verbose, 
+                                     return_scores = FALSE,
+                                     name = NULL, 
+                                     ...){
   
-  if(is.null(name)) labelname = "labels_Seurat"
+  if(is.null(name)) labelname = "labels_Seurat" else labelname = name
   
   if(verbose) cat(blue("[ANNO/Seurat]"), "Adding module scores \n")
   
@@ -119,10 +153,47 @@ assignIdentities <- function(sce,
   
   colnames(seu@meta.data)[tail(seq_along(seu@meta.data), length(genesets))] = names(genesets)
   
-  colData(sce) = cbind(colData(sce), seu@meta.data[,tail(seq_along(seu@meta.data), length(genesets))])
-  colData(sce)[,labelname] = names(genesets)[apply(colData(sce)[,tail(seq_along(colData(sce)),  length(genesets))],
-                             1, which.max)]
+  scores = seu@meta.data[,tail(seq_along(seu@meta.data), length(genesets))]
+  colData(sce)[,labelname] = names(genesets)[apply(scores, 1, which.max)]
   
+  if(return_scores) metadata(sce)$Seurat_ModuleScores = scores
+
+  return(sce)
+}
+
+#' @importFrom GSVA gsva
+#' @importFrom crayon blue
+#' @importFrom SummarizedExperiment colData assay
+#' @importFrom S4Vectors metadata
+
+.assignIdentities_ssGSEA <- function(sce, 
+                                     genesets, 
+                                     verbose, 
+                                     name = NULL, 
+                                     annotation = "logcounts", 
+                                     return_scores = FALSE,
+                                     kcdf = "Gaussian", ...) {
+  
+  if(is.null(name)) labelname = "labels_ssGSEA" else labelname = name
+  
+  if(verbose) cat(blue("[ANNO/ssGSEA]"), "Calculating ssGSEA \n")
+  
+  ss = gsva(sce, 
+            gset.idx.list = genesets, 
+            annotation = annotation, 
+            method = "ssgsea", 
+            kcdf = kcdf, 
+            verbose = verbose, 
+            ...)
+  
+  scores = t(as.matrix(assay(ss, "es")))
+  
+  labels_ssGSEA = names(genesets)[apply(scores, 1, which.max)]
+  
+  colData(sce)[,labelname] = labels_ssGSEA
+  
+  if(return_scores) metadata(sce)$ssGSEA_Scores = scores
   
   return(sce)
+  
 }

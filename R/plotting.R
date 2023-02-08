@@ -285,7 +285,7 @@ plot_UMAP <- function(sce,
 #'     Must be categorical (factor or coercible character). 
 #' @param cluster_genes logical, should genes be clustered? Default is TRUE
 #' @param cluster_groups logical, should groups be clustered? Default is TRUE
-#' @param expres_use character, name of the `assay` slot in the SingleCellExperiment
+#' @param exprs_use character, name of the `assay` slot in the SingleCellExperiment
 #' @param color_palette a character string containing colors to be used. Default
 #'     is NULL, meaning an automatic palette will be generated.
 #' @param format character, one of "wide" (genes are columns, groups are rows) 
@@ -414,4 +414,3 @@ plot_dots <- function(sce,
   
   return(p)
 }
-

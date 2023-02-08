@@ -4,7 +4,17 @@
 \alias{assignIdentities}
 \title{#' SCE Cell Type annotation pipeline}
 \usage{
-assignIdentities(sce, genesets, method, verbose = TRUE, name = NULL, ...)
+assignIdentities(
+  sce,
+  genesets,
+  method,
+  verbose = TRUE,
+  name = NULL,
+  return_scores = FALSE,
+  kcdf = "Gaussian",
+  annotation = "logcounts",
+  ...
+)
 }
 \arguments{
 \item{sce}{a SingleCellExperiment object}
@@ -19,13 +29,23 @@ labels and/or assign scores}
 \item{name}{character, the name of the column in the colData of sce where final
 labels will be stored}
 
+\item{return_scores}{logical, should the scores for each cell and each geneset
+be saved in the object metadata slot? Default is FALSE.}
+
+\item{kcdf}{character, which kernel to use for the CDF. One of "Poisson" or 
+"Gaussian". Only used when method = "ssGSEA".}
+
+\item{annotation}{character, which assay name to use for rank calculation. 
+Only used when method = "ssGSEA".}
+
 \item{...}{other arguments passed internally to \code{AUCell::AUCell_calcAUC()} 
-("AUC" method) or \code{Seurat::AddModuleScore()} ("Seurat" method)}
+("AUC" method) or \code{Seurat::AddModuleScore()} ("Seurat" method) or
+\code{GSVA::gsva}("ssGSEA" method)}
 }
 \value{
 a `SingleCellExperiment` object with a column named `"name"` containing
-    the highest scoring label for a method, and other method-specific columns
-    such as AUC values or score values per geneset.
+    the highest scoring label for a method. Optionally, the single scores from
+    each method for each geneset are saved in the `metadata` slot.
 }
 \description{
 Automatic assignment of cell type identities in SingleCellExperiment objects
@@ -35,10 +55,11 @@ This is a wrapper around two method for assigning to each cell a
    score for the expression of a given geneset. The "AUC" method calculates
    the Area Under the Curve of the ranked expression of genes in each geneset,
    whereas the "Seurat" function uses the \code{Seurat::AddModuleScore()}
-   function. Both methods result in a final label assignment (i.e. the names
+   function. The "ssGSEA" method calculates an enrichment score in each cell.
+   All methods result in a final label assignment (i.e. the names
    of the user-provided geneset for which each single cell has the highest 
-   score), although scores are not comparable between themselves - AUC is
-   strictly positive, whereas the Module Score can also be negative. 
+   score), although scores are not comparable between themselves - AUC and 
+   ssGSEA are strictly positive, whereas the Module Score can also be negative. 
    The user can pass additional arguments to each function using the `...` 
    argument.
 }

@@ -29,13 +29,13 @@ Must be categorical (factor or coercible character).}
 
 \item{cluster_groups}{logical, should groups be clustered? Default is TRUE}
 
+\item{exprs_use}{character, name of the `assay` slot in the SingleCellExperiment}
+
 \item{color_palette}{a character string containing colors to be used. Default
 is NULL, meaning an automatic palette will be generated.}
 
 \item{format}{character, one of "wide" (genes are columns, groups are rows) 
 or "tall" (genes are rows, grups are columns)}
-
-\item{expres_use}{character, name of the `assay` slot in the SingleCellExperiment}
 }
 \value{
 a ggplot object showing average gene expression and proportion of 
