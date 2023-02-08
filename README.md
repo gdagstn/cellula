@@ -238,7 +238,7 @@ plot_UMAP(sce, umap_slot = "UMAP_Harmony", color_by = "metacluster_score", label
 
 ## Assigning cell identities
 
-`papplain` implements two methods for automated cell identity assignment, based on the Bioconductor `AUCell` package or the `Seurat` `AddModuleScore()` function.
+`papplain` implements two methods for automated cell identity assignment, based on the Bioconductor `AUCell` package, the `GSVA` `ssGSEA` implementation, or the `Seurat` `AddModuleScore()` function.
 
 The function requires a `genesets` named list containing genes to be used for scoring every single cell. These can be obtained through other packages, e.g. `msigdbr`. For instance, if we wanted to take all the Muraro et al. signature genes, present in the C8 collection, we would do:
 
@@ -258,11 +258,14 @@ sce = assignIdentities(sce,
                        method = "AUC")
 ```
 
+Other methods are "Seurat" and "ssGSEA". 
+
 This will create a column named "labels_AUC" (or anything else the user determines using the `name` argument) in the `colData(sce)`. Assignments can be plotted:
 
 ```{r}
 plot_UMAP(sce, umap_slot = "UMAP_Harmony", color_by = "labels_AUC")
 ```
+
 
 <img src="https://user-images.githubusercontent.com/21171362/217058249-6bcc821a-22cb-4aa1-88d1-d21e33fc63e7.png" width = "800"/>
 
