@@ -40,4 +40,5 @@ Imports:
     rlang,
     methods,
     alamak,
-    GSVA
+    GSVA,
+    UCell

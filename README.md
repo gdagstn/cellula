@@ -86,13 +86,14 @@ The scheme is:
         |    ├── Harmony [INT/HARMONY]
         |    |    ├── Harmony matrix (on PCA)
         |    |    └── UMAP
-        |    ├── Regression [INT/regression]
+        |    └── Regression [INT/regression]
         |         ├── regression on logcounts
         |         ├── PCA
         |         └── UMAP
         └── Cell type annotation [ANNO] (optional) - choose one method
                   ├── Seurat AddModuleScore
                   ├── ssGSEA
+                  ├── UCell
                   └── AUCell
                  
 
@@ -229,7 +230,7 @@ sce <- metaCluster(sce, clusters = clusterlabels)
 
 <img src="https://user-images.githubusercontent.com/21171362/216005406-369d20fb-5696-4d91-ba0a-b5e450d8db86.png" width="400"/>
 
-Every cell will belong to a series of clusters, which in turn belong to a metacluster. For every cell, we count how many times they are assigned to a particular metacluster, and the maximum metacluster is assigned, together with a "metacluster score" (i.e. the frequency of assignment to the maximum metacluster) and whether this score is above or below a certain threshold (0.5 by default). These columns are saved in the colData slot of the SCE.
+Every cell will belong to a series of clusters, which in turn belong to a metacluster. For every cell, we count how many times they are assigned to a particular metacluster, and the maximum metacluster is assigned, together with a "metacluster score" (i.e. the frequency of assignment to the maximum metacluster) and whether this score is above or below a certain threshold (0.5 by default). These columns are saved in the `colData` slot of the SCE.
 
 ```{r}
 plot_UMAP(sce, umap_slot = "UMAP_Harmony", color_by = "metacluster_score", label_by = "SNN_0.5")
@@ -259,7 +260,7 @@ sce = assignIdentities(sce,
                        method = "AUC")
 ```
 
-Other methods are "Seurat" and "ssGSEA". 
+Other methods are "Seurat", "UCell", and "ssGSEA". 
 
 This will create a column named "labels_AUC" (or anything else the user determines using the `name` argument) in the `colData(sce)`. Assignments can be plotted:
 

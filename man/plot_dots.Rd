@@ -31,6 +31,8 @@ Must be categorical (factor or coercible character).}
 
 \item{exprs_use}{character, name of the `assay` slot in the SingleCellExperiment}
 
+\item{threshold}{numeric, expression threshold below which a gene is not expressed}
+
 \item{color_palette}{a character string containing colors to be used. Default
 is NULL, meaning an automatic palette will be generated.}
 

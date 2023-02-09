@@ -286,6 +286,7 @@ plot_UMAP <- function(sce,
 #' @param cluster_genes logical, should genes be clustered? Default is TRUE
 #' @param cluster_groups logical, should groups be clustered? Default is TRUE
 #' @param exprs_use character, name of the `assay` slot in the SingleCellExperiment
+#' @param threshold numeric, expression threshold below which a gene is not expressed
 #' @param color_palette a character string containing colors to be used. Default
 #'     is NULL, meaning an automatic palette will be generated.
 #' @param format character, one of "wide" (genes are columns, groups are rows) 

@@ -5,7 +5,8 @@
 #' @param sce a SingleCellExperiment object
 #' @param genesets named list of character vectors, genesets used to calculate 
 #'     labels and/or assign scores
-#' @param method character, the method for label calling. One of "AUC" or "Seurat".
+#' @param method character, the method for label calling. One of "AUC", "Seurat",
+#'     "ssGSEA" or "UCell".
 #' @param verbose logical, should messages on progress be printed? Default is TRUE
 #' @param name character, the name of the column in the colData of sce where final
 #'     labels will be stored
@@ -16,24 +17,40 @@
 #' @param annotation character, which assay name to use for rank calculation. 
 #'     Only used when method = "ssGSEA". 
 #' @param ... other arguments passed internally to \code{AUCell::AUCell_calcAUC()} 
-#'     ("AUC" method) or \code{Seurat::AddModuleScore()} ("Seurat" method) or
-#'     \code{GSVA::gsva}("ssGSEA" method)
+#'     ("AUC" method), \code{Seurat::AddModuleScore()} ("Seurat" method),
+#'     \code{GSVA::gsva()}("ssGSEA" method), or \code{UCell::ScoreSignatures_UCell()}
+#'     ("UCell" method).
 #'     
 #' @return  a `SingleCellExperiment` object with a column named `"name"` containing
 #'     the highest scoring label for a method. Optionally, the single scores from
 #'     each method for each geneset are saved in the `metadata` slot. 
 #'     
-#' @details This is a wrapper around two method for assigning to each cell a 
-#'    score for the expression of a given geneset. The "AUC" method calculates
-#'    the Area Under the Curve of the ranked expression of genes in each geneset,
-#'    whereas the "Seurat" function uses the \code{Seurat::AddModuleScore()}
-#'    function. The "ssGSEA" method calculates an enrichment score in each cell.
+#' @details This is a wrapper around four methods for assigning to each cell a 
+#'    score for the expression of a given geneset. 
+#'    \itemize{
+#'     \item{ The "AUC" method 
+#'     (\href{https://www.nature.com/articles/nmeth.4463}{Aibar et al. 2017}) calculates
+#'     the Area Under the Curve of the ranked expression of genes in each geneset.}
+#'    
+#'    \item{The "Seurat" method (\href{https://www.science.org/doi/10.1126/science.aad0501}{Tirosh et al. 2016}) 
+#'     uses the \code{Seurat::AddModuleScore()} function. }
+#'    
+#'    \item{The "ssGSEA" method (\href{https://www.nature.com/articles/nature08460}{Barbie et al. 2009}) 
+#'     calculates an enrichment score in each cell using "single sample" GSEA.}
+#'    
+#'    \item{The "UCell" method (\href{https://www.sciencedirect.com/science/article/pii/S2001037021002816}{Andreatta and Carmona 2020}) 
+#'     calculates an enrichment score using a Mann-Whitney U-test.}
+#'    }
+#'    
 #'    All methods result in a final label assignment (i.e. the names
 #'    of the user-provided geneset for which each single cell has the highest 
-#'    score), although scores are not comparable between themselves - AUC and 
-#'    ssGSEA are strictly positive, whereas the Module Score can also be negative. 
+#'    score), although scores are not comparable between themselves - AUC, 
+#'    ssGSEA, and UCell are strictly positive, whereas the Module Score can also 
+#'    be negative. 
+#'    
 #'    The user can pass additional arguments to each function using the `...` 
 #'    argument.
+#'    
 #'    
 #' @export     
 
@@ -67,7 +84,13 @@ assignIdentities <- function(sce,
                                                     return_scores = return_scores,
                                                     annotation = annotation,
                                                     kcdf = kcdf,
-                                                    ...)}
+                                                    ...)},
+         "UCell" = {sce = .assignIdentities_UCell(sce, 
+                                                  genesets,
+                                                  verbose,
+                                                  name = name,
+                                                  return_scores = return_scores,
+                                                  ...)}
          )
   
   return(sce)
@@ -172,7 +195,8 @@ assignIdentities <- function(sce,
                                      name = NULL, 
                                      annotation = "logcounts", 
                                      return_scores = FALSE,
-                                     kcdf = "Gaussian", ...) {
+                                     kcdf = "Gaussian", 
+                                     ...) {
   
   if(is.null(name)) labelname = "labels_ssGSEA" else labelname = name
   
@@ -193,6 +217,38 @@ assignIdentities <- function(sce,
   colData(sce)[,labelname] = labels_ssGSEA
   
   if(return_scores) metadata(sce)$ssGSEA_Scores = scores
+  
+  return(sce)
+  
+}
+
+#' @importFrom UCell ScoreSignatures_UCell
+#' @importFrom crayon blue
+#' @importFrom SummarizedExperiment colData assay
+#' @importFrom S4Vectors metadata
+
+.assignIdentities_UCell <- function(sce, 
+                                    genesets, 
+                                    verbose, 
+                                    name = NULL,
+                                    return_scores = FALSE, 
+                                    ...) {
+  
+  if(is.null(name)) labelname = "labels_UCell" else labelname = name
+  
+  if(verbose) cat(blue("[ANNO/UCell]"), "Calculating UCell scores \n")
+  
+  scores <- ScoreSignatures_UCell(matrix = assay(sce, "logcounts"), 
+                                 features = genesets, 
+                                 maxRank = max(lengths(genesets)) + 1,
+                                 name = "",
+                                 ...)
+  
+  labels_UCell = names(genesets)[apply(scores, 1, which.max)]
+  
+  colData(sce)[,labelname] = labels_UCell
+  
+  if(return_scores) metadata(sce)$UCell_Scores = scores
   
   return(sce)
   
