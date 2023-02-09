@@ -21,7 +21,7 @@ devtools::install("path/to/cloned/git")
 The package will require a number of `BioConductor` and `GitHub` dependencies. You can install them as follows:
 
 ```{r}
-BiocManager::install(c("scran", "scuttle", "bluster", "scater", "batchelor", "DropletUtils", "AUCell", "harmony", "GSVA",  "gdagstn/alamak"))
+BiocManager::install(c("scran", "scuttle", "bluster", "scater", "batchelor", "DropletUtils", "AUCell", "harmony", "GSVA",  "gdagstn/alamak", "UCell"))
 ```
 
 # Usage
@@ -240,7 +240,7 @@ plot_UMAP(sce, umap_slot = "UMAP_Harmony", color_by = "metacluster_score", label
 
 ## Assigning cell identities
 
-`papplain` implements two methods for automated cell identity assignment, based on the Bioconductor `AUCell` package, the `GSVA` `ssGSEA` implementation, or the `Seurat` `AddModuleScore()` function.
+`papplain` implements two methods for automated cell identity assignment, based on the Bioconductor `AUCell` package, the `GSVA` `ssGSEA` implementation, the `Seurat` `AddModuleScore()` function or the `UCell` method.
 
 The function requires a `genesets` named list containing genes to be used for scoring every single cell. These can be obtained through other packages, e.g. `msigdbr`. For instance, if we wanted to take all the Muraro et al. signature genes, present in the C8 collection, we would do:
 
@@ -248,7 +248,9 @@ The function requires a `genesets` named list containing genes to be used for sc
 library(msigdbr)
 
 type_genes = msigdbr("Homo sapiens", category = "C8")
+
 genesets = lapply(split(type_genes, type_genes$gs_name), function(x) x$gene_symbol)
+
 muraro_genes = genesets[grep("MURARO", names(genesets))]
 ```
 
