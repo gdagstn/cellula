@@ -70,11 +70,12 @@ assignIdentities <- function(sce,
                              ...) {
   
   if(is(genesets, "character")) {
-    if(is.null(genesets)) name = "signature"
-    genesets = list(name = genesets)
+    if(is.null(name)) name = "signature"
+    genesets = list(genesets)
+    names(genesets) = name
   } 
   
-  switch(method, #'    of the user-provided geneset #'    of the user-provided geneset 
+  switch(method, 
          "AUC" = {sce = .assignIdentities_AUC(sce, 
                                               genesets, 
                                               verbose, 
@@ -259,7 +260,7 @@ assignIdentities <- function(sce,
   
   if(verbose) cat(blue("[ANNO/UCell]"), "Calculating UCell scores \n")
   
-  maxrank = min(max(lengths(genesets))*2, nrow(sce))
+  maxrank = 1500
   
   scores <- ScoreSignatures_UCell(matrix = assay(sce, "counts"), 
                                   features = genesets, 
