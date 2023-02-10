@@ -370,8 +370,12 @@ plot_dots <- function(sce,
   
   scdf = do.call(rbind, sce_byclust)
   
-  if(cluster_genes) scdf$gene = factor(scdf$gene, levels = genes[hc_exp_genes])
-  if(cluster_groups) scdf$cluster = factor(scdf$cluster, levels = unique(colData(sce)[,group_by])[hc_exp_clusters])
+  if(cluster_genes) {
+    scdf$gene = factor(scdf$gene, levels = genes[hc_exp_genes])
+  } else scdf$gene = factor(scdf$gene, levels = rev(genes))
+  if(cluster_groups) {
+    scdf$cluster = factor(scdf$cluster, levels = unique(colData(sce)[,group_by])[hc_exp_clusters])
+  }
   
   scdf$mean_expression[scdf$mean_expression == 0] <- NA
   scdf$proportion[scdf$proportion == 0] <- NA
@@ -394,6 +398,8 @@ plot_dots <- function(sce,
       theme_minimal() + 
       theme(axis.text.x = element_text(angle = 45, hjust = 1, face = "italic"),
             panel.border = element_blank(), 
+            panel.grid.major = element_blank(), 
+            panel.grid.minor = element_blank(),
             axis.line = element_line(colour = "black")
             ) + 
       labs(colour = "Mean expression", size = "Proportion")
@@ -408,6 +414,8 @@ plot_dots <- function(sce,
       theme_minimal() +
       theme(axis.text.y = element_text(face = "italic"),
             panel.border = element_blank(), 
+            panel.grid.major = element_blank(), 
+            panel.grid.minor = element_blank(),
             axis.line = element_line(colour = "black")
             ) + 
       labs(colour = "Mean expression", size = "Proportion")
