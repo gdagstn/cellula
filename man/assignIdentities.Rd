@@ -20,9 +20,10 @@ assignIdentities(
 \item{sce}{a SingleCellExperiment object}
 
 \item{genesets}{named list of character vectors, genesets used to calculate 
-labels and/or assign scores}
+labels and/or assign scores. Alternatively, a character vector to calculate
+a single score from.}
 
-\item{method}{character, the method for label calling. One of "AUC", "Seurat",
+\item{method}{character, the method for scoring. One of "AUC", "Seurat",
 "ssGSEA" or "UCell".}
 
 \item{verbose}{logical, should messages on progress be printed? Default is TRUE}
@@ -70,11 +71,15 @@ This is a wrapper around four methods for assigning to each cell a
     calculates an enrichment score using a Mann-Whitney U-test.}
    }
    
-   All methods result in a final label assignment (i.e. the names
-   of the user-provided geneset for which each single cell has the highest 
-   score), although scores are not comparable between themselves - AUC, 
+   If a list of genesets is given, all methods result in a final label assignment 
+   (i.e. the names of the user-provided geneset for which each single cell has 
+   the highest score). If only a single geneset is provided, the score for that
+   geneset is added to the `colData` slot.
+   
+   Please note that scores are not comparable between themselves - AUC, 
    ssGSEA, and UCell are strictly positive, whereas the Module Score can also 
-   be negative. 
+   be negative; UCell and AUCell are normalized between 0 and 1, whereas
+   ssGSEA is not.
    
    The user can pass additional arguments to each function using the `...` 
    argument.

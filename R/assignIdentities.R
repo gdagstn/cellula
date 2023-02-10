@@ -4,8 +4,9 @@
 #'
 #' @param sce a SingleCellExperiment object
 #' @param genesets named list of character vectors, genesets used to calculate 
-#'     labels and/or assign scores
-#' @param method character, the method for label calling. One of "AUC", "Seurat",
+#'     labels and/or assign scores. Alternatively, a character vector to calculate
+#'     a single score from.
+#' @param method character, the method for scoring. One of "AUC", "Seurat",
 #'     "ssGSEA" or "UCell".
 #' @param verbose logical, should messages on progress be printed? Default is TRUE
 #' @param name character, the name of the column in the colData of sce where final
@@ -42,11 +43,15 @@
 #'     calculates an enrichment score using a Mann-Whitney U-test.}
 #'    }
 #'    
-#'    All methods result in a final label assignment (i.e. the names
-#'    of the user-provided geneset for which each single cell has the highest 
-#'    score), although scores are not comparable between themselves - AUC, 
+#'    If a list of genesets is given, all methods result in a final label assignment 
+#'    (i.e. the names of the user-provided geneset for which each single cell has 
+#'    the highest score). If only a single geneset is provided, the score for that
+#'    geneset is added to the `colData` slot.
+#'    
+#'    Please note that scores are not comparable between themselves - AUC, 
 #'    ssGSEA, and UCell are strictly positive, whereas the Module Score can also 
-#'    be negative. 
+#'    be negative; UCell and AUCell are normalized between 0 and 1, whereas
+#'    ssGSEA is not.
 #'    
 #'    The user can pass additional arguments to each function using the `...` 
 #'    argument.
@@ -63,6 +68,11 @@ assignIdentities <- function(sce,
                              kcdf = "Gaussian", 
                              annotation = "logcounts",
                              ...) {
+  
+  if(is(genesets, "character")) {
+    if(is.null(genesets)) name = "signature"
+    genesets = list(name = genesets)
+  } 
   
   switch(method, #'    of the user-provided geneset #'    of the user-provided geneset 
          "AUC" = {sce = .assignIdentities_AUC(sce, 
@@ -119,28 +129,22 @@ assignIdentities <- function(sce,
                            rankings,
                            aucMaxRank = ceiling(0.2 * nrow(rankings)),
                            ...)
-    # All assignments
-    
-    assigned <- as.data.frame(t(assay(aucs)))
-    
-    
-    # Best overall score
-    assigned$first_max_score <- apply(assigned, 1, max)
-    
-    # Second best score
-    assigned$second_max_score <- apply(assigned[,1:(ncol(assigned) - 1)], 1, function(x) {
-      return(max(x[x != max(x)]))
-    })
-    
-    # Ambiguous labels
-    assigned$ambiguous <- (assigned$first_max_score - assigned$second_max_score)/(assigned$first_max_score + assigned$second_max_score) <= 0.2
-    
-    assigned$best_label = colnames(assigned)[apply(assigned[,1:(ncol(assigned) - 3)], 1, which.max)]
-    
-    colData(sce)[,labelname] <- factor(assigned$best_label)
-    
-    if(return_scores) metadata(sce)$AUC_Scores = assigned
-    
+
+    scores <- as.data.frame(t(assay(aucs)))
+   
+    if(length(genesets) > 1) {
+      
+      labels_AUC = names(genesets)[apply(scores, 1, which.max)]
+      
+      colData(sce)[,labelname] = labels_AUC
+      
+      if(return_scores) metadata(sce)$AUC_Scores = scores
+      
+    } else if(length(genesets) == 1) {
+      
+      colData(sce)[,labelname] = as.numeric(scores[, 1, drop = TRUE])
+    }
+
     return(sce)
 }
 
@@ -177,9 +181,19 @@ assignIdentities <- function(sce,
   colnames(seu@meta.data)[tail(seq_along(seu@meta.data), length(genesets))] = names(genesets)
   
   scores = seu@meta.data[,tail(seq_along(seu@meta.data), length(genesets))]
-  colData(sce)[,labelname] = names(genesets)[apply(scores, 1, which.max)]
   
-  if(return_scores) metadata(sce)$Seurat_ModuleScores = scores
+  if(length(genesets) > 1) {
+    
+    labels_Seurat = names(genesets)[apply(scores, 1, which.max)]
+    
+    colData(sce)[,labelname] = labels_Seurat
+    
+    if(return_scores) metadata(sce)$Seurat_ModuleScores = scores
+    
+  } else if(length(genesets) == 1) {
+    
+    colData(sce)[,labelname] = as.numeric(scores[, 1, drop = TRUE])
+  }
 
   return(sce)
 }
@@ -212,12 +226,19 @@ assignIdentities <- function(sce,
   
   scores = t(as.matrix(assay(ss, "es")))
   
-  labels_ssGSEA = names(genesets)[apply(scores, 1, which.max)]
-  
-  colData(sce)[,labelname] = labels_ssGSEA
-  
-  if(return_scores) metadata(sce)$ssGSEA_Scores = scores
-  
+  if(length(genesets) > 1) {
+    
+    labels_ssGSEA = names(genesets)[apply(scores, 1, which.max)]
+    
+    colData(sce)[,labelname] = labels_ssGSEA
+    
+    if(return_scores) metadata(sce)$ssGSEA_Scores = scores
+    
+  } else if(length(genesets) == 1) {
+    
+    colData(sce)[,labelname] = as.numeric(scores[, 1, drop = TRUE])
+  }
+
   return(sce)
   
 }
@@ -238,18 +259,26 @@ assignIdentities <- function(sce,
   
   if(verbose) cat(blue("[ANNO/UCell]"), "Calculating UCell scores \n")
   
-  scores <- ScoreSignatures_UCell(matrix = assay(sce, "logcounts"), 
-                                 features = genesets, 
-                                 maxRank = max(lengths(genesets)) + 1,
-                                 name = "",
-                                 ...)
+  maxrank = min(max(lengths(genesets))*2, nrow(sce))
   
-  labels_UCell = names(genesets)[apply(scores, 1, which.max)]
+  scores <- ScoreSignatures_UCell(matrix = assay(sce, "counts"), 
+                                  features = genesets, 
+                                  maxRank = maxrank,
+                                  name = "",
+                                  ...)
   
-  colData(sce)[,labelname] = labels_UCell
-  
-  if(return_scores) metadata(sce)$UCell_Scores = scores
+  if(length(genesets) > 1) {
+    
+    labels_UCell = names(genesets)[apply(scores, 1, which.max)]
+    
+    colData(sce)[,labelname] = labels_UCell
+    
+    if(return_scores) metadata(sce)$UCell_Scores = scores
+    
+  } else if(length(genesets) == 1) {
+    
+    colData(sce)[,labelname] = as.numeric(scores[, 1, drop = TRUE])
+  }
   
   return(sce)
-  
 }

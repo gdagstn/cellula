@@ -270,5 +270,14 @@ This will create a column named "labels_AUC" (or anything else the user determin
 plot_UMAP(sce, umap_slot = "UMAP_Harmony", color_by = "labels_AUC")
 ```
 
-
 <img src="https://user-images.githubusercontent.com/21171362/217058249-6bcc821a-22cb-4aa1-88d1-d21e33fc63e7.png" width = "800"/>
+
+You can also use single signatures as an input, which will result in adding the score to the `colData` slot of the SCE directly, rather than an assignment:
+
+```{r}
+sce <- assignIdentities(sce, genesets = muraro_genes$BETA_CELL, method = "AUC", name = "Beta_Cell_signature")
+
+plot_UMAP(sce, umap_slot = "UMAP_Harmony", color_by = "Beta_Cell_signature")
+```
+
+<img src="https://user-images.githubusercontent.com/21171362/218026010-9bc1f806-e3c3-408d-ad49-0ca5cab1bd09.png" width = "800"/>
