@@ -448,6 +448,8 @@ plot_dots <- function(sce,
 #'     colouring variable. If NULL (default), violins (and points) will not be colored.
 #' @param group_by character, the column name from colData(sce) to be used as a
 #'     facetting variable. Default is NULL.
+#' @param color_palette character string of colors for categorical plots or heatmap. 
+#'     Default is NULL.
 #' @param contour logical, should contours be plotted on the scatterplot? 
 #'     default is TRUE.
 #' @param clustered logical, should rows and columns be clustered in the confusion
@@ -522,11 +524,13 @@ plot_Coldata <- function(sce,
 }
 
 #' @importFrom ggplot2 .data aes position_dodge ggplot geom_violin geom_boxplot guides
-#' @importFrom ggplot2 theme_minimal theme element_blank labs element_line 
+#' @importFrom ggplot2 theme_minimal theme element_blank labs element_line xlab scale_fill_manual
 #' @importFrom qualpalr qualpal
 #' @importFrom ggbeeswarm geom_quasirandom
 
 .makeViolin <- function(df, x, y, plot_cells = FALSE, color_by = NULL, color_palette = NULL) {
+  
+  ep = "{papplain::.makeViolin() via plot_Coldata()} - "
   
   # Define mappings
   aes_cd = aes(y = .data[[y]])
@@ -631,7 +635,7 @@ plot_Coldata <- function(sce,
                size = 0.5)
   if(contour) {
     p <- p + stat_density_2d(geom = "polygon", contour = TRUE,
-                    aes(fill = after_stat(level)),
+                    aes(fill = after_stat(.data[["level"]])),
                     alpha = 0.5,
                     bins = 10,
                     col = "black",
@@ -662,7 +666,7 @@ plot_Coldata <- function(sce,
 
 
 #' @importFrom ggplot2 .data aes ggplot geom_tile element_text scale_x_discrete
-#' @importFrom ggplot2 theme_minimal theme element_blank labs element_line 
+#' @importFrom ggplot2 theme_minimal theme element_blank labs element_line scale_fill_gradientn
 #' @importFrom stats dist hclust
 #' @importFrom colorspace sequential_hcl
 

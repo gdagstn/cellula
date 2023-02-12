@@ -320,6 +320,3 @@ sce <- assignIdentities(sce, genesets = muraro_genes$BETA_CELL, method = "AUC", 
 
 plot_UMAP(sce, umap_slot = "UMAP_Harmony", color_by = "Beta_Cell_signature")
 ```
-
-
-
