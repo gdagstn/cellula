@@ -41,10 +41,11 @@ Assuming that you have formed a SCE object containing the "individual" column th
 ```{r}
 sce <- papplain(sce, name = "myproject", batch = "individual", 
                 integration_method = "Harmony",
-                verbose = TRUE, save_plots = FALSE)
+                verbose = TRUE, save_plots = TRUE)
 ```
 
-The `name` argument defines the name of the folder that will be created to store files and plots. We set `verbose = TRUE` to print the progress of the pipeline.
+The `name` argument defines the name of the folder that will be created to store files and plots. We set `verbose = TRUE` to print the progress of the pipeline. 
+Setting `save_plots = TRUE` will create a few QC plots in the `name/plots` folder: total UMI, total genes detected, UMI x genes; optionally % MT, % Ribo and %MALAT1, total UMI x doublet class. Plots are separated according to whether the cells were discarded or not in the filtering step.
 
 The `papplain()` function is a wrapper around a few modules or sub-pipelines that have different degrees of customization.
 

@@ -56,7 +56,7 @@ plotModularity <- function(sce, name, type = "heatmap") {
 #'
 #' @return a beeswarm plot of silhouette widths
 #'
-#' @importFrom ggplot2 ggplot aes_string theme_bw
+#' @importFrom ggplot2 ggplot aes_string theme_classic
 #' @importFrom ggbeeswarm geom_quasirandom
 #' @importFrom S4Vectors metadata metadata<-
 #'
@@ -69,7 +69,7 @@ plotSilhouette <- function(sce, name) {
   name = paste0("silhouette_", name)
   ggplot(metadata(sce)[[name]], aes_string(x="cluster", y="width", colour="closest")) +
     geom_quasirandom(method="smiley") +
-    theme_bw()
+    theme_classic()
 }
 
 
@@ -395,7 +395,7 @@ plot_dots <- function(sce,
                ) +
       geom_point(shape = 16, na.rm = TRUE) + 
       cscale + 
-      theme_minimal() + 
+      theme_classic() + 
       theme(axis.text.x = element_text(angle = 45, hjust = 1, face = "italic"),
             panel.border = element_blank(), 
             panel.grid.major = element_blank(), 
@@ -536,8 +536,8 @@ plot_Coldata <- function(sce,
   aes_cd = aes(y = .data[[y]])
   
   if(!is.null(x)) {
-    if(!is(df[,x], "factor") & !is(df[,x], "character"))
-      stop(paste0(ep, "x must be a categorical variable (factor or character)"))
+    if(!is(df[,x], "factor") & !is(df[,x], "character") & !is(df[,x], "logical"))
+      stop(paste0(ep, "x must be a categorical variable (coercible to factor)"))
     df[,x] = factor(df[,x])
     aes_cd$x = aes(x = .data[[x]])$x
     if(is.null(color_by)) {
@@ -545,8 +545,8 @@ plot_Coldata <- function(sce,
       aes_cd$fill = aes(fill = .data[[x]])$fill
     }
     if(!is.null(color_by)) {
-      if(!is(df[,color_by], "factor") & !is(df[,color_by], "character"))
-        stop(paste0(ep, "color_by must be a categorical variable (factor or character)"))
+      if(!is(df[,color_by], "factor") & !is(df[,color_by], "character") & !is(df[,color_by], "logical"))
+        stop(paste0(ep, "color_by must be a categorical variable (coercible to factor)"))
       aes_cd$colour = aes(colour = .data[[color_by]])$colour
       aes_cd$fill = aes(fill = .data[[color_by]])$fill
     }
@@ -607,8 +607,9 @@ plot_Coldata <- function(sce,
                         col = "black",
                         position = dodge,
                         show.legend = FALSE) + 
-    theme_minimal() +
-    theme(panel.grid.major = element_blank(), 
+    theme_classic() +
+    theme(plot.margin = margin(1, 1, 1, 1, "cm"),
+          panel.grid.major = element_blank(), 
           panel.grid.minor = element_blank(),
           axis.line = element_line(colour = "black")
     ) + 
@@ -618,7 +619,12 @@ plot_Coldata <- function(sce,
   if(!is.null(x) | !is.null(color_by)){
     if(!is.null(x) & is.null(color_by)) group_var = x else group_var = color_by
         if(is.null(color_palette)) {
-      pal = qualpal(n = length(unique(df[,group_var])))$hex
+          if(length(unique(df[,group_var])) > 1) {
+            pal = qualpal(n = length(unique(df[,group_var])))$hex
+          } else {
+            pal = "gray"
+          }
+      
     } else {
       pal = color_palette
     }
@@ -661,11 +667,12 @@ plot_Coldata <- function(sce,
                     linewidth = 0.2) +
       scale_fill_continuous_sequential(palette = "Heat 2")
   }
-    p <- p + theme_minimal() +
-             theme(panel.grid.major = element_blank(), 
-             panel.grid.minor = element_blank(),
-             axis.line = element_line(colour = "black"),
-             text = element_text(family = "sans")
+    p <- p + theme_classic() +
+             theme(plot.margin = margin(1, 1, 1, 1, "cm"),
+               panel.grid.major = element_blank(), 
+               panel.grid.minor = element_blank(),
+               axis.line = element_line(colour = "black"),
+               text = element_text(family = "sans")
         )
     
     # Colors
@@ -723,8 +730,9 @@ plot_Coldata <- function(sce,
            geom_tile(aes(fill = .data[["Jaccard index"]])) + 
            scale_x_discrete(position = "top") 
            
-  p = p + theme_minimal() +
-    theme(panel.grid.major = element_blank(), 
+  p = p + theme_classic() +
+    theme(plot.margin = margin(1, 1, 1, 1, "cm"),
+          panel.grid.major = element_blank(), 
           panel.grid.minor = element_blank(),
           axis.line = element_blank(),
           text = element_text(family = "sans")
