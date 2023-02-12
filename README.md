@@ -153,7 +153,7 @@ mostly useful to check for differences in clustering/annotations)
 ```{r}
 plot_Coldata(sce, x = "sum", y = "detected") + scale_x_log10()
 ```
-<img src="https://user-images.githubusercontent.com/21171362/218302610-403b2620-f12c-486f-8055-0dec050f1c55.png" width="500")
+<img src="https://user-images.githubusercontent.com/21171362/218302610-403b2620-f12c-486f-8055-0dec050f1c55.png" width="500"/>
 
 `plot_dots()` - see below. 
 
