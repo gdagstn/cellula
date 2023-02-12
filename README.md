@@ -137,12 +137,18 @@ plot_UMAP(sce, umap_slot = "UMAP_Harmony", color_by = "sum")
 Takes as input `x` and `y` as column names from `colData(sce)`, with an optional `color_by` and `group_by` argument for facetting. 
 
 This function returns different plots depending on the class of the 2 `colData` columns selected:
-- if `y` is a numeric and `x` is categorical (character or factor), it returns a combined violin-boxplot with one plot per level of `x`. Additionally, if the `color_by` argument specifies another column, every `x` will be divided by levels of `color_by`. 
+- if `y` is a numeric and `x` is categorical (character or factor), it returns a combined violin-boxplot with one plot per level of `x`. 
 
 ```{r}
 plot_Coldata(sce, x = "individual", y = "sum") + scale_y_log10()
 ```
 <img src="https://user-images.githubusercontent.com/21171362/218302530-3e934eaa-20ce-43bf-98a0-b4c211d77ed4.png" width="800"/>
+
+Additionally, if the `color_by` argument specifies another column, every `x` will be divided by levels of `color_by`. With the appropriate use of the `x`, `color_by` and `group_by` variables once an look at 3 different groupings of `y` at once.
+
+```{r}
+plot_Coldata(sce, x = "individual", y = "sum", color_by = "disease", group_by = "cell type") + scale_y_log10()
+```
 
 - if `y` and `x` are both categorical, it returns a heatmap of the confusion matrix where every value is the pairwise Jaccard index between sets for any given level pair (this is
 mostly useful to check for differences in clustering/annotations)

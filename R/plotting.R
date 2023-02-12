@@ -538,6 +538,7 @@ plot_Coldata <- function(sce,
   if(!is.null(x)) {
     if(!is(df[,x], "factor") & !is(df[,x], "character"))
       stop(paste0(ep, "x must be a categorical variable (factor or character)"))
+    df[,x] = factor(df[,x])
     aes_cd$x = aes(x = .data[[x]])$x
     if(is.null(color_by)) {
       aes_cd$colour = aes(colour = .data[[x]])$colour
@@ -553,6 +554,8 @@ plot_Coldata <- function(sce,
     df$group = y
     aes_cd$x = aes(x = .data[["group"]])$x
     if(!is.null(color_by)) {
+      df[,color_by] = factor(df[,color_by])
+      aes_cd$x = aes(x = .data[[color_by]])$x
       aes_cd$colour = aes(colour = .data[[color_by]])$colour
       aes_cd$fill = aes(fill = .data[[color_by]])$fill
     }
@@ -562,7 +565,7 @@ plot_Coldata <- function(sce,
   
   # Violins
   p <- ggplot(df, mapping = aes_cd) + 
-    geom_violin(alpha = 0.5, 
+    geom_violin(alpha = 0.35, 
                 scale = "width", 
                 width = 0.9,
                 position = dodge)
@@ -570,16 +573,31 @@ plot_Coldata <- function(sce,
   # Beeswarm
   if(plot_cells) {
     if(is.null(x) & !is.null(color_by)) {
-      aes_bee = aes(y = .data[[y]], x = .data[["group"]])
+      aes_bee = aes_cd
+      aes_bee$x = aes(x = .data[[color_by]])$x
       aes_bee$colour = aes(colour = .data[[color_by]])$colour
-    } else aes_bee = aes_cd
-    
+      pwidth = 1/length(levels(df[,color_by]))
+    } else if(!is.null(x) & is.null(color_by)){
+      pwidth = 1/length(levels(df[,x]))
+      aes_bee = aes_cd
+      aes_bee$x = aes(x = .data[[x]])$x
+      aes_bee$colour = aes(colour = .data[[x]])$colour
+    } else if(!is.null(x) & !is.null(color_by)){
+      if(x != color_by) {
+        aes_bee = aes(y = .data[[y]], x = .data[[x]])
+        pwscale = length(unique(paste0(df[,x], "_", df[,color_by])))
+        pwidth = 1/pwscale
+      }
+      
+    }
+
     p <- p + geom_quasirandom(mapping = aes_bee,
                               groupOnX = TRUE,
-                              width = 0.45, 
+                              #width = pwidth, 
                               bandwidth = 1, 
-                              alpha = 0.2, 
-                              size = 0.6) 
+                              alpha = 0.3, 
+                              size = 0.6,
+                              dodge.width = 1) 
   }
   
   # Boxplot
