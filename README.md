@@ -105,7 +105,7 @@ Most of the choices can be made around the integration method. `papplain` has im
 Each step of the pipeline can be called independently on the object:
 
 ```{r}
-sce <- doQC(sce, name = "segerstolpe", batch = "individual", integration_method = "Harmony", save_plots = FALSE)
+sce <- doQC(sce, name = "segerstolpe", batch = "individual", save_plots = TRUE)
 sce <- doNormAndReduce(sce, name = "segerstolpe", batch = "individual")
 sce <- integrateSCE(sce, batch = "individual", method = "Seurat")
 ```
