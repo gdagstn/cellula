@@ -313,6 +313,7 @@ sce <- assignIdentities(sce,
 plot_UMAP(sce, umap_slot = "UMAP_Harmony", color_by = "Beta_Cell_signature")
 ```
 The `"UCell"` method works well when you have small signatures (e.g. even 2/3 genes). It allows you to specify positive and negative labels, which is useful when you are sure the identity of a cell types depends on the lack of expression of certain markers (see hematopoietic lineages). To do so, you can add "+" or "-" to each gene.
+<img src="https://user-images.githubusercontent.com/21171362/218026010-9bc1f806-e3c3-408d-ad49-0ca5cab1bd09.png" width = "500"/>
 
 ```{r}
 sce <- assignIdentities(sce, genesets = muraro_genes$BETA_CELL, method = "AUC", name = "Beta_Cell_signature")
@@ -321,4 +322,4 @@ plot_UMAP(sce, umap_slot = "UMAP_Harmony", color_by = "Beta_Cell_signature")
 ```
 
 
-<img src="https://user-images.githubusercontent.com/21171362/218026010-9bc1f806-e3c3-408d-ad49-0ca5cab1bd09.png" width = "800"/>
+
