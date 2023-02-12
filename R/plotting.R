@@ -423,3 +423,314 @@ plot_dots <- function(sce,
   
   return(p)
 }
+
+#' @importFrom scater retrieveCellInfo
+
+.makeColdataDF <- function(sce, columns) {
+  do.call(cbind, lapply(columns, function(x) {
+    ret = retrieveCellInfo(sce, by = x)
+    col = data.frame(ret$value, row.names = colnames(sce))
+    colnames(col) = ret$name
+    return(col)
+  })
+  )
+}
+
+#' Plot cell metadata
+#' 
+#' Plot data from the colData of the SCE object
+#' 
+#' @param sce a SingleCellExperiment object
+#' @param y character, the column from colData(sce) whose values need to be plotted
+#' @param x character, the column from colData(sce) to be used as a grouping variable
+#'     default is NULL, which means all points belong to one violin plot only
+#' @param color_by character, the column name from colData(sce) to be used as a 
+#'     colouring variable. If NULL (default), violins (and points) will not be colored.
+#' @param group_by character, the column name from colData(sce) to be used as a
+#'     facetting variable. Default is NULL.
+#' @param contour logical, should contours be plotted on the scatterplot? 
+#'     default is TRUE.
+#' @param clustered logical, should rows and columns be clustered in the confusion
+#'     matrix heatmap? Default is TRUE.
+#' @param plot_cells logical, should cells be plotted as well? Default is FALSE 
+#'     for speed. 
+#'     
+#' @returns a ggplot with different types of visualization depending on the
+#'     classes of the columns chosen. If y is a numeric and x is NULL, or a 
+#'     categorical (character/facrtor), the function plots a violin + boxplot divided by
+#'     x and/or by color_by. If y and x are both numeric, the function plots a 
+#'     scatterplot with optional 2D kernel contouring. If y and x are both
+#'     categorical, the function plots a heatmap of the confusion matrix, 
+#'     showing pairwise Jaccard indices. All plots can be facetted.
+#' 
+#' @importFrom ggplot2 facet_wrap
+#' @importFrom rlang sym
+#' @importFrom methods is
+#' 
+#' @export
+
+plot_Coldata <- function(sce, 
+                         y,
+                         x = NULL,
+                         color_by = NULL, 
+                         group_by = NULL,
+                         color_palette = NULL,
+                         contour = TRUE,
+                         clustered = TRUE,
+                         plot_cells = FALSE) {
+  ## Sanity checks
+  # Error prefix
+  ep = "{papplain::plot_Coldata()} - "
+  
+  # Checks
+  if(!is(sce, "SingleCellExperiment")) 
+    stop(paste0(ep, "Must provide a SingleCellExperiment object"))
+  
+  # Prepare data
+  include = c(x, y, color_by, group_by)
+  include = unique(include[!is.null(include)])
+  
+  if(any(!include %in% colnames(colData(sce))))
+    stop(paste0(ep, "Some columns were not found in the colData"))
+
+  df <- .makeColdataDF(sce, include)
+  
+  if(!is.null(x) & is(df[,x], "numeric") & is(df[,y], "numeric")){
+    p <- .makeScatter(df, x, y, color_by, color_palette, contour)
+  } else if((!is(df[,x], "numeric") & !is.null(x) 
+             & is(df[,y], "numeric")) 
+            | (is.null(x) & is(df[,y], "numeric"))) {
+    p <- .makeViolin(df, x, y, plot_cells, color_by, color_palette)
+  } else if(!is.null(x) 
+            & (is(df[,x], "character") | is(df[,x], "factor")) 
+            & (is(df[,y], "character") | is(df[,y], "factor"))) {
+    df[,x] = factor(df[,x])
+    df[,y] = factor(df[,y])
+    p <- .makeHeatmap(df, x, y, clustered, color_palette)
+  }
+     
+  # Facet
+  if(!is.null(group_by)) {
+    if(!is(df[,group_by], "factor") & !is(df[,group_by], "character")){
+      cat(paste0(ep, "group_by must be a categorical variable (factor or character). Returning un-facetted plot.\n"))
+    } else {
+          p = p + facet_wrap(vars(!!sym(group_by)))
+    }
+  }
+  
+  return(p)
+}
+
+#' @importFrom ggplot2 .data aes position_dodge ggplot geom_violin geom_boxplot guides
+#' @importFrom ggplot2 theme_minimal theme element_blank labs element_line 
+#' @importFrom qualpalr qualpal
+#' @importFrom ggbeeswarm geom_quasirandom
+
+.makeViolin <- function(df, x, y, plot_cells = FALSE, color_by = NULL, color_palette = NULL) {
+  
+  # Define mappings
+  aes_cd = aes(y = .data[[y]])
+  
+  if(!is.null(x)) {
+    if(!is(df[,x], "factor") & !is(df[,x], "character"))
+      stop(paste0(ep, "x must be a categorical variable (factor or character)"))
+    aes_cd$x = aes(x = .data[[x]])$x
+    if(is.null(color_by)) {
+      aes_cd$colour = aes(colour = .data[[x]])$colour
+      aes_cd$fill = aes(fill = .data[[x]])$fill
+    }
+    if(!is.null(color_by)) {
+      if(!is(df[,color_by], "factor") & !is(df[,color_by], "character"))
+        stop(paste0(ep, "color_by must be a categorical variable (factor or character)"))
+      aes_cd$colour = aes(colour = .data[[color_by]])$colour
+      aes_cd$fill = aes(fill = .data[[color_by]])$fill
+    }
+  } else {
+    df$group = y
+    aes_cd$x = aes(x = .data[["group"]])$x
+    if(!is.null(color_by)) {
+      aes_cd$colour = aes(colour = .data[[color_by]])$colour
+      aes_cd$fill = aes(fill = .data[[color_by]])$fill
+    }
+  }
+  
+  dodge <- position_dodge(width = 1)
+  
+  # Violins
+  p <- ggplot(df, mapping = aes_cd) + 
+    geom_violin(alpha = 0.5, 
+                scale = "width", 
+                width = 0.9,
+                position = dodge)
+  
+  # Beeswarm
+  if(plot_cells) {
+    if(is.null(x) & !is.null(color_by)) {
+      aes_bee = aes(y = .data[[y]], x = .data[["group"]])
+      aes_bee$colour = aes(colour = .data[[color_by]])$colour
+    } else aes_bee = aes_cd
+    
+    p <- p + geom_quasirandom(mapping = aes_bee,
+                              groupOnX = TRUE,
+                              width = 0.45, 
+                              bandwidth = 1, 
+                              alpha = 0.2, 
+                              size = 0.6) 
+  }
+  
+  # Boxplot
+  p <- p + geom_boxplot(mapping = aes_cd,
+                        width = 0.1, 
+                        outlier.shape = NA, 
+                        col = "black",
+                        position = dodge,
+                        show.legend = FALSE) + 
+    theme_minimal() +
+    theme(panel.grid.major = element_blank(), 
+          panel.grid.minor = element_blank(),
+          axis.line = element_line(colour = "black")
+    ) + 
+    xlab(NULL)
+  
+  # Colors
+  if(!is.null(x) | !is.null(color_by)){
+    if(!is.null(x) & is.null(color_by)) group_var = x else group_var = color_by
+        if(is.null(color_palette)) {
+      pal = qualpal(n = length(unique(df[,group_var])))$hex
+    } else {
+      pal = color_palette
+    }
+    
+    cscale = scale_colour_manual(values = pal)
+    fscale = scale_fill_manual(values = pal)
+    fguides = guides(boxplot = "none")
+    p <- p + cscale + fscale + fguides
+  }
+  
+  return(p)
+}
+
+
+#' @importFrom ggplot2 .data aes ggplot stat_density_2d after_stat
+#' @importFrom ggplot2 theme_minimal theme element_blank labs element_line 
+#' @importFrom qualpalr qualpal
+#' @importFrom colorspace scale_fill_continuous_sequential
+
+.makeScatter <- function(df, x, y, 
+                         color_by = NULL, 
+                         color_palette = NULL, 
+                         contour = TRUE) {
+  # Define mappings
+  aes_cd = aes(x = .data[[x]], y = .data[[y]])
+  
+   if(!is.null(color_by)) {
+      aes_cd$colour = aes(colour = .data[[color_by]])$colour
+    }
+  p <- ggplot(df, mapping = aes_cd) + 
+    geom_point(alpha = 1, 
+               size = 0.5)
+  if(contour) {
+    p <- p + stat_density_2d(geom = "polygon", contour = TRUE,
+                    aes(fill = after_stat(level)),
+                    alpha = 0.5,
+                    bins = 10,
+                    col = "black",
+                    linetype = 4,
+                    linewidth = 0.2) +
+      scale_fill_continuous_sequential(palette = "Heat 2")
+  }
+    p <- p + theme_minimal() +
+             theme(panel.grid.major = element_blank(), 
+             panel.grid.minor = element_blank(),
+             axis.line = element_line(colour = "black"),
+             text = element_text(family = "sans")
+        )
+    
+    # Colors
+    if(!is.null(color_by)) {
+      if(is.null(color_palette)) {
+        pal = qualpal(n = length(unique(df[,color_by])))$hex
+      } else {
+        pal = color_palette
+      }
+      cscale = scale_colour_manual(values = pal)
+      p = p + cscale
+    }
+    
+  return(p)
+}
+
+
+#' @importFrom ggplot2 .data aes ggplot geom_tile element_text scale_x_discrete
+#' @importFrom ggplot2 theme_minimal theme element_blank labs element_line 
+#' @importFrom stats dist hclust
+#' @importFrom colorspace sequential_hcl
+
+.makeHeatmap <- function(df, x, y, clustered = TRUE, color_palette = NULL) {
+  
+  # Calculate Jaccard index
+  jdf = expand.grid(levels(df[,x]), levels(df[,y]))
+  
+  jdf$intersection = apply(jdf[,1:2], 1, function(row) {
+    length(intersect(which(df[,1] == row[1]), which(df[,2] == row[2])))
+  })
+  
+  jdf$union = apply(jdf[,1:2], 1, function(row) {
+    length(union(which(df[,1] == row[1]), which(df[,2] == row[2])))
+  })
+  
+  jdf$`Jaccard index`= jdf$intersection/jdf$union
+  
+  colnames(jdf)[c(1,2)] = c(x, y)
+  
+  # Reorder (protect against 1, 10, 2, ...)
+  jdf[,x] = .reorderNumericLevels(jdf[,x])
+  jdf[,y] = .reorderNumericLevels(jdf[,y], rev = TRUE)
+  
+  # Clustering
+  if(clustered) {
+    mat = matrix(jdf$`Jaccard index`, nrow = length(unique(jdf[,x])))
+    col_ord = hclust(dist(mat))$order
+    row_ord = rev(hclust(dist(t(mat)))$order)
+    jdf[,x] = factor(jdf[,x], levels = unique(jdf[,x])[col_ord])
+    jdf[,y] = factor(jdf[,y], levels = unique(jdf[,y])[row_ord])
+  } 
+  
+  # Plot
+  p = ggplot(jdf, aes(x = .data[[x]], y = .data[[y]])) + 
+           geom_tile(aes(fill = .data[["Jaccard index"]])) + 
+           scale_x_discrete(position = "top") 
+           
+  p = p + theme_minimal() +
+    theme(panel.grid.major = element_blank(), 
+          panel.grid.minor = element_blank(),
+          axis.line = element_blank(),
+          text = element_text(family = "sans")
+    )
+  
+  # Colors
+  if(is.null(color_palette)) {
+    pal = rev(sequential_hcl(n = 40, palette = "YlGnBu"))[10:40]
+  } else {
+    pal = color_palette
+  }
+  
+  cscale = scale_fill_gradientn(colours = pal) 
+  
+  p = p + cscale
+  return(p)
+             
+}
+
+
+.reorderNumericLevels <- function(f, rev = FALSE) {
+  conv = suppressWarnings(as.numeric(levels(f)))
+    if(!any(is.na(conv))) {
+    fl = as.character(sort(as.numeric(levels(f))))
+    if(rev) fl = fl[rev(seq_along(fl))]
+    levels(f) = fl
+    return(f)
+  } else {
+    return(f)
+  }
+}

@@ -111,7 +111,13 @@ sce <- integrateSCE(sce, batch = "individual", method = "Seurat")
 
 ## Plotting
 
-Plotting functions are a work in progress, but for now you can plot a UMAP with a few visualization options.
+There are a few simple plotting functions in `papplain`:
+
+- `plot_UMAP()` to plot a UMAP (or any other 2D dimensional reduction)
+- `plot_Coldata()` to plot data from the `colData` slot as a boxplot, scatterplot or confusion matrix
+- `plot_dots()` to plot a dot plot of gene expression
+
+### `plot_UMAP()`
 
 You can choose point color using the `color_by` argument, and facetting is supported via the `group_by` argument. Additionally you can choose a `shape_by` for symbols, and `label_by` to place labels on the plot. Note that shape, group, and labels need to be categorical (i.e. factor) variables, whereas color can be numeric. The color palette is automatically generated, but it can be set by the user through the `color_palette` argument.
 
@@ -126,6 +132,30 @@ plot_UMAP(sce, umap_slot = "UMAP_Harmony", color_by = "sum")
 ```
 
 <img src="https://user-images.githubusercontent.com/21171362/216003504-32242a1e-bf33-4479-b525-c29a6569d64f.png" width="300"/>
+
+### `plot_Coldata()`
+Takes as input `x` and `y` as column names from `colData(sce)`, with an optional `color_by` and `group_by` argument for facetting. 
+
+This function returns different plots depending on the class of the 2 `colData` columns selected:
+- if `y` is a numeric and `x` is categorical (character or factor), it returns a combined violin-boxplot with one plot per level of `x`. Additionally, if the `color_by` argument specifies another column, every `x` will be divided by levels of `color_by`. 
+
+```{r}
+sce <- scuttle::addPerCellQCMetrics(sce)
+plot_Coldata(sce, x = "individual", y = "sum") + scale_y_log10()
+```
+<img src="https://user-images.githubusercontent.com/21171362/218302530-3e934eaa-20ce-43bf-98a0-b4c211d77ed4.png" width="800"/>
+
+- if `y` and `x` are both categorical, it returns a heatmap of the confusion matrix where every value is the pairwise Jaccard index between sets for any given level pair (this is
+mostly useful to check for differences in clustering/annotations)
+
+- if `y` and `x` are both numeric, it returns a scatterplot with an optional 2D kernel density contour plot overlaid. 
+
+```{r}
+plot_Coldata(sce, x = "sum", y = "detected") + scale_x_log10()
+```
+<img src="https://user-images.githubusercontent.com/21171362/218302610-403b2620-f12c-486f-8055-0dec050f1c55.png" width="500")
+
+`plot_dots()` - see below. 
 
 ## Parallelization
 
@@ -275,9 +305,20 @@ plot_UMAP(sce, umap_slot = "UMAP_Harmony", color_by = "labels_AUC")
 You can also use single signatures as an input, which will result in adding the score to the `colData` slot of the SCE directly, rather than an assignment:
 
 ```{r}
+sce <- assignIdentities(sce, 
+                        genesets = muraro_genes$BETA_CELL, 
+                        method = "AUC", 
+                        name = "Beta_Cell_signature")
+
+plot_UMAP(sce, umap_slot = "UMAP_Harmony", color_by = "Beta_Cell_signature")
+```
+The `"UCell"` method works well when you have small signatures (e.g. even 2/3 genes). It allows you to specify positive and negative labels, which is useful when you are sure the identity of a cell types depends on the lack of expression of certain markers (see hematopoietic lineages). To do so, you can add "+" or "-" to each gene.
+
+```{r}
 sce <- assignIdentities(sce, genesets = muraro_genes$BETA_CELL, method = "AUC", name = "Beta_Cell_signature")
 
 plot_UMAP(sce, umap_slot = "UMAP_Harmony", color_by = "Beta_Cell_signature")
 ```
+
 
 <img src="https://user-images.githubusercontent.com/21171362/218026010-9bc1f806-e3c3-408d-ad49-0ca5cab1bd09.png" width = "800"/>
