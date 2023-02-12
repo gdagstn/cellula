@@ -140,7 +140,6 @@ This function returns different plots depending on the class of the 2 `colData` 
 - if `y` is a numeric and `x` is categorical (character or factor), it returns a combined violin-boxplot with one plot per level of `x`. Additionally, if the `color_by` argument specifies another column, every `x` will be divided by levels of `color_by`. 
 
 ```{r}
-sce <- scuttle::addPerCellQCMetrics(sce)
 plot_Coldata(sce, x = "individual", y = "sum") + scale_y_log10()
 ```
 <img src="https://user-images.githubusercontent.com/21171362/218302530-3e934eaa-20ce-43bf-98a0-b4c211d77ed4.png" width="800"/>
@@ -302,6 +301,15 @@ plot_UMAP(sce, umap_slot = "UMAP_Harmony", color_by = "labels_AUC")
 
 <img src="https://user-images.githubusercontent.com/21171362/217058249-6bcc821a-22cb-4aa1-88d1-d21e33fc63e7.png" width = "800"/>
 
+
+You can now see why it can be useful to plot a confusion matrix as a heatmap:
+
+```{r}
+plot_Coldata(sce, x = "SNN_0.5", y = "labels_AUC")
+```
+
+<img src="https://user-images.githubusercontent.com/21171362/218304923-ef02142a-00dc-4065-a4d6-a0d509e88d3a.png" width = "800"/>
+
 You can also use single signatures as an input, which will result in adding the score to the `colData` slot of the SCE directly, rather than an assignment:
 
 ```{r}
@@ -312,11 +320,8 @@ sce <- assignIdentities(sce,
 
 plot_UMAP(sce, umap_slot = "UMAP_Harmony", color_by = "Beta_Cell_signature")
 ```
-The `"UCell"` method works well when you have small signatures (e.g. even 2/3 genes). It allows you to specify positive and negative labels, which is useful when you are sure the identity of a cell types depends on the lack of expression of certain markers (see hematopoietic lineages). To do so, you can add "+" or "-" to each gene.
+
 <img src="https://user-images.githubusercontent.com/21171362/218026010-9bc1f806-e3c3-408d-ad49-0ca5cab1bd09.png" width = "500"/>
 
-```{r}
-sce <- assignIdentities(sce, genesets = muraro_genes$BETA_CELL, method = "AUC", name = "Beta_Cell_signature")
 
-plot_UMAP(sce, umap_slot = "UMAP_Harmony", color_by = "Beta_Cell_signature")
-```
+The `"UCell"` method works well when you have small signatures (e.g. even 2/3 genes). It allows you to specify positive and negative labels, which is useful when you are sure the identity of a cell types depends on the lack of expression of certain markers (see hematopoietic lineages). To do so, you can add "+" or "-" to each gene.
