@@ -229,7 +229,6 @@ doQC <- function(sce,
                        samples = samples,
                        BPPARAM = parallel_param)
   }
-    
   
      if(save_plots) {
       if(detect_doublets) {
@@ -247,10 +246,10 @@ doQC <- function(sce,
       pl <- pl[!is.na(pl)]
      
       ncols <- floor(sqrt(length(pl)))
-      pfinal = do.call("grid.arrange", c(pl, ncol = ncols))
+      pfinal = do.call("arrangeGrob", c(pl, ncol = ncols))
       ggsave(filename = "QC_Plot_ALL.pdf", pfinal, 
              path = savepath, device = "pdf", 
-             width = 3000, height = 3000, units = "px")
+             width = 3200, height = 3200, units = "px")
   } 
     
   return(sce)

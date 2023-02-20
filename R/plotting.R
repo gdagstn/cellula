@@ -152,10 +152,12 @@ plot_UMAP <- function(sce,
   
   # Rescaling
   udf = as.data.frame(reducedDim(sce, umap_slot)[,1:2])
+  orig_range = lapply(udf, range)
+  names(orig_range) = c("x", "y")
   udf[,1:2] = apply(udf[,1:2], 2, function(x) (x-min(x))/diff(range(x)))
   colnames(udf) = c("x", "y")
 
-  # Check which aesthetics to include
+  # Check which mappings to include
   include = list(color_by, shape_by, group_by, label_by)
   include = unique(unlist(include[!is.null(include)]))
   
@@ -163,7 +165,7 @@ plot_UMAP <- function(sce,
   
   colnames(udf)[seq_len(length(include)) + 2] = include
   
-  classes = unlist(lapply(udf[,include], class))
+  classes = unlist(lapply(udf[,include,drop=FALSE], class))
   
   names(classes) = include
   aes_umap = aes(x = .data[["x"]], y = .data[["y"]])
@@ -228,28 +230,49 @@ plot_UMAP <- function(sce,
   }
   
   # Plot construction
+  arrow_1 = data.frame(x = 0, xend = 0.15, y = 0, yend = 0)
+  arrow_2 = data.frame(x = 0, xend = 0, y = 0, yend = 0.15)
+  text_1 = data.frame(x = -0.03, y = 0.02)
+  text_2 = data.frame(x = 0.02, y = -0.03)
+  
   p = ggplot(udf, mapping = aes_umap) + 
     geom_point(size = 0.7, shape = 16) + 
     theme_void() + 
     theme(plot.margin = margin(1, 1, 1, 1, "cm")) + 
-    geom_segment(aes(x = 0, xend = 0.15, y = 0, yend = 0), 
+    geom_segment(data = arrow_1,
+                 mapping = aes(x = .data[["x"]], 
+                               y = .data[["y"]], 
+                               xend = .data[["xend"]],
+                               yend = .data[["yend"]]),
+                 inherit.aes = FALSE,
                  color = "black",
                  linewidth = 0.3,
                  arrow = arrow(length=unit(0.1,"cm"), 
                                type = "closed")) + 
-    geom_segment(aes(x = 0, xend = 0, y = 0, yend = 0.15), 
+    geom_segment(data = arrow_2,
+                 mapping = aes(x = .data[["x"]], 
+                               y = .data[["y"]], 
+                               xend = .data[["xend"]],
+                               yend = .data[["yend"]]),
                  color = "black",
+                 inherit.aes = FALSE,
                  linewidth = 0.3,
                  arrow = arrow(length=unit(0.1,"cm"), 
                                type = "closed")) + 
-    geom_text(aes(x = -0.03, y = 0.02), 
+    geom_text(data = text_1,
+              aes(x = .data[["x"]], 
+                  y = .data[["y"]]), 
+              inherit.aes = FALSE,
               label = "UMAP 2", 
               angle = 90, 
               size = 2,
               hjust = "left",
               vjust = "top",
               color = "black") +
-    geom_text(aes(x = 0.02, y = -0.03), 
+    geom_text(data = text_2,
+              aes(x = .data[["x"]], 
+                  y = .data[["y"]]), 
+              inherit.aes = FALSE,
               label = "UMAP 1", 
               size = 2,
               hjust = "left",
@@ -263,7 +286,9 @@ plot_UMAP <- function(sce,
   
   if(!is.null(label_by)) {
     p = p + geom_label(data = label_df, 
-                       mapping = aes(x = .data[["x"]], y = .data[["y"]], label = .data[["label"]]), 
+                       mapping = aes(x = .data[["x"]], 
+                                     y = .data[["y"]], 
+                                     label = .data[["label"]]), 
                        inherit.aes = FALSE, size = 2)
   }
   
