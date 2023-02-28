@@ -130,8 +130,8 @@ plot_UMAP <- function(sce,
   if(!umap_slot %in% reducedDimNames(sce)) 
     stop(paste0(ep, "Could not find a slot named \"", umap_slot, "\" in the SingleCellExperiment object"))
   if(!is.null(color_by)){
-    if(!color_by %in% colnames(colData(sce))) 
-      stop(paste0(ep, color_by, " column not found in the colData of the SingleCellExperiment object"))
+    if(!color_by %in% colnames(colData(sce)) & !color_by %in% rowData(sce)$Symbol & !color_by %in% rowData(sce)$ID) 
+      stop(paste0(ep, color_by, " is not a column or a rowData element of the SingleCellExperiment object"))
   }
   if(!is.null(shape_by)){
     if(!shape_by %in% colnames(colData(sce))) 
@@ -156,7 +156,12 @@ plot_UMAP <- function(sce,
   names(orig_range) = c("x", "y")
   udf[,1:2] = apply(udf[,1:2], 2, function(x) (x-min(x))/diff(range(x)))
   colnames(udf) = c("x", "y")
-
+  
+  if(!is.null(color_by) & (color_by %in% rowData(sce)$Symbol | color_by %in% rowData(sce)$ID)) {
+    feature = which(rowData(sce)$Symbol == color_by | rowData(sce)$ID == color_by)
+    colData(sce)[,color_by] = as.numeric(assay(sce[feature,], "logcounts"))
+  }
+  
   # Check which mappings to include
   include = list(color_by, shape_by, group_by, label_by)
   include = unique(unlist(include[!is.null(include)]))

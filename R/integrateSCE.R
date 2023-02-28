@@ -93,26 +93,31 @@ integrateSCE = function(sce,
   } else if(method == "Seurat"){
 
     if(verbose) cat(blue("[INT/Seurat]"), "Converting to Seurat object.\n")
-    old_colnames = colnames(sce)
+
+    old_rownames = rownames(sce)
+    rownames(sce) = paste0("g", seq_len(nrow(sce)))
+    swap = FALSE
+
     if(any(duplicated(colnames(sce)))) {
+      old_colnames = colnames(sce)
+      swap = TRUE
       colnames(sce) = paste0("cell_", seq_len(ncol(sce)))
     }
-    seu <- CreateSeuratObject(counts = counts(sce), meta.data = as.data.frame(colData(sce)))
-    seu <- SetAssayData(object = seu, slot = "data", new.data = logcounts(sce))
-    seu[["pca"]] <- CreateDimReducObject(embeddings = reducedDim(sce, "PCA"), key = "PC_")
+      seu <- CreateSeuratObject(counts = counts(sce), meta.data = as.data.frame(colData(sce)))
+      seu <- SetAssayData(object = seu, slot = "data", new.data = logcounts(sce))
+      seu[["pca"]] <- CreateDimReducObject(embeddings = reducedDim(sce, "PCA"), key = "PC_")
+      batches =  unique(as.character((seu[[batch]][[batch]])))
+      seulist = lapply(batches, function(x) seu[,seu[[batch]] == x])
+      names(seulist) = batches
 
-    batches =  unique(as.character((seu[[batch]][[batch]])))
-    seulist = lapply(batches, function(x) seu[,seu[[batch]] == x])
-    names(seulist) = batches
+      if(verbose) cat(blue("[INT/Seurat]"), "Normalization and HVG selection.\n")
 
-    if(verbose) cat(blue("[INT/Seurat]"), "Normalization and HVG selection.\n")
-
-    seulist = lapply(seulist, function(x) {
-      x <- NormalizeData(x, verbose = verbose)
-      x <- FindVariableFeatures(x,
-                                selection.method = "vst",
-                                nfeatures = hvg_ntop,
-                                verbose = verbose)
+      seulist = lapply(seulist, function(x) {
+        x <- NormalizeData(x, verbose = verbose)
+        x <- FindVariableFeatures(x,
+                                  selection.method = "vst",
+                                  nfeatures = hvg_ntop,
+                                  verbose = verbose)
     })
 
     if(verbose) cat(blue("[INT/Seurat]"), "Finding anchors.\n")
@@ -138,17 +143,19 @@ integrateSCE = function(sce,
 
     if(verbose) cat(blue("[INT/Seurat]"), "Transferring to SCE object.\n")
 
+
     reducedDim(sce, "PCA_Seurat") = Embeddings(seu_int, reduction = "spca")
     rm(seu)
     rm(seu_int)
+
+    if(swap) colnames(sce) = old_colnames
+    rownames(sce) = old_rownames
 
     if(verbose) cat(blue("[INT/Seurat]"), "Running UMAP on Seurat-corrected space.\n")
 
     reducedDim(sce, "UMAP_Seurat") <- umap(reducedDim(sce, "PCA_Seurat")[,seq_len(ndims)],
                                            n_neighbors = neighbor_n,
                                            min_dist = 0.7)
-    colnames(sce) = old_colnames
-
   } else if(method == "LIGER") {
 
     old_colnames = colnames(sce)

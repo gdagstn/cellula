@@ -92,7 +92,7 @@ papplain <- function(sce,
   }
 
   dir.create(name)
-  
+
  if(!is.null(batch)) {
    if(!is.factor(colData(sce)[,batch]))
      colData(sce)[,batch] = as.factor(colData(sce)[,batch])
@@ -109,7 +109,8 @@ papplain <- function(sce,
   }
 
   if(do_qc) {
-    sce <- doQC(sce, name = name,
+    sce <- doQC(sce,
+                name = name,
                 batch = batch, discard = discard,
                 subset_mito = subset_mito,
                 subset_ribo = subset_ribo,
@@ -121,6 +122,7 @@ papplain <- function(sce,
                 verbose = verbose,
                 save_plots = save_plots,
                 parallel_param = parallel_param)
+
     if(verbose) cat("Saving temporary file. \n")
 
     saveRDS(sce, file = paste0("./", name, "/", name, "_tempSCE.RDS"))
@@ -151,10 +153,6 @@ papplain <- function(sce,
                        verbose = verbose)
   }
 
-  if(verbose) cat("Done.\nSaving temporary file. \n")
-
-  saveRDS(sce, file = paste0("./", name, "/", name, "_tempSCE.RDS"))
-
   if(verbose) cat("Saving final object.\n")
   saveRDS(sce, file = paste0("./", name, "/", name, "_PS_INT_SCE.RDS"))
 
@@ -162,6 +160,7 @@ papplain <- function(sce,
   file.remove(paste0("./", name, "/", name, "_tempSCE.RDS"))
 
   if(verbose) cat("All done. Input cells: ", ncells, ", final cell number: ", ncol(sce), ".\n")
+
   return(sce)
 }
 
