@@ -93,6 +93,7 @@ plotSilhouette <- function(sce, name) {
 #'     e.g. "cluster". Will be used to add labels to the plot. Can only be used
 #'     for categorical variables.
 #' @param point_size numeric, the size of the points in the plot. Default is 0.7.
+#' @param label_size numeric, the size of the font for the labels. Default is 2.
 #' @param color_palette a character string containing colors to be used. Default
 #'     is NULL, meaning an automatic palette will be generated.
 #' @param rescale logical, should coordinates be rescaled between 0 and 1? Default is TRUE.
@@ -122,6 +123,7 @@ plot_UMAP <- function(sce,
                       group_by = NULL,
                       label_by = NULL,
                       point_size = 0.7,
+                      label_size = 2,
                       color_palette = NULL,
                       rescale = TRUE) {
 
@@ -309,7 +311,7 @@ plot_UMAP <- function(sce,
                              mapping = aes(x = .data[["x"]],
                                            y = .data[["y"]],
                                            label = .data[["label"]]),
-                             inherit.aes = FALSE, size = 2)
+                             inherit.aes = FALSE, size = label_size)
   }
 
   if(!is.null(group_by)) {
