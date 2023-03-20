@@ -11,7 +11,10 @@ plot_UMAP(
   shape_by = NULL,
   group_by = NULL,
   label_by = NULL,
-  color_palette = NULL
+  point_size = 0.7,
+  label_size = 2,
+  color_palette = NULL,
+  rescale = TRUE
 )
 }
 \arguments{
@@ -20,12 +23,12 @@ plot_UMAP(
 \item{umap_slot}{character, the name in the reducedDim slot of the SCE object, e.g.
 "UMAP_Harmony"}
 
-\item{color_by}{character, column name in the colData slot of the SCE object, 
-e.g. "cluster". Will be used to assign colors. Automatically detects 
+\item{color_by}{character, column name in the colData slot of the SCE object,
+e.g. "cluster". Will be used to assign colors. Automatically detects
 whether the variable is categorical or continuous.}
 
 \item{shape_by}{character, column name in the colData slot of the SCE object,
-e.g. "cluster". Will be used to assign shapes. Can only be used for 
+e.g. "cluster". Will be used to assign shapes. Can only be used for
 categorical variables.}
 
 \item{group_by}{character, column name in the colData slot of the SCE object,
@@ -36,11 +39,17 @@ categorical variables.}
 e.g. "cluster". Will be used to add labels to the plot. Can only be used
 for categorical variables.}
 
+\item{point_size}{numeric, the size of the points in the plot. Default is 0.7.}
+
+\item{label_size}{numeric, the size of the font for the labels. Default is 2.}
+
 \item{color_palette}{a character string containing colors to be used. Default
 is NULL, meaning an automatic palette will be generated.}
+
+\item{rescale}{logical, should coordinates be rescaled between 0 and 1? Default is TRUE.}
 }
 \value{
-a ggplot object showing the UMAP coordinates colored, shaped and 
+a ggplot object showing the UMAP coordinates colored, shaped and
     faceted as set by the arguments.
 }
 \description{

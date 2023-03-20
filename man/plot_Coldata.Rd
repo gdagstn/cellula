@@ -24,31 +24,31 @@ plot_Coldata(
 \item{x}{character, the column from colData(sce) to be used as a grouping variable
 default is NULL, which means all points belong to one violin plot only}
 
-\item{color_by}{character, the column name from colData(sce) to be used as a 
+\item{color_by}{character, the column name from colData(sce) to be used as a
 colouring variable. If NULL (default), violins (and points) will not be colored.}
 
 \item{group_by}{character, the column name from colData(sce) to be used as a
 facetting variable. Default is NULL.}
 
-\item{color_palette}{character string of colors for categorical plots or heatmap. 
+\item{color_palette}{character string of colors for categorical plots or heatmap.
 Default is NULL.}
 
-\item{contour}{logical, should contours be plotted on the scatterplot? 
+\item{contour}{logical, should contours be plotted on the scatterplot?
 default is TRUE.}
 
 \item{clustered}{logical, should rows and columns be clustered in the confusion
 matrix heatmap? Default is TRUE.}
 
-\item{plot_cells}{logical, should cells be plotted as well? Default is FALSE 
+\item{plot_cells}{logical, should cells be plotted as well? Default is FALSE
 for speed.}
 }
 \value{
 a ggplot with different types of visualization depending on the
-    classes of the columns chosen. If y is a numeric and x is NULL, or a 
+    classes of the columns chosen. If y is a numeric and x is NULL, or a
     categorical (character/facrtor), the function plots a violin + boxplot divided by
-    x and/or by color_by. If y and x are both numeric, the function plots a 
+    x and/or by color_by. If y and x are both numeric, the function plots a
     scatterplot with optional 2D kernel contouring. If y and x are both
-    categorical, the function plots a heatmap of the confusion matrix, 
+    categorical, the function plots a heatmap of the confusion matrix,
     showing pairwise Jaccard indices. All plots can be facetted.
 }
 \description{

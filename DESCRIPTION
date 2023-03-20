@@ -41,4 +41,10 @@ Imports:
     methods,
     alamak,
     GSVA,
-    UCell
+    UCell,
+    Matrix,
+    TSCAN,
+    ggrepel,
+    oveRlay,
+    pracma,
+    slingshot

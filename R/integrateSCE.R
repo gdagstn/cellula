@@ -182,7 +182,7 @@ integrateSCE = function(sce,
     reducedDim(sce, type = "LIGER_NORM") = l@H.norm
 
     if(verbose) cat(blue("[INT/LIGER]"), "Running UMAP on LIGER factorization.\n")
-    reducedDim(sce, "UMAP_LIGER") <- umap(reducedDim(sce, "LIGER_NORM")[,min(ncol(reducedDim(sce, "LIGER_NORM"), seq_len(ndims)))],
+    reducedDim(sce, "UMAP_LIGER") <- umap(reducedDim(sce, "LIGER_NORM")[,seq_len(min(ncol(reducedDim(sce, "LIGER_NORM")), ndims))],
                                           n_neighbors = neighbor_n,
                                           min_dist = 0.7)
 

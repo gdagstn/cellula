@@ -17,7 +17,7 @@
 #'
 #' @importFrom slingshot slingLineages
 #' @importFrom ggplot2 .data aes geom_segment geom_point geom_polygon unit labs
-#' @importFrom ggplot2 scale_color_manual theme_classic theme element_blank
+#' @importFrom ggplot2 scale_color_manual theme_classic theme element_blank scale_size
 #' @importFrom ggrepel geom_label_repel
 #' @importFrom oveRlay makeOverlay
 #'
@@ -106,7 +106,7 @@ plotMetroMap <- function(sce,
           axis.line = element_blank()
           )
   } else {
-    p = plot_UMAP(sce, umap_slot = dimred, color_by = coords_by, alpha = 0.2)
+    p = plot_UMAP(sce, umap_slot = dimred, color_by = coords_by)
     p = p +
       geom_segment(data = linecoords,
                    mapping = aes(x = .data[["x0"]], xend = .data[["x1"]],

@@ -101,7 +101,7 @@ findTrajectories <- function(sce, space = "PCA", clusters, method = "slingshot",
 #' @returns a SingleCellExperiment object with metacells and sample-level colData   
 #' 
 #' @importFrom stats kmeans
-#' @importFrom SingleCellExperiment reducedDim
+#' @importFrom SingleCellExperiment reducedDim SingleCellExperiment
 #' @importFrom scuttle summarizeAssayByGroup
 #' 
 #' @export

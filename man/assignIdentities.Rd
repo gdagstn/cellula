@@ -19,7 +19,7 @@ assignIdentities(
 \arguments{
 \item{sce}{a SingleCellExperiment object}
 
-\item{genesets}{named list of character vectors, genesets used to calculate 
+\item{genesets}{named list of character vectors, genesets used to calculate
 labels and/or assign scores. Alternatively, a character vector to calculate
 a single score from.}
 
@@ -34,13 +34,13 @@ labels will be stored}
 \item{return_scores}{logical, should the scores for each cell and each geneset
 be saved in the object metadata slot? Default is FALSE.}
 
-\item{kcdf}{character, which kernel to use for the CDF. One of "Poisson" or 
+\item{kcdf}{character, which kernel to use for the CDF. One of "Poisson" or
 "Gaussian". Only used when method = "ssGSEA".}
 
-\item{annotation}{character, which assay name to use for rank calculation. 
+\item{annotation}{character, which assay name to use for rank calculation.
 Only used when method = "ssGSEA".}
 
-\item{...}{other arguments passed internally to \code{AUCell::AUCell_calcAUC()} 
+\item{...}{other arguments passed internally to \code{AUCell::AUCell_calcAUC()}
 ("AUC" method), \code{Seurat::AddModuleScore()} ("Seurat" method),
 \code{GSVA::gsva()}("ssGSEA" method), or \code{UCell::ScoreSignatures_UCell()}
 ("UCell" method).}
@@ -54,33 +54,33 @@ a `SingleCellExperiment` object with a column named `"name"` containing
 Automatic assignment of cell type identities in SingleCellExperiment objects
 }
 \details{
-This is a wrapper around four methods for assigning to each cell a 
-   score for the expression of a given geneset. 
+This is a wrapper around four methods for assigning to each cell a
+   score for the expression of a given geneset.
    \itemize{
-    \item{ The "AUC" method 
+    \item{ The "AUC" method
     (\href{https://www.nature.com/articles/nmeth.4463}{Aibar et al. 2017}) calculates
     the Area Under the Curve of the ranked expression of genes in each geneset.}
-   
-   \item{The "Seurat" method (\href{https://www.science.org/doi/10.1126/science.aad0501}{Tirosh et al. 2016}) 
+
+   \item{The "Seurat" method (\href{https://www.science.org/doi/10.1126/science.aad0501}{Tirosh et al. 2016})
     uses the \code{Seurat::AddModuleScore()} function. }
-   
-   \item{The "ssGSEA" method (\href{https://www.nature.com/articles/nature08460}{Barbie et al. 2009}) 
+
+   \item{The "ssGSEA" method (\href{https://www.nature.com/articles/nature08460}{Barbie et al. 2009})
     calculates an enrichment score in each cell using "single sample" GSEA.}
-   
-   \item{The "UCell" method (\href{https://www.sciencedirect.com/science/article/pii/S2001037021002816}{Andreatta and Carmona 2020}) 
+
+   \item{The "UCell" method (\href{https://www.sciencedirect.com/science/article/pii/S2001037021002816}{Andreatta and Carmona 2020})
     calculates an enrichment score using a Mann-Whitney U-test.}
    }
-   
-   If a list of genesets is given, all methods result in a final label assignment 
-   (i.e. the names of the user-provided geneset for which each single cell has 
+
+   If a list of genesets is given, all methods result in a final label assignment
+   (i.e. the names of the user-provided geneset for which each single cell has
    the highest score). If only a single geneset is provided, the score for that
    geneset is added to the `colData` slot.
-   
-   Please note that scores are not comparable between themselves - AUC, 
-   ssGSEA, and UCell are strictly positive, whereas the Module Score can also 
+
+   Please note that scores are not comparable between themselves - AUC,
+   ssGSEA, and UCell are strictly positive, whereas the Module Score can also
    be negative; UCell and AUCell are normalized between 0 and 1, whereas
    ssGSEA is not.
-   
-   The user can pass additional arguments to each function using the `...` 
+
+   The user can pass additional arguments to each function using the `...`
    argument.
 }

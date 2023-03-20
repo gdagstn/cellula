@@ -21,8 +21,8 @@ plot_dots(
 
 \item{genes}{character string, the genes to be plotted (matched with rownames)}
 
-\item{group_by}{character, column name in the colData slot of the SCE object, 
-e.g. "cluster". Will be used to assign calculate proportions. 
+\item{group_by}{character, column name in the colData slot of the SCE object,
+e.g. "cluster". Will be used to assign calculate proportions.
 Must be categorical (factor or coercible character).}
 
 \item{cluster_genes}{logical, should genes be clustered? Default is TRUE}
@@ -36,11 +36,11 @@ Must be categorical (factor or coercible character).}
 \item{color_palette}{a character string containing colors to be used. Default
 is NULL, meaning an automatic palette will be generated.}
 
-\item{format}{character, one of "wide" (genes are columns, groups are rows) 
+\item{format}{character, one of "wide" (genes are columns, groups are rows)
 or "tall" (genes are rows, grups are columns)}
 }
 \value{
-a ggplot object showing average gene expression and proportion of 
+a ggplot object showing average gene expression and proportion of
    expressing cells grouped by a grouping variable such as cluster.
 }
 \description{

@@ -390,7 +390,7 @@ plot_dots <- function(sce,
     }
   }
 
-  sccoune_byclust = lapply(unique(colData(sce)[,group_by]), function(x) {
+  sce_byclust = lapply(unique(colData(sce)[,group_by]), function(x) {
     cur = assay(sce, exprs_use)[genes, which(colData(sce)[,group_by] == x)]
     props = apply(cur, 1, function(x) sum(x > threshold))/ncol(cur)
     aves = apply(cur, 1, function(x) mean(x))
