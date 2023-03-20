@@ -123,8 +123,9 @@ assignIdentities <- function(sce,
     if(verbose) cat(blue("[ANNO/AUC]"), "Assigning cell labels \n")
 
     rankings <- AUCell_buildRankings(counts(sce),
+                                     splitByBlocks = TRUE,
                                      plotStats = FALSE,
-                                     verbose = FALSE)
+                                     verbose = verbose)
 
     aucs <- AUCell_calcAUC(genesets,
                            rankings,
@@ -168,11 +169,8 @@ assignIdentities <- function(sce,
 
   if(verbose) cat(blue("[ANNO/Seurat]"), "Adding module scores \n")
 
-  swap = FALSE
-
+  old_colnames = colnames(sce)
   if(any(duplicated(colnames(sce)))) {
-    old_colnames = colnames(sce)
-    swap = TRUE
     colnames(sce) = paste0("cell_", seq_len(ncol(sce)))
   }
 
@@ -196,9 +194,8 @@ assignIdentities <- function(sce,
 
   } else if(length(genesets) == 1) {
 
-    colData(sce)[,labelname] = as.numeric(scores)
+    colData(sce)[,labelname] = as.numeric(scores[, 1, drop = TRUE])
   }
-  if(swap) colnames(sce) = old_colnames
 
   return(sce)
 }
@@ -244,6 +241,8 @@ assignIdentities <- function(sce,
     colData(sce)[,labelname] = as.numeric(scores[, 1, drop = TRUE])
   }
 
+  if(verbose) cat(blue("[ANNO/ssGSEA]"), "Done. \n")
+
   return(sce)
 
 }
@@ -284,6 +283,8 @@ assignIdentities <- function(sce,
 
     colData(sce)[,labelname] = as.numeric(scores[, 1, drop = TRUE])
   }
+
+  if(verbose) cat(blue("[ANNO/UCell]"), "Done. \n")
 
   return(sce)
 }

@@ -142,82 +142,77 @@ doQC <- function(sce,
     colData(sce) <- cbind(colData(sce), sce_fqc)
 
     sce$discard[is.na(sce$discard)] = TRUE
-
-    # Save plots
+    
+    # Save plots  
     if(save_plots){
-
+      
       if(verbose) cat(blue("[QC]"),"   Saving QC plots. \n")
-
-      if(!is.null(name)) {
-        savepath = paste0(getwd(), "/", name)
-      } else {
-        savepath = getwd()
-      }
-
+      
+      savepath = paste0(getwd(), "/", name)
       dir.create(paste0(savepath, "/plots"))
       savepath = paste0(savepath, "/plots")
-
+      
       if(!is.null(batch)) {
         xlen = length(unique(colData(sce)[,batch])) * 2
         w = 250 * xlen
-        h = 600 * sqrt(xlen)
+        h = 600 * sqrt(xlen) 
       } else {
         w = 1200
         h = 1200
       }
-
+      
       if(!all(colData(sce)[,"discard"] == FALSE)) cby = "discard" else cby = NULL
-
-      p1 <- plot_Coldata(sce, y = "sum", x = batch, color_by = cby) +
+      
+      p1 <- plot_Coldata(sce, y = "sum", x = batch, color_by = cby) + 
         scale_y_log10() + ylab("log10(Total UMI)")
-
-      ggsave(filename = "QC_Plots_total_UMI.pdf", p1,
+      
+      ggsave(filename = "QC_Plots_total_UMI.pdf", p1, 
              path = savepath, device = "pdf",
              width = w, height = h, units = "px")
-
-      p2 <- plot_Coldata(sce, y = "detected",
+      
+      p2 <- plot_Coldata(sce, y = "detected", 
                          x = batch, color_by = cby) +
         ylab("Total detected genes")
-      ggsave(filename = "QC_Plots_detected_genes.pdf", p2,
+      ggsave(filename = "QC_Plots_detected_genes.pdf", p2, 
              path = savepath, device = "pdf",
              width = w, height = h, units = "px")
-
-      p3 <- plot_Coldata(sce, y = "sum", x = "detected", group_by = batch) +
+      
+      p3 <- plot_Coldata(sce, y = "sum", x = "detected", group_by = batch) + 
         scale_y_log10() +
         xlab("Total detected genes") + ylab("log10(Total UMI)")
-
-      ggsave(filename = "QC_Plots_detected_by_total_UMI.pdf", p3,
+      
+      ggsave(filename = "QC_Plots_detected_by_total_UMI.pdf", p3, 
              path = savepath, device = "pdf",
              width = h*1.1, height = h*1.1, units = "px")
-
+      
       if(!(all(mito == FALSE))) {
-        pmito <- plot_Coldata(sce, y = "subsets_mito_percent", x = batch,
-                              color_by = cby) +
+        pmito <- plot_Coldata(sce, y = "subsets_mito_percent", x = batch, 
+                              color_by = cby) + 
           ylab("% Mitochondrial transcripts")
-        ggsave(filename = "QC_Plots_mito_percent.pdf", pmito,
-               path = savepath, device = "pdf",
+        ggsave(filename = "QC_Plots_mito_percent.pdf", pmito, 
+               path = savepath, device = "pdf", 
                width = w, height = h, units = "px")
       } else {
         pmito <- NA
       }
-
+      
       if(!(all(Ribo == FALSE))) {
-        pribo <- plot_Coldata(sce, y = "subsets_Ribo_percent", x = batch,
-                              color_by = cby) +
+        pribo <- plot_Coldata(sce, y = "subsets_Ribo_percent", x = batch, 
+                              color_by = cby) + 
           ylab("% Ribosomal transcripts")
-        ggsave(filename = "QC_Plots_ribo_percent.pdf", pribo,
-               path = savepath, device = "pdf",
+        ggsave(filename = "QC_Plots_ribo_percent.pdf", pribo, 
+               path = savepath, device = "pdf", 
                width = w, height =h, units = "px")
       } else {
         pribo <- NA
       }
-
+      
       if(!(all(Malat1 == FALSE))) {
-        pmalat1 <- plot_Coldata(sce, y = "subsets_Malat1_percent", x = batch,
-                                color_by = cby)  +
+        pmalat1 <- plot_Coldata(sce, y = "subsets_Malat1_percent", x = batch, 
+                                color_by = cby)  + 
           ylab("% MALAT1 transcripts")
         ggsave(filename = "QC_Plots_MALAT1_percent.pdf", pmalat1,
-               path = savepath, device = "pdf",
+               path = savepath, device = "pdf", 
                width = w, height = h, units = "px")
       } else {
         pmalat1 <- NA
@@ -234,28 +229,28 @@ doQC <- function(sce,
                        samples = samples,
                        BPPARAM = parallel_param)
   }
-
+  
      if(save_plots) {
       if(detect_doublets) {
-        pdbl <- plot_Coldata(sce, y = "sum", x = batch, color_by = "scDblFinder.class") +
-          scale_y_log10()  +
+        pdbl <- plot_Coldata(sce, y = "sum", x = batch, color_by = "scDblFinder.class") + 
+          scale_y_log10()  + 
           ylab("log10(Total UMI)")
-        ggsave(filename = "QC_Plots_total_UMI_doublets.pdf", pdbl,
-               path = savepath, device = "pdf",
+        ggsave(filename = "QC_Plots_total_UMI_doublets.pdf", pdbl, 
+               path = savepath, device = "pdf", 
                width = w, height = h, units = "px")
       } else {
         pdbl <- NA
       }
-
+    
       pl <- list(p1, p2, p3, pmito, pribo, pmalat1, pdbl)
       pl <- pl[!is.na(pl)]
-
+     
       ncols <- floor(sqrt(length(pl)))
       pfinal = do.call(arrangeGrob, c(pl, ncol = ncols))
-      ggsave(filename = "QC_Plot_ALL.pdf", pfinal,
-             path = savepath, device = "pdf",
+      ggsave(filename = "QC_Plot_ALL.pdf", pfinal, 
+             path = savepath, device = "pdf", 
              width = 3200, height = 3200, units = "px")
-  }
-
+  } 
+    
   return(sce)
 }

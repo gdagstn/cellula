@@ -89,7 +89,8 @@ doNormAndReduce <- function(sce, batch = NULL, name,
 
   sce <- runPCA(sce,
                 subset_row = hvgs,
-                exprs_values = "logcounts")#,
+                exprs_values = "logcounts",
+                ncomponents	= ndims)#,
   #BPPARAM = parallel_param)
 
   if(verbose) cat("Saving temporary file. \n")
