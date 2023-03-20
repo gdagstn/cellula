@@ -19,6 +19,8 @@ plotMetroMap(
 \arguments{
 \item{sce}{a `SingleCellExperiment` class object}
 
+\item{coords_by}{character, a grouping variable to define the clusters.}
+
 \item{dimred}{character, the name of the 2D dimensional reduction to use as
 base for plotting}
 
@@ -31,6 +33,9 @@ spacing between grid points, and more points. Default is 30.}
 \item{overlay}{logical, should an overlay contour be drawn? Default is TRUE}
 
 \item{overlay_res}{the overlay resolution. Default is 60.}
+
+\item{include_cells}{logical, should cells be plotted in the background? 
+Default is FALSE.}
 
 \item{labels}{logical, should cluster labels be plotted? Default is TRUE.}
 }

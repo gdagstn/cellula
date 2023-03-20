@@ -42,11 +42,19 @@ performed.}
 Default is "auto", implying an entropy-based method will be used to guess
 the best starting point.}
 
+\item{omega}{logical, should the `omega` method for MST calculation be used?
+Default is TRUE. See `?slingshot::getLineages` for more information.}
+
+\item{omega_scale}{numeric, the value of the `omega_scale` parameter. 
+Default is 1.5. See `?slingshot::getLineages` for more information.}
+
 \item{do_de}{logical. Should differential expression across trajectories be
 performed? Default is FALSE.}
 
 \item{batch_de}{character, the name of the `colData` column to be used as a
 blocking factor in the differential expression analysis. Default is NULL.}
+
+\item{verbose}{logical, should progress messages be printed? Default is FALSE.}
 
 \item{BPPARAM}{a `BiocParallelParam` object. Default is NULL.}
 }
