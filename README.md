@@ -1,8 +1,8 @@
-# papplain
+# cellula
 
-**`papplain`** is a simple R-based pipeline for single cell RNA-seq processing with a focus on integration.
+**`cellula`** is a simple R-based pipeline for single cell RNA-seq processing with a focus on integration.
 
-`papplain` follows the practices outlined in the [OSCA book](https://bioconductor.org/books/release/OSCA/), with some additional options for integration/batch effect correction methods.
+`cellula` follows the practices outlined in the [OSCA book](https://bioconductor.org/books/release/OSCA/), with some additional options for integration/batch effect correction methods.
 
 As a one-stop solution, this package tends to make choices for the users, with the caveat that these choices follow either defaults or sensible implementations. However, this means that a certain degree of freedom is removed from the end user. This assumes that users who desire total control on the process (or granular specification of parameters) do not need `papplain` and would be more comfortable setting up their own analysis pipelines.
 
@@ -98,7 +98,7 @@ The scheme is:
                   └── AUCell
                  
 
-Most of the choices can be made around the integration method. `papplain` has implemented 5 methods: `fastMNN` and `regressBatches` from the `batchelor` package, `Harmony`, the CCA-based `Seurat` method, and non-negative matrix factorization (NMF) from `LIGER` through the `rliger` package.
+Most of the choices can be made around the integration method. `cellula` has implemented 5 methods: `fastMNN` and `regressBatches` from the `batchelor` package, `Harmony`, the CCA-based `Seurat` method, and non-negative matrix factorization (NMF) from `LIGER` through the `rliger` package.
 
 `LIGER` and `Seurat` integration methods require an intermediate step where package-specific objects are created and some pre-processing steps are repeated again according to the best practices published by the authors of those packages.
 
@@ -112,7 +112,7 @@ sce <- integrateSCE(sce, batch = "individual", method = "Seurat")
 
 ## Plotting
 
-There are a few simple plotting functions in `papplain`:
+There are a few simple plotting functions in `cellula`:
 
 - `plot_UMAP()` to plot a UMAP (or any other 2D dimensional reduction)
 - `plot_Coldata()` to plot data from the `colData` slot as a boxplot, scatterplot or confusion matrix
@@ -165,7 +165,7 @@ plot_Coldata(sce, x = "sum", y = "detected") + scale_x_log10()
 
 ## Parallelization
 
-Since `papplain` is mostly based on R/Bioconductor packages, it offers the `BiocParallel` parallelization backend through its `parallel_param` argument. In some cases, e.g. the Seurat integration, another type of backend has to be set up separately outside of the function call.
+Since `cellula` is mostly based on R/Bioconductor packages, it offers the `BiocParallel` parallelization backend through its `parallel_param` argument. In some cases, e.g. the Seurat integration, another type of backend has to be set up separately outside of the function call.
 
 BiocParallel parallelization is implemented where possible, i.e. all the steps of the pipeline where it is sensible to use them (PCA, clustering, integration...).
 
@@ -175,7 +175,7 @@ sce <- integrateSCE(sce, batch = "individual", method = "fastMNN", parallel_para
 
 # Clustering
 
-`papplain` also offers a wrapper around clustering functions. For now, only SNN-based Louvain and Leiden clustering are implemented. The `makeGraphsAndClusters()` function allows users to do parameter sweeps along either the number of neighbors or the resolution of the clustering.
+`cellula` also offers a wrapper around clustering functions. For now, only SNN-based Louvain and Leiden clustering are implemented. The `makeGraphsAndClusters()` function allows users to do parameter sweeps along either the number of neighbors or the resolution of the clustering.
 
 In this example we sweep along the value of the `resolution` parameter for a Louvain clustering. For the SNN graph constructions, edges are weighted according to the jaccard index of their shared neighbors, mimicking the `Seurat` graph construction and clustering procedure:
 
@@ -276,7 +276,7 @@ plot_UMAP(sce, umap_slot = "UMAP_Harmony", color_by = "metacluster_score", label
 
 ## Assigning cell identities
 
-`papplain` implements two methods for automated cell identity assignment, based on the Bioconductor `AUCell` package, the `GSVA` `ssGSEA` implementation, the `Seurat` `AddModuleScore()` function or the `UCell` method.
+`cellula` implements 4 methods for automated cell identity assignment, based on the Bioconductor `AUCell` package, the `GSVA` `ssGSEA` implementation, the `Seurat` `AddModuleScore()` function or the `UCell` method.
 
 The function requires a `genesets` named list containing genes to be used for scoring every single cell. These can be obtained through other packages, e.g. `msigdbr`. For instance, if we wanted to take all the Muraro et al. signature genes, present in the C8 collection, we would do:
 
@@ -290,7 +290,7 @@ genesets = lapply(split(type_genes, type_genes$gs_name), function(x) x$gene_symb
 muraro_genes = genesets[grep("MURARO", names(genesets))]
 ```
 
-Then, we would use the `assignIdentities()` function from `papplain` to calculate signature scores:
+Then, we would use the `assignIdentities()` function from `cellula` to calculate signature scores:
 
 ```{r}
 sce = assignIdentities(sce, 
