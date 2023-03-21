@@ -4,7 +4,7 @@
 
 `cellula` follows the practices outlined in the [OSCA book](https://bioconductor.org/books/release/OSCA/), with some additional options for integration/batch effect correction methods.
 
-As a one-stop solution, this package tends to make choices for the users, with the caveat that these choices follow either defaults or sensible implementations. However, this means that a certain degree of freedom is removed from the end user. This assumes that users who desire total control on the process (or granular specification of parameters) do not need `papplain` and would be more comfortable setting up their own analysis pipelines.
+As a one-stop solution, this package tends to make choices for the users, with the caveat that these choices follow either defaults or sensible implementations. However, this means that a certain degree of freedom is removed from the end user. This assumes that users who desire total control on the process (or granular specification of parameters) do not need `cellula` and would be more comfortable setting up their own analysis pipelines.
 
 `cellula` exists to automate and share routine analyses the way I usually do them, and offer "quick and dirty" access for exploratory data analysis.
 
@@ -27,7 +27,7 @@ BiocManager::install(c("scran", "scuttle", "bluster", "scater", "batchelor", "Dr
 
 # Usage
 
-The pipelines in `papplain` assume that you are working with the output of CellRanger (or something similar) and you imported it into a `SingleCellExperiment` object (hereafter SCE) using `DropletUtils::read10Xcounts()`. This is relevant for gene identifiers, since the `rowData` slot of the SCE will have a "Symbol" and a "ID" column.
+The pipelines in `cellula` assume that you are working with the output of `CellRanger` (or something similar) and you imported it into a `SingleCellExperiment` object (hereafter SCE) using `DropletUtils::read10Xcounts()`. This is relevant for gene identifiers, since the `rowData` slot of the SCE will have a "Symbol" and a "ID" column.
 
 For demo purposes we can use a publicly available dataset, Segerstolpe et al. 2016 [ref](https://pubmed.ncbi.nlm.nih.gov/27667667/), which we retrieve using the `scRNAseq` package:
 
