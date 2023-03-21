@@ -1,3 +1,5 @@
+<img src="https://user-images.githubusercontent.com/21171362/226672559-0c1dc740-bf3b-4c0d-acfb-713971b30d95.png" align="right" alt="" width="200" />
+
 # cellula
 
 **`cellula`** is a simple R-based pipeline for single cell RNA-seq processing with a focus on integration.
