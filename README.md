@@ -6,9 +6,10 @@
 
 As a one-stop solution, this package tends to make choices for the users, with the caveat that these choices follow either defaults or sensible implementations. However, this means that a certain degree of freedom is removed from the end user. This assumes that users who desire total control on the process (or granular specification of parameters) do not need `papplain` and would be more comfortable setting up their own analysis pipelines.
 
-`papplain` exists to automate and share routine analyses the way I usually do them, and offer "quick and dirty" access for exploratory data analysis.
+`cellula` exists to automate and share routine analyses the way I usually do them, and offer "quick and dirty" access for exploratory data analysis.
 
 *Where does the name "papplain" come from?* it's an inside joke with some friends and ex colleagues.
+*Why did you change it to "cellula"?* one day I'd like to share this tool and I need a name that is not too dumb.
 
 # Install
 
