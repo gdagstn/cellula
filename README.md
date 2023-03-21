@@ -11,6 +11,7 @@ As a one-stop solution, this package tends to make choices for the users, with t
 `cellula` exists to automate and share routine analyses the way I usually do them, and offer "quick and dirty" access for exploratory data analysis.
 
 *Where does the name "papplain" come from?* it's an inside joke with some friends and ex colleagues.
+
 *Why did you change it to "cellula"?* one day I'd like to share this tool and I need a name that is not too dumb.
 
 # Install
