@@ -2,7 +2,7 @@
 
 # cellula
 
-**`cellula`** is a simple R-based pipeline for single cell RNA-seq processing with a focus on integration.
+**`cellula`** is a simple R-based pipeline for single cell RNA-seq processing with a number of methods for integration and identity assignment.
 
 `cellula` follows the practices outlined in the [OSCA book](https://bioconductor.org/books/release/OSCA/), with some additional options for integration/batch effect correction methods.
 
@@ -43,7 +43,7 @@ colnames(rowData(sce)) = c("Symbol", "ID")
 Assuming that you have formed a SCE object containing the "individual" column that identifies different batches, you can run an integration pipeline as follows:
 
 ```{r}
-sce <- papplain(sce, name = "myproject", batch = "individual", 
+sce <- cellula(sce, name = "myproject", batch = "individual", 
                 integration_method = "Harmony",
                 verbose = TRUE, save_plots = TRUE)
 ```
@@ -51,11 +51,11 @@ sce <- papplain(sce, name = "myproject", batch = "individual",
 The `name` argument defines the name of the folder that will be created to store files and plots. We set `verbose = TRUE` to print the progress of the pipeline. 
 Setting `save_plots = TRUE` will create a few QC plots in the `name/plots` folder: total UMI, total genes detected, UMI x genes; optionally % MT, % Ribo and %MALAT1, total UMI x doublet class. Plots are separated according to whether the cells were discarded or not in the filtering step.
 
-The `papplain()` function is a wrapper around a few modules or sub-pipelines that have different degrees of customization.
+The `cellula()` function is a wrapper around a few modules or sub-pipelines that have different degrees of customization.
 
 The scheme is:
 
-    papplain
+    cellula
         ├── Quality Control [QC]
         |    ├── run emptyDrops (optional) [QC/EMPTY]
         |    ├── score mito/ribo/malat1 subsets (optional)
