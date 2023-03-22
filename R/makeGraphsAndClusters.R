@@ -56,7 +56,7 @@ makeGraphsAndClusters <- function(sce,
                                   verbose = FALSE) {
   
   #Error prefix
-  ep = "{papplain::makeGraphsAndClusters} - "
+  ep = "{cellula::makeGraphsAndClusters} - "
   
   if(!is(sce, "SingleCellExperiment")) 
     stop(paste0(ep, "Must provide a SingleCellExperiment object"))
@@ -181,7 +181,7 @@ metaCluster <- function(sce,
                         denominator = "union") {
 
   #Error prefix
-  ep = "{papplain::metaCluster} - "
+  ep = "{cellula::metaCluster} - "
   
   if(threshold > 1 | threshold < 0) stop(paste0(ep, "threshold must be between 0 and 1"))
   if(any(!clusters %in% colnames(colData(sce)))) stop(paste0(ep, "some cluster column names were not found in colData"))

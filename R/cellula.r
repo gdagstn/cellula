@@ -59,7 +59,7 @@
 #'
 #' @export
 
-papplain <- function(sce,
+cellula <- function(sce,
                      batch = NULL,
                      name = NULL,
                      do_qc = TRUE,
