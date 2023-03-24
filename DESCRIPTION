@@ -1,4 +1,4 @@
-Package: papplain
+Package: cellula
 Type: Package
 Title: Simple scRNAseq pipeline
 Version: 0.0.900
