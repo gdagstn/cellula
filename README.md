@@ -25,7 +25,7 @@ devtools::install("path/to/cloned/git")
 The package will require a number of `BioConductor` and `GitHub` dependencies. You can install them as follows:
 
 ```{r}
-BiocManager::install(c("scran", "scuttle", "bluster", "scater", "batchelor", "DropletUtils", "AUCell", "harmony", "GSVA",  "gdagstn/alamak", "UCell"))
+BiocManager::install(c("scran", "scuttle", "bluster", "scater", "batchelor", "DropletUtils", "AUCell", "harmony", "GSVA",  "gdagstn/oveRlay", "UCell"))
 ```
 
 # Usage
