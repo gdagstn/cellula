@@ -9,9 +9,7 @@
 #' @param method character, the integration method. One of "fastMNN", "Harmony",
 #'     "Seurat", "LIGER", and "regression". Default is "fastMNN".
 #' @param ndims numeric, the number of dimensions to use for integration. Default
-#'     is 20.
-#' @param liger_k the k parameter for LIGER integration, i.e. dimensionality of
-#'     the cell resulting integrated embeddings. Default is 20.
+#'     is 20. For LIGER, it is the value of the k parameter in `optimizeALS()`
 #' @param neighbor_n the number of neighbors used to compute UMAP. Default is
 #'     NULL, which results in the rounded squared root of the number of cells.
 #' @param verbose logical, display messages on progress? Default is FALSE.
@@ -25,7 +23,7 @@
 #' @importFrom ids adjective_animal
 #' @importFrom SummarizedExperiment colData rowData
 #' @importFrom crayon blue
-#' @importFrom scater plotColData runPCA
+#' @importFrom scater runPCA
 #' @importFrom uwot umap
 #' @importFrom scDblFinder scDblFinder
 #' @importFrom scran quickCluster computeSumFactors modelGeneVar
@@ -47,7 +45,6 @@ integrateSCE = function(sce,
                         hvg_ntop = 2000,
                         method = "fastMNN",
                         ndims = 20,
-                        liger_k = 20,
                         neighbor_n = NULL,
                         parallel_param = SerialParam(),
                         verbose = FALSE){
@@ -98,6 +95,8 @@ integrateSCE = function(sce,
     if(any(duplicated(colnames(sce)))) {
       colnames(sce) = paste0("cell_", seq_len(ncol(sce)))
     }
+    nf = data.frame(old_colnames, row.names = colnames(sce))
+
     seu <- CreateSeuratObject(counts = counts(sce), meta.data = as.data.frame(colData(sce)))
     seu <- SetAssayData(object = seu, slot = "data", new.data = logcounts(sce))
     seu[["pca"]] <- CreateDimReducObject(embeddings = reducedDim(sce, "PCA"), key = "PC_")
@@ -148,7 +147,7 @@ integrateSCE = function(sce,
     reducedDim(sce, "UMAP_Seurat") <- umap(reducedDim(sce, "PCA_Seurat")[,seq_len(ndims)],
                                            n_neighbors = neighbor_n,
                                            min_dist = 0.7)
-    colnames(sce) = old_colnames
+    colnames(sce) = nf[colnames(sce), 1]
 
   } else if(method == "LIGER") {
 
@@ -157,6 +156,8 @@ integrateSCE = function(sce,
     if(any(duplicated(colnames(sce)))) {
       colnames(sce) = paste0("cell_", seq_len(ncol(sce)))
     }
+
+    nf = data.frame(old_colnames, row.names = colnames(sce))
 
     if(verbose) cat(blue("[INT/LIGER]"), "Creating LIGER object.\n")
 
@@ -172,21 +173,21 @@ integrateSCE = function(sce,
     l <- scaleNotCenter(l)
 
     if(verbose) cat(blue("[INT/LIGER]"), "Factorization.\n")
-    l <- optimizeALS(l, k = liger_k, verbose = verbose)
+    l <- optimizeALS(l, k = ndims, verbose = verbose)
 
     if(verbose) cat(blue("[INT/LIGER]"), "Quantile normalization\n")
     l <- quantile_norm(l, verbose = verbose)
 
     if(verbose) cat(blue("[INT/LIGER]"), "Transferring to SCE object.\n")
-    reducedDim(sce, type = "LIGER") = do.call(rbind, l@H)
-    reducedDim(sce, type = "LIGER_NORM") = l@H.norm
+    reducedDim(sce, type = "LIGER") = do.call(rbind, l@H)[colnames(sce),]
+    reducedDim(sce, type = "LIGER_NORM") = l@H.norm[colnames(sce),]
 
     if(verbose) cat(blue("[INT/LIGER]"), "Running UMAP on LIGER factorization.\n")
     reducedDim(sce, "UMAP_LIGER") <- umap(reducedDim(sce, "LIGER_NORM")[,seq_len(min(ncol(reducedDim(sce, "LIGER_NORM")), ndims))],
                                           n_neighbors = neighbor_n,
                                           min_dist = 0.7)
 
-    colnames(sce) = old_colnames
+    colnames(sce) = nf[colnames(sce), 1]
 
   } else if(method == "regression") {
 
