@@ -1,4 +1,4 @@
-<img src="https://user-images.githubusercontent.com/21171362/226674116-19929777-ac30-4aa0-8205-f7130cf22d35.png" align="right" alt="" width="200" />
+<img src="https://user-images.githubusercontent.com/21171362/232594554-7e4ded96-0647-4eb6-8bb2-145c35659a6b.png" align="right" alt="" width="200" />
 
 # cellula
 
