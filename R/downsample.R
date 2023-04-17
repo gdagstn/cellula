@@ -68,7 +68,55 @@ downsampleCounts <- function(mat,
   },
   BPPARAM = BPPARAM)
 
-  ds_final = do.call(cbind, ds)
-  ds_final
+  do.call(cbind, ds)
+}
+
+#' Downsample cells
+#'
+#' Downsamples a SingleCellExperiment to a proportion of cells 
+#'
+#' @param sce a SingleCellExperiment object
+#' @param sample_by character, the column name of the colData slot for sampling. 
+#'     Cells will be downsampled within each level of `sample_by`.
+#' @param min numeric, the minimum number of cells to retain within each level of
+#'     `sample_by`. Strictly positive
+#' @param proportion numeric, the target proportion of cells to downsample within
+#'     each level of `sample_by`. 
+#' @param BPPARAM a BiocParallel BPPARAM object. Default is SerialParam(), meaning
+#'     no parallelization will be used.
+#' @param verbose logical, should progress be displayed? Default is TRUE.
+#'
+#' @return a SingleCellExperiment object with fewer cells than the original
+#'
+#' @author Giuseppe D'Agostino
+#'
+#' @importFrom methods is
+#' @importFrom BiocParallel SerialParam bplapply
+#' @importFrom SummarizedExperiment colData
+
+downsampleCells <- function(sce, sample_by, proportion = 0.1, min = 10, 
+                            verbose = TRUE, BPPARAM = SerialParam()) {
+  
+  if(!is(sce, "SingleCellExperiment")) stop("sce must be a SingleCellExperiment object")
+  if(min <= 0) stop("min must be strictly positive")
+  if(!is(min, "numeric")) stop("min must be a numeric")
+  if(!is(proportion, "numeric")) stop("proportion must be a numeric")
+  if(proportion > 1 | proportion < 0) stop("proportion must be between 0 and 1 excluded")
+  if(!sample_by %in% colnames(colData(sce))) stop(sample_by, " is not a column in colData(sce)")
+
+      sampled = bplapply(unique(colData(sce)[,by]), function(x) {
+    if(verbose) cat("Downsampling cells in ", x)
+    curr = sce[, which(colData(sce)[,sample_by]) == x]
+    if(ncol(curr) < min) {
+      warning("Total cell number for ", x, " is less than min. \nWill retain all cells in ", x, ".")
+      min = ncol(curr)
+    }
+    subp = max(c(floor(ncol(curr)/proportion), min))
+    keep = colnames(curr)[sample(seq_along(colnames(curr)), subp)]
+    curr[,keep]
+  },
+  BPPARAM = BPPARAM)
+  
+  Reduce(cbind, sampled)
 }
 

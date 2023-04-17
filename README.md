@@ -14,6 +14,21 @@ As a one-stop solution, this package tends to make choices for the users, with t
 
 *Why did you change it to "cellula"?* one day I'd like to share this tool and I need a name that is not too dumb.
 
+# Table of Contents
+
+- [Install](https://github.com/gdagstn/cellula#install)
+- [Usage](https://github.com/gdagstn/cellula#usage)
+  - [Plotting](https://github.com/gdagstn/cellula#plotting)
+  - [Parallelization](https://github.com/gdagstn/cellula#parallelization)
+- [Clustering](https://github.com/gdagstn/cellula#clustering)
+  - [Plotting clustering results](https://github.com/gdagstn/cellula#plotting-clustering-results)
+  - [Gene dot plot](https://github.com/gdagstn/cellula#gene-dot-plot)
+  - [Metaclusters](https://github.com/gdagstn/cellula#metaclusters)
+- [Assigning cell identities](https://github.com/gdagstn/cellula#assigning-cell-identities)
+- [Downsampling](https://github.com/gdagstn/cellula#downsampling)
+- [Inferring trajectories](https://github.com/gdagstn/cellula#inferring-trajectories)
+  -[Metacells](https://github.com/gdagstn/cellula#metacells)
+  
 # Install
 
 For the time being, clone the repo and install:
@@ -22,10 +37,14 @@ For the time being, clone the repo and install:
 devtools::install("path/to/cloned/git")
 ```
 
+`cellula` is **dependency-heavy**, which is not something I'm proud of, but makes sense considering this is a wrapper to a series of different analytical approaches.
+
 The package will require a number of `BioConductor` and `GitHub` dependencies. You can install them as follows:
 
 ```{r}
-BiocManager::install(c("scran", "scuttle", "bluster", "scater", "batchelor", "DropletUtils", "AUCell", "harmony", "GSVA",  "gdagstn/oveRlay", "UCell"))
+BiocManager::install(c("scran", "scuttle", "bluster", "scater", "batchelor", "DropletUtils", 
+                      "AUCell", "harmony", "GSVA", "gdagstn/oveRlay", "UCell", 
+                      "slingshot", "TSCAN"))
 ```
 
 # Usage
@@ -278,7 +297,7 @@ plot_UMAP(sce, umap_slot = "UMAP_Harmony", color_by = "metacluster_score", label
 
 <img src="https://user-images.githubusercontent.com/21171362/216006433-2b39bf37-a9f4-49e4-be97-ec17ac690297.png" width="400"/>
 
-## Assigning cell identities
+# Assigning cell identities
 
 `cellula` implements 4 methods for automated cell identity assignment, based on the Bioconductor `AUCell` package, the `GSVA` `ssGSEA` implementation, the `Seurat` `AddModuleScore()` function or the `UCell` method.
 
@@ -336,3 +355,67 @@ plot_UMAP(sce, umap_slot = "UMAP_Harmony", color_by = "Beta_Cell_signature")
 
 
 The `"UCell"` method works well when you have small signatures (e.g. even 2/3 genes). It allows you to specify positive and negative labels, which is useful when you are sure the identity of a cell types depends on the lack of expression of certain markers (see hematopoietic lineages). To do so, you can add "+" or "-" to each gene.
+
+# Downsampling
+
+There are two ways to downsample data in `cellula`: downsampling **reads** and downsampling **cells**. 
+
+The first approach simulates reads randomly sampling counts from a distribution with a fixed total number, using a vector of probabilities equivalent to the per-gene proportion of reads within each cell. 
+
+Briefly, let's consider a cell **C** in which genes *a*, *b*, and *c* have been quantified with 50, 30, 20 counts each (totaling to 100 counts). This is equivalent to a bag of marbles in which the probability of randomly picking an *a* marble is 50/100 = 0.5, *b* marble is 0.3, and *c* marble is 0.2. 
+
+If we want to downsample **C** to a total of 40 counts (yielding the downsampled **C'**), we randomly pick 40 counts from a (0.5, 0.3, 0.2) vector of probabilities.
+
+This is a sort of downsampling by simulation and is described in Scott Tyler's [work](https://github.com/scottyler89/downsample), reimplemented in `cellula` with a slightly faster optimization. 
+
+The `downsampleCounts()` uses a minimum count number that is user-defined (or the minimum total count number in the dataset as a default) and returns a `SingleCellExperiment` object with the same number of cells as the input, and a down-sampled count matrix where each cell has the same total number of counts.
+
+The second approach randomly select cells from within groups such as clusters, batches, or a combination of the two. 
+
+Cells are randomly selected so that they represent a user-defined fraction of the within-group total, with some lower bound to ensure that small groups are represented: if a rare cluster label only contains 9 cells and we want to downsample a dataset to 10%, we can cap the minimum to 5 cells so that we ensure the rare label is still adequately represented. 
+
+The `downsampleCells()` function returns a `SingleCellExperiment` object with fewer cells than the input, as defined by the `proportion` and `min` parameters.
+
+
+# Inferring trajectories
+
+At the time of writing `cellula` only implements a wrapper around the `slingshot` method for pseudotemporal trajectory inference, and the `testPseudotime()` method from `TSCAN` for differential expression along a trajectory. 
+
+The `findTrajectories()` function takes a `SingleCellExperiment` object as input, and requires the user to specify the cluster label which will be used as an input to the MST creation in `slingshot`. 
+
+Other important parameters are: 
+- `space` - the reduced dimensional reduction in which trajectories will be estimated (default is "PCA") 
+- `start` - the starting cluster for trajectory estimation, defaulting to "auto" for an entropy-based method
+- `omega` - whether or not to use a synthetic cluster to estimate disjointed trajectories, as detailed in `?slingshot::getLineages`
+- `doDE` - whether or not to perform differential expression on every trajectory. 
+
+The output is the same object used in the input, with some additional fields:
+
+- the `colData` slot will contain a column containing the `slingshot` object, plus the `slingPseudotime_N` pseudotime values for each lineage, where N is the number of the lineage. This is the normal output of `slingshot`. 
+- the `metadata` slot will contain three new elements:
+  - `Slingshot_lineages`: the output of `slingLineages()`, i.e. the result of the MST construction 
+  - `Slingshot_embedded_curves`: the output of `embedCurves()`, i.e. the projection of low-dimensional principal curves onto a 2D embedding such as UMAP. Optional and only created if the parameter `dr_embed` is set to TRUE.
+  - `pseudotime_DE`: the results of the differential expression test. This is a list where each lineage is tested separately. Optional and only created if `doDE` is set to TRUE.
+  
+In this example we use the `Harmony`-integrated space ("PCA_Harmony"), the SNN_0.5 clustering and the starting cluster **8**:
+
+```{r}
+sce <- findTrajectories(sce, space = "PCA_Harmony", 
+                        clusters = "SNN_0.5", start = "8")
+```
+  
+## Metacells
+
+In order to speed up calculations and overcome sparsity, cells can be aggregated into metacells using k-means clustering with a high *k*. 
+
+Clustering is carried out in the reduced dimensional space of choice selected through the `space` argument, and it is carried out in each level of `group` separately.
+
+Rather than selecting the number of clusters *k*, the function takes an average number of cells per cluster *w* which is used to determine *k* (default is w = 10 cells per cluster). Read counts are aggregated by gene across all cells within each cluster, resulting in metacells. These can be used as input to `findTrajectories()` or other operations such as clustering, downsampling, signature scoring, etc.
+
+```{r}
+sce_meta <- makeMetacells(sce, space = "PCA_Harmony", 
+                          clusters = "SNN_0.5", start = "8")
+```
+
+
+

@@ -11,7 +11,6 @@ integrateSCE(
   hvg_ntop = 2000,
   method = "fastMNN",
   ndims = 20,
-  liger_k = 20,
   neighbor_n = NULL,
   parallel_param = SerialParam(),
   verbose = FALSE
@@ -30,10 +29,7 @@ integrateSCE(
 "Seurat", "LIGER", and "regression". Default is "fastMNN".}
 
 \item{ndims}{numeric, the number of dimensions to use for integration. Default
-is 20.}
-
-\item{liger_k}{the k parameter for LIGER integration, i.e. dimensionality of
-the cell resulting integrated embeddings. Default is 20.}
+is 20. For LIGER, it is the value of the k parameter in `optimizeALS()`}
 
 \item{neighbor_n}{the number of neighbors used to compute UMAP. Default is
 NULL, which results in the rounded squared root of the number of cells.}

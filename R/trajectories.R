@@ -9,7 +9,7 @@
 #'     indication.
 #' @param method character, the method for estimation. Currently only "slingshot".
 #' @param ndims numeric, the number of dimensions to use in `space`. If the number
-#'     of columns in `space` is < `ndims`, it will be used.
+#'     of columns in `space` is < `ndims`, it will be used instead.
 #' @param dr_embed character, the name of the `reducedDim` slot where curves should
 #'     be embedded for plotting. Default is NULL, meaning no embedding will be
 #'     performed.
