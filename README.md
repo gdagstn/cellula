@@ -27,7 +27,7 @@ As a one-stop solution, this package tends to make choices for the users, with t
 - [Assigning cell identities](https://github.com/gdagstn/cellula#assigning-cell-identities)
 - [Downsampling](https://github.com/gdagstn/cellula#downsampling)
 - [Inferring trajectories](https://github.com/gdagstn/cellula#inferring-trajectories)
-  -[Metacells](https://github.com/gdagstn/cellula#metacells)
+  - [Metacells](https://github.com/gdagstn/cellula#metacells)
   
 # Install
 
