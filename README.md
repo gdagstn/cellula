@@ -412,9 +412,10 @@ Clustering is carried out in the reduced dimensional space of choice selected th
 
 Rather than selecting the number of clusters *k*, the function takes an average number of cells per cluster *w* which is used to determine *k* (default is w = 10 cells per cluster). Read counts are aggregated by gene across all cells within each cluster, resulting in metacells. These can be used as input to `findTrajectories()` or other operations such as clustering, downsampling, signature scoring, etc.
 
+In this example we create metacells aggregating (on average) 10 cells, within each cluster from the "SNN_0.5" clustering results:
+
 ```{r}
-sce_meta <- makeMetacells(sce, space = "PCA_Harmony", 
-                          clusters = "SNN_0.5", start = "8")
+sce_meta <- makeMetacells(sce, group = "SNN_0.5", space = "PCA_Harmony", w = 10)
 ```
 
 

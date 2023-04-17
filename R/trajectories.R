@@ -73,6 +73,7 @@ findTrajectories <- function(sce, space = "PCA", clusters, method = "slingshot",
     if(!is.null(batch_de)) batch = factor(colData(sce)[,batch_de]) else batch = NULL
 
     sling_colnames = paste0("slingPseudotime_", seq_along(slingLineages(sce)))
+    
     sling_tests <- lapply(sling_colnames, function(x)
       testPseudotime(assay(sce, "logcounts"),
                             pseudotime = colData(sce)[,x],
