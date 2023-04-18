@@ -33,10 +33,13 @@ As a one-stop solution, this package tends to make choices for the users, with t
   
 # Install
 
-For the time being, clone the repo and install:
+Use `remotes`, `devtools` or `BiocManager` to install:
 
 ```{r}
-devtools::install("path/to/cloned/git")
+remotes::install_github("gdagstn/cellula")
+devtools::install_github("gdagstn/cellula")
+BiocManager::install("gdagstn/cellula")
+
 ```
 
 `cellula` is **dependency-heavy**, which is not something I'm proud of, but makes sense considering this is a wrapper to a series of different analytical approaches.
