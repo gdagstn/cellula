@@ -138,6 +138,8 @@ sce <- doNormAndReduce(sce, name = "segerstolpe", batch = "individual")
 sce <- integrateSCE(sce, batch = "individual", method = "Seurat")
 ```
 
+Doublet identification is carried out through the `scDblFinder` package[[8]](#8) using standard defaults.
+
 ## Plotting
 
 There are a few simple plotting functions in `cellula`:
@@ -203,7 +205,7 @@ sce <- integrateSCE(sce, batch = "individual", method = "fastMNN", parallel_para
 
 # Clustering
 
-`cellula` also offers a wrapper around clustering functions. For now, only SNN-based Louvain[[8]](#8) and Leiden[[9]](#9) clustering are implemented. The `makeGraphsAndClusters()` function allows users to do parameter sweeps along either the number of neighbors or the resolution of the clustering.
+`cellula` also offers a wrapper around clustering functions. For now, only SNN-based Louvain[[9]](#9) and Leiden[[10]](#10) clustering are implemented. The `makeGraphsAndClusters()` function allows users to do parameter sweeps along either the number of neighbors or the resolution of the clustering.
 
 In this example we sweep along the value of the `resolution` parameter for a Louvain clustering. For the SNN graph constructions, edges are weighted according to the jaccard index of their shared neighbors, mimicking the `Seurat` graph construction and clustering procedure:
 
@@ -237,7 +239,7 @@ plot_UMAP(sce, umap_slot = "UMAP_Harmony", color_by = "SNN_0.5", label_by = "SNN
 
 <img src="https://user-images.githubusercontent.com/21171362/216006173-db0a4ebf-702e-4bac-a25c-e789ee675e03.png" width="400"/>
 
-If using the `clustree` [package]()[[10]](#10), the clustering tree can be visualized by using the same prefix defined in `makeGraphsAndClusters()`:
+If using the `clustree` [package]()[[11]](#11), the clustering tree can be visualized by using the same prefix defined in `makeGraphsAndClusters()`:
 
 ```{r}
 library(clustree)
@@ -304,9 +306,9 @@ plot_UMAP(sce, umap_slot = "UMAP_Harmony", color_by = "metacluster_score", label
 
 # Assigning cell identities
 
-`cellula` implements 4 methods for automated cell identity assignment, based on the Bioconductor `AUCell` [package]()[[11]](#11), the `GSVA` `ssGSEA` implementation[[12]](#12), the `Seurat` `AddModuleScore()` function or the `UCell` method[[13]](#13).
+`cellula` implements 4 methods for automated cell identity assignment, based on the Bioconductor `AUCell` [package]()[[12]](#12), the `GSVA` `ssGSEA` implementation[[13]](#13), the `Seurat` `AddModuleScore()` function or the `UCell` method[[14]](#14).
 
-The function requires a `genesets` named list containing genes to be used for scoring every single cell. These can be obtained through other packages, e.g. `msigdbr`. For instance, if we wanted to take all the Muraro et al.[[14]](#14). signature genes, present in the C8 collection, we would do:
+The function requires a `genesets` named list containing genes to be used for scoring every single cell. These can be obtained through other packages, e.g. `msigdbr`. For instance, if we wanted to take all the Muraro et al.[[15]](#15). signature genes, present in the C8 collection, we would do:
 
 ```{r}
 library(msigdbr)
@@ -371,7 +373,7 @@ Briefly, let's consider a cell **C** in which genes *a*, *b*, and *c* have been 
 
 If we want to downsample **C** to a total of 40 counts (yielding the downsampled **C'**), we randomly pick 40 counts from a (0.5, 0.3, 0.2) vector of probabilities.
 
-This is a sort of downsampling by simulation and is described in Scott Tyler's [work](https://github.com/scottyler89/downsample)[[15]](#15), reimplemented in `cellula` with a slightly faster optimization. 
+This is a sort of downsampling by simulation and is described in Scott Tyler's [work](https://github.com/scottyler89/downsample)[[16]](#16), reimplemented in `cellula` with a slightly faster optimization. 
 
 The `downsampleCounts()` uses a minimum count number that is user-defined (or the minimum total count number in the dataset as a default) and returns a `SingleCellExperiment` object with the same number of cells as the input, and a down-sampled count matrix where each cell has the same total number of counts.
 
@@ -384,7 +386,7 @@ The `downsampleCells()` function returns a `SingleCellExperiment` object with fe
 
 # Inferring trajectories
 
-At the time of writing `cellula` only implements a wrapper around the `slingshot` method[[16]](#16) for pseudotemporal trajectory inference, and the `testPseudotime()` method from `TSCAN`[[17]](#17) for differential expression along a trajectory. 
+At the time of writing `cellula` only implements a wrapper around the `slingshot` method[[17]](#17) for pseudotemporal trajectory inference, and the `testPseudotime()` method from `TSCAN`[[18]](#18) for differential expression along a trajectory. 
 
 The `findTrajectories()` function takes a `SingleCellExperiment` object as input, and requires the user to specify the cluster label which will be used as an input to the MST creation in `slingshot`. 
 
@@ -439,23 +441,25 @@ sce_meta <- makeMetacells(sce, group = "SNN_0.5", space = "PCA_Harmony", w = 10)
 
 <a id="7">[7]</a> Welch et al. Cell. 2019 Jun 13; 177(7): 1873–1887.e17.
 
-<a id="8">[8]</a> Blondel et al. J. Stat. Mech. 2008; P10008
+<a id="8">[8]</a> Germain et al. F1000Res. 2021; 10: 979
 
-<a id="9">[9]</a> Traag et al. Sci Rep. 2019; 9:5233.
+<a id="9">[9]</a> Blondel et al. J. Stat. Mech. 2008; P10008
 
-<a id="10">[10]</a> Zappia and Oshlack Gigascience. 2018 Jul; 7(7): giy083.
+<a id="10">[10]</a> Traag et al. Sci Rep. 2019; 9:5233.
 
-<a id="11">[11]</a> Aibar et al. Nat Methods. 2017 Nov; 14(11): 1083–1086.
+<a id="11">[11]</a> Zappia and Oshlack Gigascience. 2018 Jul; 7(7): giy083.
 
-<a id="12">[12]</a> Hänzelmann et al. BMC Bioinformatics. 2013 Jan 16;14: 7. 
+<a id="12">[12]</a> Aibar et al. Nat Methods. 2017 Nov; 14(11): 1083–1086.
 
-<a id="13">[13]</a> Andreatta and Carmona Comput Struct Biotechnol J. 2021 Jun 30;19: 3796-3798.
+<a id="13">[13]</a> Hänzelmann et al. BMC Bioinformatics. 2013 Jan 16;14: 7. 
 
-<a id="14">[14]</a> Muraro et al. Cell Syst. 2016 Oct 26;3(4):385-394.e3
+<a id="14">[14]</a> Andreatta and Carmona Comput Struct Biotechnol J. 2021 Jun 30;19: 3796-3798.
 
-<a id="15">[15]</a> Tyler et al. biorXiv 2021 11.15.468733
+<a id="15">[15]</a> Muraro et al. Cell Syst. 2016 Oct 26;3(4):385-394.e3
 
-<a id="16">[16]</a> Street et al. BMC Genomics. 2018 Jun 19;19(1): 477.
+<a id="16">[16]</a> Tyler et al. biorXiv 2021 11.15.468733
 
-<a id="17">[17]</a> Ji and Ji https://www.bioconductor.org/packages/release/bioc/html/TSCAN.html
+<a id="17">[17]</a> Street et al. BMC Genomics. 2018 Jun 19;19(1): 477.
+
+<a id="18">[18]</a> Ji and Ji https://www.bioconductor.org/packages/release/bioc/html/TSCAN.html
 
