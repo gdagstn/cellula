@@ -4,7 +4,7 @@
 
 **`cellula`** is a simple R-based pipeline for single cell RNA-seq processing with a number of methods for integration and identity assignment.
 
-`cellula` follows the practices outlined in the [OSCA book](https://bioconductor.org/books/release/OSCA/), with some additional options for integration/batch effect correction methods.
+`cellula` follows the practices outlined in the [OSCA book](https://bioconductor.org/books/release/OSCA/)[[1]](#1), with some additional options for integration/batch effect correction methods, signature scoring, and downsampling.
 
 As a one-stop solution, this package tends to make choices for the users, with the caveat that these choices follow either defaults or sensible implementations. However, this means that a certain degree of freedom is removed from the end user. This assumes that users who desire total control on the process (or granular specification of parameters) do not need `cellula` and would be more comfortable setting up their own analysis pipelines.
 
@@ -49,9 +49,9 @@ BiocManager::install(c("scran", "scuttle", "bluster", "scater", "batchelor", "Dr
 
 # Usage
 
-The pipelines in `cellula` assume that you are working with the output of `CellRanger` (or something similar) and you imported it into a `SingleCellExperiment` object (hereafter SCE) using `DropletUtils::read10Xcounts()`. This is relevant for gene identifiers, since the `rowData` slot of the SCE will have a "Symbol" and a "ID" column.
+The pipelines in `cellula` assume that you are working with the output of `CellRanger` (or something similar) and you imported it into a `SingleCellExperiment` object (hereafter SCE) using the `TENxIO` package. This is relevant for gene identifiers, since the `rowData` slot of the SCE will have a "Symbol" and a "ID" column.
 
-For demo purposes we can use a publicly available dataset, Segerstolpe et al. 2016 [ref](https://pubmed.ncbi.nlm.nih.gov/27667667/), which we retrieve using the `scRNAseq` package:
+For demo purposes we can use a publicly available dataset, [Segerstolpe et al. 2016](https://pubmed.ncbi.nlm.nih.gov/27667667/)[[2]](#2), which we retrieve using the `scRNAseq` package:
 
 ```{r}
 # BiocManager::install("scRNAseq") 
@@ -121,7 +121,7 @@ The scheme is:
                   └── AUCell
                  
 
-Most of the choices can be made around the integration method. `cellula` has implemented 5 methods: `fastMNN` and `regressBatches` from the `batchelor` package, `Harmony`, the CCA-based `Seurat` method, and non-negative matrix factorization (NMF) from `LIGER` through the `rliger` package.
+Most of the choices can be made around the integration method. `cellula` has implemented 5 methods: `fastMNN`[[3]](#3),[[4]](#4) and `regressBatches` from the `batchelor` package, `Harmony`[[5]](#5), the CCA-based `Seurat`[[6]](#6) method, and non-negative matrix factorization (NMF) from `LIGER`[[7]](#7) through the `rliger` package.
 
 `LIGER` and `Seurat` integration methods require an intermediate step where package-specific objects are created and some pre-processing steps are repeated again according to the best practices published by the authors of those packages.
 
@@ -198,7 +198,7 @@ sce <- integrateSCE(sce, batch = "individual", method = "fastMNN", parallel_para
 
 # Clustering
 
-`cellula` also offers a wrapper around clustering functions. For now, only SNN-based Louvain and Leiden clustering are implemented. The `makeGraphsAndClusters()` function allows users to do parameter sweeps along either the number of neighbors or the resolution of the clustering.
+`cellula` also offers a wrapper around clustering functions. For now, only SNN-based Louvain[[8]](#8) and Leiden[[9]](#9) clustering are implemented. The `makeGraphsAndClusters()` function allows users to do parameter sweeps along either the number of neighbors or the resolution of the clustering.
 
 In this example we sweep along the value of the `resolution` parameter for a Louvain clustering. For the SNN graph constructions, edges are weighted according to the jaccard index of their shared neighbors, mimicking the `Seurat` graph construction and clustering procedure:
 
@@ -232,7 +232,7 @@ plot_UMAP(sce, umap_slot = "UMAP_Harmony", color_by = "SNN_0.5", label_by = "SNN
 
 <img src="https://user-images.githubusercontent.com/21171362/216006173-db0a4ebf-702e-4bac-a25c-e789ee675e03.png" width="400"/>
 
-If using `clustree`, the clustering tree can be visualized by using the same prefix defined in `makeGraphsAndClusters()`:
+If using the `clustree` [package]()[[10]](#10), the clustering tree can be visualized by using the same prefix defined in `makeGraphsAndClusters()`:
 
 ```{r}
 library(clustree)
@@ -299,9 +299,9 @@ plot_UMAP(sce, umap_slot = "UMAP_Harmony", color_by = "metacluster_score", label
 
 # Assigning cell identities
 
-`cellula` implements 4 methods for automated cell identity assignment, based on the Bioconductor `AUCell` package, the `GSVA` `ssGSEA` implementation, the `Seurat` `AddModuleScore()` function or the `UCell` method.
+`cellula` implements 4 methods for automated cell identity assignment, based on the Bioconductor `AUCell` [package]()[[11]](#11), the `GSVA` `ssGSEA` implementation[[12]](#12), the `Seurat` `AddModuleScore()` function or the `UCell` method[[13]](#13).
 
-The function requires a `genesets` named list containing genes to be used for scoring every single cell. These can be obtained through other packages, e.g. `msigdbr`. For instance, if we wanted to take all the Muraro et al. signature genes, present in the C8 collection, we would do:
+The function requires a `genesets` named list containing genes to be used for scoring every single cell. These can be obtained through other packages, e.g. `msigdbr`. For instance, if we wanted to take all the Muraro et al.[[14]](#14). signature genes, present in the C8 collection, we would do:
 
 ```{r}
 library(msigdbr)
@@ -366,7 +366,7 @@ Briefly, let's consider a cell **C** in which genes *a*, *b*, and *c* have been 
 
 If we want to downsample **C** to a total of 40 counts (yielding the downsampled **C'**), we randomly pick 40 counts from a (0.5, 0.3, 0.2) vector of probabilities.
 
-This is a sort of downsampling by simulation and is described in Scott Tyler's [work](https://github.com/scottyler89/downsample), reimplemented in `cellula` with a slightly faster optimization. 
+This is a sort of downsampling by simulation and is described in Scott Tyler's [work](https://github.com/scottyler89/downsample)[[15]](#15), reimplemented in `cellula` with a slightly faster optimization. 
 
 The `downsampleCounts()` uses a minimum count number that is user-defined (or the minimum total count number in the dataset as a default) and returns a `SingleCellExperiment` object with the same number of cells as the input, and a down-sampled count matrix where each cell has the same total number of counts.
 
@@ -379,7 +379,7 @@ The `downsampleCells()` function returns a `SingleCellExperiment` object with fe
 
 # Inferring trajectories
 
-At the time of writing `cellula` only implements a wrapper around the `slingshot` method for pseudotemporal trajectory inference, and the `testPseudotime()` method from `TSCAN` for differential expression along a trajectory. 
+At the time of writing `cellula` only implements a wrapper around the `slingshot` method[[16]](#16) for pseudotemporal trajectory inference, and the `testPseudotime()` method from `TSCAN`[[17]](#17) for differential expression along a trajectory. 
 
 The `findTrajectories()` function takes a `SingleCellExperiment` object as input, and requires the user to specify the cluster label which will be used as an input to the MST creation in `slingshot`. 
 
@@ -418,5 +418,39 @@ In this example we create metacells aggregating (on average) 10 cells, within ea
 sce_meta <- makeMetacells(sce, group = "SNN_0.5", space = "PCA_Harmony", w = 10)
 ```
 
+# References
 
+<a id="1">[1]</a> Amezquita et al. Nat Methods. 2020 Feb; 17(2): 137–145
+
+<a id="2">[2]</a> Segerstolpe et al. Cell Metab. 2016 Oct 11; 24(4): 593–607.
+
+<a id="3">[3]</a> Haghverdi et al. Nat Biotechnol. 2018 Jun;36(5): 421-427.
+
+<a id="4">[4]</a> Lun ATL. https://marionilab.github.io/FurtherMNN2018/theory/description.html
+
+<a id="5">[5]</a> Korsunsky et al. Nat Methods. 2019 Dec;16(12): 1289-1296.
+
+<a id="6">[6]</a> Stuart et al. Cell. 2019 Jun 13;177(7): 1888-1902.e21.
+
+<a id="7">[7]</a> Welch et al. Cell. 2019 Jun 13; 177(7): 1873–1887.e17.
+
+<a id="8">[8]</a> Blondel et al. J. Stat. Mech. 2008; P10008
+
+<a id="9">[9]</a> Traag et al. Sci Rep. 2019; 9:5233.
+
+<a id="10">[10]</a> Zappia and Oshlack Gigascience. 2018 Jul; 7(7): giy083.
+
+<a id="11">[11]</a> Aibar et al. Nat Methods. 2017 Nov; 14(11): 1083–1086.
+
+<a id="12">[12]</a> Hänzelmann et al. BMC Bioinformatics. 2013 Jan 16;14: 7. 
+
+<a id="13">[13]</a> Andreatta and Carmona Comput Struct Biotechnol J. 2021 Jun 30;19: 3796-3798.
+
+<a id="14">[14]</a> Muraro et al. Cell Syst. 2016 Oct 26;3(4):385-394.e3
+
+<a id="15">[15]</a> Tyler et al. biorXiv 2021 11.15.468733
+
+<a id="16">[16]</a> Street et al. BMC Genomics. 2018 Jun 19;19(1): 477.
+
+<a id="17">[17]</a> Ji and Ji https://www.bioconductor.org/packages/release/bioc/html/TSCAN.html
 
