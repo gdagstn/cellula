@@ -56,6 +56,12 @@ integrateSCE = function(sce,
     #fastMNN
     if(verbose) cat(blue("[INT/fastMNN]"), "Correcting batch effect using fastMNN.\n")
     
+    if(is.null(hvgs)) {
+      if(!is.null(metadata(sce)$hvgs)) hvgs = metadata(sce)$hvgs
+    } else {
+      stop("{cellula::integrateSCE()} - Highly variable genes not supplied and not previously calculated.")
+    }
+    
     sce_corr <- fastMNN(sce,
                         batch = colData(sce)[,batch],
                         d = ndims,
@@ -92,13 +98,15 @@ integrateSCE = function(sce,
     
     if(verbose) cat(blue("[INT/Seurat]"), "Converting to Seurat object.\n")
     old_colnames = colnames(sce)
-    if(any(duplicated(colnames(sce)))) {
-      colnames(sce) = paste0("cell_", seq_len(ncol(sce)))
-    }
+    
+    colnames(sce) = paste0("cell_", seq_len(ncol(sce)))
+    
     nf = data.frame(old_colnames, row.names = colnames(sce))
     
     seu <- CreateSeuratObject(counts = counts(sce), meta.data = as.data.frame(colData(sce)))
-    seu <- SetAssayData(object = seu, slot = "data", new.data = logcounts(sce))
+    lc = logcounts(sce)
+    rownames(lc) = rownames(seu)
+    seu <- SetAssayData(object = seu, slot = "data", new.data = lc)
     seu[["pca"]] <- CreateDimReducObject(embeddings = reducedDim(sce, "PCA"), key = "PC_")
     
     batches =  unique(as.character((seu[[batch]][[batch]])))
@@ -123,7 +131,14 @@ integrateSCE = function(sce,
     
     if(verbose) cat(blue("[INT/Seurat]"), "Integration.\n")
     
-    seu_int <- IntegrateData(anchorset = anchors, dims = seq_len(ndims))
+    kweight = min(100, unlist(lapply(seulist, function(x) floor(0.5*(ncol(x))))))
+    
+
+    
+    if(verbose) cat(blue("[INT/Seurat]"), "    Using k.weight = ", kweight, ".\n")
+    
+    seu_int <- IntegrateData(anchorset = anchors, dims = seq_len(ndims), 
+                             k.weight = kweight)
     
     if(verbose) cat(blue("[INT/Seurat]"), "Running PCA on integrated object.\n")
     seu_int <- ScaleData(seu_int,
@@ -136,9 +151,12 @@ integrateSCE = function(sce,
                       verbose = verbose,
                       reduction.name = "spca")
     
+    seu_int = seu_int[,rownames(nf)]
+    
     if(verbose) cat(blue("[INT/Seurat]"), "Transferring to SCE object.\n")
     
-    reducedDim(sce, "PCA_Seurat") = Embeddings(seu_int, reduction = "spca")
+      
+    reducedDim(sce, "PCA_Seurat") = Embeddings(seu_int, reduction = "spca")[colnames(sce),]
     rm(seu)
     rm(seu_int)
     
@@ -201,6 +219,11 @@ integrateSCE = function(sce,
                                BPPARAM = parallel_param)
     
     reducedDim(sce, "PCA_regression") <- reducedDim(sce_corr, "corrected")
+    
+    if(verbose) cat(blue("[INT/regression]"), "Running UMAP on regression-corrected space.\n")
+    reducedDim(sce, "UMAP_regression") <- umap(reducedDim(sce, "LIGER_NORM")[,seq_len(min(ncol(reducedDim(sce, "PCA_regression")), ndims))],
+                                          n_neighbors = neighbor_n,
+                                          min_dist = 0.7)
     
   }
   return(sce)

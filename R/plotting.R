@@ -129,7 +129,7 @@ plot_UMAP <- function(sce,
 
   ## Sanity checks
   # Error prefix
-  ep = "{cellulalain::plot_UMAP()} - "
+  ep = "{cellula::plot_UMAP()} - "
 
   # Checks
   if(!is(sce, "SingleCellExperiment"))
@@ -364,7 +364,7 @@ plot_dots <- function(sce,
 
   ## Sanity checks
   # Error prefix
-  ep = "{cellulalain::plot_Dots()} - "
+  ep = "{cellula::plot_Dots()} - "
 
   # Checks
   if(!is(sce, "SingleCellExperiment"))
@@ -577,7 +577,7 @@ plot_Coldata <- function(sce,
 
 .makeViolin <- function(df, x, y, plot_cells = FALSE, color_by = NULL, color_palette = NULL) {
 
-  ep = "{cellulalain::.makeViolin() via plot_Coldata()} - "
+  ep = "{cellula::.makeViolin() via plot_Coldata()} - "
 
   # Define mappings
   aes_cd = aes(y = .data[[y]])
