@@ -37,7 +37,7 @@ downsampleCounts <- function(mat,
     }
     if(any(colSums(mat) < target)) {
       if(verbose) message("Removing cells with total count below target")
-      mat = mat[,colSums(mat) >= target]
+      mat = mat[,colSums(mat) > target]
     }
   }
 
@@ -45,13 +45,13 @@ downsampleCounts <- function(mat,
                  ceiling(seq_along(seq_len(ncol(mat)))/chunksize))
 
   ds = bplapply(chunks, function(n) {
-    ch = mat[,n]
+    ch = mat[,n,drop=FALSE]
     dsch = apply(ch, 2, function(x) {
       nz_genes = rownames(mat)[which(x > 0)]
       nz_genes = rep(nz_genes, x[nz_genes])
 
       sim = sample(nz_genes,
-                   size = target,
+                   size = min(target, length(nz_genes)),
                    replace = FALSE)
 
       genes_sampled = table(sim)[nz_genes]
