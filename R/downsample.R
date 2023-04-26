@@ -17,7 +17,9 @@
 #'
 #' @importFrom methods as
 #' @importFrom BiocParallel SerialParam bplapply
-#' @importFrom Matrix sparseVector
+#' @importFrom Matrix sparseVector colSums
+#' 
+#' @export
 
 downsampleCounts <- function(mat,
                              target = NULL,
@@ -93,6 +95,8 @@ downsampleCounts <- function(mat,
 #' @importFrom methods is
 #' @importFrom BiocParallel SerialParam bplapply
 #' @importFrom SummarizedExperiment colData
+#' 
+#' @export
 
 downsampleCells <- function(sce, sample_by, proportion = 0.1, min = 10, 
                             verbose = TRUE, BPPARAM = SerialParam()) {
