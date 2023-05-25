@@ -37,7 +37,6 @@
 #' @importFrom ggplot2 scale_y_log10 ggtitle ggsave ylab
 #' @importFrom scDblFinder scDblFinder
 #' @importFrom BiocParallel SerialParam
-#' @importFrom alamak alamak
 #'
 #' @export
 
