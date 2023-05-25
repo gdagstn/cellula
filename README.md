@@ -221,7 +221,7 @@ If another integration method has been run on the same object (e.g. Seurat integ
 
 ```{r}
 sce <- makeGraphsAndClusters(sce, k = c(0.1, 0.25, 0.5, 0.75, 1), 
-                             space = reducedDim(sce, "PCA_Seurat")
+                             space = reducedDim(sce, "PCA_Seurat"),
                              sweep_on = "clustering", method = "louvain", 
                              weighting_scheme = "jaccard", prefix = "Seurat_SNN_",
                              verbose = TRUE)
@@ -265,6 +265,9 @@ You can also use the `plot_dots()` function to plot the popular dot-plot for mar
 This function takes in a `SingleCellExperiment` object, together with a vector of genes (matched to the `rownames` of the object), and a grouping variable specified by the `group_by` argument. Additionally, dots can be ordered by hierarchical clustering on either genes, groups, or both (set `cluster_genes` and/or `cluster_groups` to `TRUE`, which is the default). Colors can also be customized via the `color_palette` argument. Finally, the user can choose whether they want genes to be columns (`format = "wide"`, the default) or rows (`format = "tall"`).
 
 ```{r}
+# Install {presto}
+remotes::install_github("immunogenomics/presto")
+
 # Quick and dirty marker calculation
 markers = presto::wilcoxauc(sce, group_by = "SNN_0.5")
 markerlist = split(markers, markers$group)
