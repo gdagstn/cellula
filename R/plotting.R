@@ -96,6 +96,9 @@ plotSilhouette <- function(sce, name) {
 #' @param label_size numeric, the size of the font for the labels. Default is 2.
 #' @param color_palette a character string containing colors to be used. Default
 #'     is NULL, meaning an automatic palette will be generated.
+#' @param trajectory a character string indicating the `metadata` slot containing
+#'     segment trajectories to be plotted. Usually either 
+#'     `"Slingshot_embedded_curves"` or `"Monocle_embedded_curves`.  
 #' @param rescale logical, should coordinates be rescaled between 0 and 1? Default is TRUE.
 #'
 #' @return a ggplot object showing the UMAP coordinates colored, shaped and
@@ -125,6 +128,7 @@ plot_UMAP <- function(sce,
                       point_size = 0.7,
                       label_size = 2,
                       color_palette = NULL,
+                      trajectory = NULL,
                       rescale = TRUE) {
 
   ## Sanity checks
@@ -317,7 +321,33 @@ plot_UMAP <- function(sce,
   if(!is.null(group_by)) {
     p = p + facet_wrap(vars(!!sym(group_by)))
   }
-
+  
+  if(!is.null(trajectory)) {
+    trj = metadata(sce)[[trajectory]]
+    if(rescale) {
+      trj$x0 = rescale(trj$x0, 
+                        from = range(orig_range$x),
+                        to = range(udf$x))
+      trj$x1 = rescale(trj$x1, 
+                        from = range(orig_range$x),
+                        to = range(udf$x))
+      
+      trj$y0 = rescale(trj$y0,
+                        from = range(orig_range$y),
+                        to = range(udf$y))
+      
+      trj$y1 = rescale(trj$y1,
+                       from = range(orig_range$y),
+                       to = range(udf$y))
+    }
+    p = p + geom_segment(data = trj, 
+                         mapping = aes(x = .data[["x0"]],
+                                       xend = .data[["x1"]],
+                                       y = .data[["y0"]],
+                                       yend = .data[["y1"]]),
+                         inherit.aes = FALSE
+    )
+  }
   return(p)
 }
 

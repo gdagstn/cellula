@@ -4,7 +4,7 @@
 \alias{makeMetacells}
 \title{Make metacells}
 \usage{
-makeMetacells(sce, w = 10, group = NULL, space = "PCA", ndims = 20)
+makeMetacells(sce, w = 10, group = NULL, dr = "PCA", ndims = 20)
 }
 \arguments{
 \item{sce}{a SingleCellExperiment object}
@@ -15,7 +15,7 @@ is 10.}
 \item{group}{character, name of the `colData` column in which cells should be 
 grouped separately. Default is NULL.}
 
-\item{space}{character, name of the `reducedDim` slot in which k-means clustering
+\item{dr}{character, name of the `reducedDim` slot in which k-means clustering
 will be performed. Default is "PCA".}
 
 \item{ndims}{numeric, the number of dimensions of the space in which clustering

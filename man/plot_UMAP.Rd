@@ -14,6 +14,7 @@ plot_UMAP(
   point_size = 0.7,
   label_size = 2,
   color_palette = NULL,
+  trajectory = NULL,
   rescale = TRUE
 )
 }
@@ -45,6 +46,10 @@ for categorical variables.}
 
 \item{color_palette}{a character string containing colors to be used. Default
 is NULL, meaning an automatic palette will be generated.}
+
+\item{trajectory}{a character string indicating the `metadata` slot containing
+segment trajectories to be plotted. Usually either 
+`"Slingshot_embedded_curves"` or `"Monocle_embedded_curves`.}
 
 \item{rescale}{logical, should coordinates be rescaled between 0 and 1? Default is TRUE.}
 }

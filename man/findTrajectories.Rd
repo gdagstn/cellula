@@ -6,7 +6,7 @@
 \usage{
 findTrajectories(
   sce,
-  space = "PCA",
+  dr = "PCA",
   clusters,
   method = "slingshot",
   ndims = 20,
@@ -14,8 +14,10 @@ findTrajectories(
   start = "auto",
   omega = TRUE,
   omega_scale = 1.5,
+  invert = FALSE,
   do_de = FALSE,
   batch_de = NULL,
+  add_metadata = TRUE,
   verbose = FALSE,
   BPPARAM = SerialParam()
 )
@@ -23,16 +25,18 @@ findTrajectories(
 \arguments{
 \item{sce}{a `SingleCellExperiment` object}
 
-\item{space}{character, the name of the `reducedDim` slot to use for trajectory
+\item{dr}{character, the name of the `reducedDim` slot to use for trajectory
 estimation. Default is "PCA".}
 
 \item{clusters}{character, the name of the `colData` column with cluster label
 indication.}
 
-\item{method}{character, the method for estimation. Currently only "slingshot".}
+\item{method}{character, the method for estimation. Can be either `"slingshot"`
+or `"monocle"`. This will result in differences in the resulting object,
+see Details for more information.}
 
-\item{ndims}{numeric, the number of dimensions to use in `space`. If the number
-of columns in `space` is < `ndims`, it will be used instead.}
+\item{ndims}{numeric, the number of dimensions to use in `dr`. If the number
+of columns in `dr` is < `ndims`, it will be used instead.}
 
 \item{dr_embed}{character, the name of the `reducedDim` slot where curves should
 be embedded for plotting. Default is NULL, meaning no embedding will be
@@ -59,8 +63,76 @@ blocking factor in the differential expression analysis. Default is NULL.}
 \item{BPPARAM}{a `BiocParallelParam` object. Default is NULL.}
 }
 \value{
-a SingleCellExperiment object with slingshot outputs
+a SingleCellExperiment object with pseudotime results
 }
 \description{
 Finds pseudo-temporal trajectories in a reduced dimensional space
+}
+\details{
+This function wraps calls to two popular trajectory estimation methods, i.e.
+\code{slingshot} and \code{monocle3}. Most parameters are shared, and 
+implementation is simplified for now (few parameters can be tweaked). In the 
+future there will be more freedom to tweak parameters, although it bears
+repeating that these are wrappers aimed at simplifying procedures.
+
+For all methods the user is asked to define the dimensionality reduction slot 
+via `dr`, and the number of dimensions via `ndims`. The user is also asked to
+provide a starting cluster; if the choice is left to `auto`, the function will
+use the entropy-based method as implemented in \code{TSCAN} to select maximum-
+entropy cell clusters as starting points. Finally, both methods have the ability
+to embed principal curves into a 2D representation of choice, albeit with 
+slightly different results. 
+
+The \code{slingshot} implementation allows the user to choose whether or not 
+to use the `omega` method to separate disjointed trajectories, and to decide 
+the `omega_scale`. Optionally, the user can run lineage-dependent differential
+expression via \code{TSCAN::testPseudotime()} setting `do_de` to `TRUE`. 
+
+The final result is a `SingleCellExperiment` object with 
+some additional fields:
+\itemize{
+ \item{"slingPseudotime_N"}{`colData` columns where N is any number >= 1. 
+     These contain the pseudotemporal ordering of cells in a lineage, with NA
+     being assigned to cells that do not belong to the lineage.}
+ \item{"Slingshot_embedded_curves"}{`metadata` list element containing segment 
+     coordinates used to plot trajectories in 2D.}
+ \item{"Slingshot_lineages"}{`metadata` list element containing lineages (as 
+     orderings of labels) used for metromap plotting.}   
+ \item{"Slingshot_MST"}{`metadata` list element containing the MST. Only
+     added if `add_metadata` is `TRUE`.}
+ \item{"Slingshot_curves"}{`metadata` list element containing list of principal
+     curve coordinates. Only added if `add_metadata` is `TRUE`.} 
+ \item{"Slingshot_weights"}{`metadata` list element containing a cell x lineage
+     matrix of lineage-associated weights. Only added if `add_metadata` is 
+     `TRUE`.}
+ \item{"Slingshot_params"}{`metadata` list element containing parameters for
+     the \code{slingshot} call. Only added if `add_metadata` is `TRUE`.}
+ \item{"pseudotime_DE"}{`metadata` list element containing a list of DE results
+     per lineage. Each result is a `DataFrame` object with `logFC`, `p.value`
+     and `FDR` values for each gene. Only added if `do_de` is set to `TRUE}         
+}
+
+The \code{monocle3} implementation is rather simplified, with an important 
+difference: it allows users to specify any reduced dimension rather than
+just UMAP. This is in keeping with the evidence that UMAP reductions greatly
+distorted. When using PCA as a space for trajectory inference, the 2D 
+embedding of the Monocle trajectories is re-calculated by picking the nearest
+neighbors in PCA to the "waypoints" calculated by the algorithm. This can 
+result in slightly more convoluted trajectories when visualized in UMAP, which
+is attributable to the distortion.
+
+The final result is a `SingleCellExperiment` object with 
+some additional fields:
+\itemize{
+ \item{"monoclePseudotime"}{`colData` column with a single pseudotime value
+    for every cell.}
+ \item{"Monocle_embedded_curves"}{`metadata` list element containing segment 
+     coordinates used to plot trajectories in 2D.}  
+ \item{"Monocle_principal_graph"}{`metadata` list element containing the 
+     principal graph coordinates. Only added if `add_metadata` is set to 
+     `TRUE`.} 
+ \item{"Monocle_principal_graph_aux"}{`metadata` list element containing 
+     all the other objects used by \code{monocle3} for trajectory inference.
+     Only added if `add_metadata` is set to `TRUE`}                
+}
 }

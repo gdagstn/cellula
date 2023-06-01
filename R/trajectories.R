@@ -3,13 +3,15 @@
 #' Finds pseudo-temporal trajectories in a reduced dimensional space
 #'
 #' @param sce a `SingleCellExperiment` object
-#' @param space character, the name of the `reducedDim` slot to use for trajectory
+#' @param dr character, the name of the `reducedDim` slot to use for trajectory
 #'     estimation. Default is "PCA".
 #' @param clusters character, the name of the `colData` column with cluster label
 #'     indication.
-#' @param method character, the method for estimation. Currently only "slingshot".
-#' @param ndims numeric, the number of dimensions to use in `space`. If the number
-#'     of columns in `space` is < `ndims`, it will be used instead.
+#' @param method character, the method for estimation. Can be either `"slingshot"`
+#'     or `"monocle"`. This will result in differences in the resulting object,
+#'     see Details for more information.
+#' @param ndims numeric, the number of dimensions to use in `dr`. If the number
+#'     of columns in `dr` is < `ndims`, it will be used instead.
 #' @param dr_embed character, the name of the `reducedDim` slot where curves should
 #'     be embedded for plotting. Default is NULL, meaning no embedding will be
 #'     performed.
@@ -27,22 +29,92 @@
 #' @param verbose logical, should progress messages be printed? Default is FALSE.    
 #' @param BPPARAM a `BiocParallelParam` object. Default is NULL.
 #'
-#' @importFrom slingshot slingshot slingLineages slingCurves embedCurves
-#' @importFrom TSCAN testPseudotime perCellEntropy
+
+#' @importFrom TSCAN perCellEntropy
 #' @importFrom SummarizedExperiment colData
 #' @importFrom SingleCellExperiment reducedDim
 #'
-#' @returns a SingleCellExperiment object with slingshot outputs
-#'
+#' @returns a SingleCellExperiment object with pseudotime results
+#' 
+#' @details
+#' This function wraps calls to two popular trajectory estimation methods, i.e.
+#' \code{slingshot} and \code{monocle3}. Most parameters are shared, and 
+#' implementation is simplified for now (few parameters can be tweaked). In the 
+#' future there will be more freedom to tweak parameters, although it bears
+#' repeating that these are wrappers aimed at simplifying procedures.
+#' 
+#' For all methods the user is asked to define the dimensionality reduction slot 
+#' via `dr`, and the number of dimensions via `ndims`. The user is also asked to
+#' provide a starting cluster; if the choice is left to `auto`, the function will
+#' use the entropy-based method as implemented in \code{TSCAN} to select maximum-
+#' entropy cell clusters as starting points. Finally, both methods have the ability
+#' to embed principal curves into a 2D representation of choice, albeit with 
+#' slightly different results. 
+#' 
+#' The \code{slingshot} implementation allows the user to choose whether or not 
+#' to use the `omega` method to separate disjointed trajectories, and to decide 
+#' the `omega_scale`. Optionally, the user can run lineage-dependent differential
+#' expression via \code{TSCAN::testPseudotime()} setting `do_de` to `TRUE`. 
+#' 
+#' The final result is a `SingleCellExperiment` object with 
+#' some additional fields:
+#' \itemize{
+#'  \item{"slingPseudotime_N"}{`colData` columns where N is any number >= 1. 
+#'      These contain the pseudotemporal ordering of cells in a lineage, with NA
+#'      being assigned to cells that do not belong to the lineage.}
+#'  \item{"Slingshot_embedded_curves"}{`metadata` list element containing segment 
+#'      coordinates used to plot trajectories in 2D.}
+#'  \item{"Slingshot_lineages"}{`metadata` list element containing lineages (as 
+#'      orderings of labels) used for metromap plotting.}   
+#'  \item{"Slingshot_MST"}{`metadata` list element containing the MST. Only
+#'      added if `add_metadata` is `TRUE`.}
+#'  \item{"Slingshot_curves"}{`metadata` list element containing list of principal
+#'      curve coordinates. Only added if `add_metadata` is `TRUE`.} 
+#'  \item{"Slingshot_weights"}{`metadata` list element containing a cell x lineage
+#'      matrix of lineage-associated weights. Only added if `add_metadata` is 
+#'      `TRUE`.}
+#'  \item{"Slingshot_params"}{`metadata` list element containing parameters for
+#'      the \code{slingshot} call. Only added if `add_metadata` is `TRUE`.}
+#'  \item{"pseudotime_DE"}{`metadata` list element containing a list of DE results
+#'      per lineage. Each result is a `DataFrame` object with `logFC`, `p.value`
+#'      and `FDR` values for each gene. Only added if `do_de` is set to `TRUE}         
+#' }
+#' 
+#' The \code{monocle3} implementation is rather simplified, with an important 
+#' difference: it allows users to specify any reduced dimension rather than
+#' just UMAP. This is in keeping with the evidence that UMAP reductions greatly
+#' distorted. When using PCA as a space for trajectory inference, the 2D 
+#' embedding of the Monocle trajectories is re-calculated by picking the nearest
+#' neighbors in PCA to the "waypoints" calculated by the algorithm. This can 
+#' result in slightly more convoluted trajectories when visualized in UMAP, which
+#' is attributable to the distortion.
+#' 
+#' The final result is a `SingleCellExperiment` object with 
+#' some additional fields:
+#' \itemize{
+#'  \item{"monoclePseudotime"}{`colData` column with a single pseudotime value
+#'     for every cell.}
+#'  \item{"Monocle_embedded_curves"}{`metadata` list element containing segment 
+#'      coordinates used to plot trajectories in 2D.}  
+#'  \item{"Monocle_principal_graph"}{`metadata` list element containing the 
+#'      principal graph coordinates. Only added if `add_metadata` is set to 
+#'      `TRUE`.} 
+#'  \item{"Monocle_principal_graph_aux"}{`metadata` list element containing 
+#'      all the other objects used by \code{monocle3} for trajectory inference.
+#'      Only added if `add_metadata` is set to `TRUE`}                
+#' }
+#' 
 #' @export
 
-findTrajectories <- function(sce, space = "PCA", clusters, method = "slingshot",
+findTrajectories <- function(sce, dr = "PCA", clusters, method = "slingshot",
                              ndims = 20, dr_embed = NULL, start = "auto", omega = TRUE,
-                             omega_scale = 1.5, do_de = FALSE, batch_de = NULL,
-                             verbose = FALSE, BPPARAM = SerialParam()) {
+                             omega_scale = 1.5, invert = FALSE, do_de = FALSE, batch_de = NULL,
+                             add_metadata = TRUE, verbose = FALSE, 
+                             BPPARAM = SerialParam()) {
 
-  space = reducedDim(sce, space)[,seq_len(min(c(ndims, ncol(reducedDim(sce, space)))))]
-
+  #space = reducedDim(sce, dr)[,seq_len(min(c(ndims, ncol(reducedDim(sce, dr)))))]
+  if(!(start %in% colData(sce)[,clusters])) stop("Could not find the start cluster!")
+    
   if(start == "auto") {
     if(!any(colnames(colData(sce)) == "entropy"))
       if(verbose) cat("Calculating per-cell entropy\n")
@@ -52,43 +124,231 @@ findTrajectories <- function(sce, space = "PCA", clusters, method = "slingshot",
   }
 
   if(method == "slingshot"){
-    if(verbose) cat("Finding trajectories\n")
-     sce <- slingshot(sce,
-                      reducedDim = space,
-                      clusterLabels = clusters,
-                      start.clus = start,
-                      omega = omega,
-                      omega_scale = omega_scale)
-
-     metadata(sce)[["Slingshot_lineages"]] = slingLineages(sce)
-
-    if(!is.null(dr_embed)) {
-      if(verbose) cat("Embedding curves\n")
-      metadata(sce)[["Slingshot_embedded_curves"]] = lapply(slingCurves(embedCurves(sce, newDimRed = dr_embed)),
-                                                            function(x) x$s)
-     }
-
-  if(do_de) {
-    if(verbose) cat("Calculating DE along lineages\n")
-    if(!is.null(batch_de)) batch = factor(colData(sce)[,batch_de]) else batch = NULL
-
-    sling_colnames = paste0("slingPseudotime_", seq_along(slingLineages(sce)))
     
-    sling_tests <- lapply(sling_colnames, function(x)
-      testPseudotime(assay(sce, "logcounts"),
-                            pseudotime = colData(sce)[,x],
-                            block = batch,
-                            BPPARAM = BPPARAM)
-      )
-
-      names(sling_tests) <- names(slingLineages(sce))
-
-      metadata(sce)$pseudotime_DE = sling_tests
-    }
+    sce = .getSlingshotTrajectories(sce = sce, dr = dr, ndims = ndims,
+                                    clusters = clusters, start = start, 
+                                    dr_embed = dr_embed, omega = omega, 
+                                    omega_scale = omega_scale, do_de = do_de,
+                                    batch_de = batch_de, verbose = verbose)
+    
+  } else if(method == "monocle") {
+    
+    sce = .getMonocleTrajectories(sce = sce, dr = dr, ndims = ndims,
+                                  clusters = clusters, start = start, 
+                                  dr_embed = dr_embed, invert = invert,
+                                  add_metadata = add_metadata, verbose = verbose)
   }
 
   return(sce)
 }
+
+
+#' @importFrom SummarizedExperiment colData rowData
+#' @importFrom SingleCellExperiment reducedDim
+#' @importFrom monocle3 new_cell_data_set learn_graph principal_graph order_cells
+#' @importFrom igraph V as_data_frame
+#' @importFrom BiocNeighbors queryKNN
+#' 
+#' @noRd
+
+.getMonocleTrajectories <- function(sce, 
+                                    dr = "PCA", 
+                                    ndims = 20, 
+                                    clusters, 
+                                    start,
+                                    dr_embed = "UMAP",
+                                    invert = FALSE,
+                                    add_metadata = TRUE,
+                                    verbose = TRUE){
+  
+  rd = rowData(sce)
+  if(!("Symbol" %in% colnames(rd))) rd$Symbol = rownames(rd)
+  rd$gene_short_name = rd$Symbol
+  
+  if(verbose) message(paste0(blue("[TRAJ/Monocle3] "),"Creating CDS object"))
+  
+  cds <- new_cell_data_set(
+    assay(sce, "counts"),
+    cell_metadata = colData(sce),
+    gene_metadata = rd
+  )
+  
+  # Shoehorn any type of space into the UMAP slot
+  reducedDim(cds, "UMAP") <- reducedDim(sce, dr)[,seq_len(ndims)]
+  
+  # only one partition - optional?
+  recreate.partition <- c(rep(1, length(cds@colData@rownames)))
+  names(recreate.partition) <- cds@colData@rownames
+  recreate.partition <- as.factor(recreate.partition)
+  cds@clusters@listData[["UMAP"]][["partitions"]] <- recreate.partition
+  
+  if(verbose) message(paste0(blue("[TRAJ/Monocle3] "),"Adding cluster labels"))
+  
+  # Add cluster labels
+  list_cluster = colData(sce)[, clusters, drop = TRUE]
+  names(list_cluster) <- colnames(sce)
+  cds@clusters@listData[["UMAP"]][["clusters"]] <- list_cluster
+  
+  # Could be a space-holder, but essentially fills out louvain parameters
+  
+  cds@clusters@listData[["UMAP"]][["louvain_res"]] <- "NA"
+  
+  if(verbose) message(paste0(blue("[TRAJ/Monocle3] "),"Learning graph"))
+  
+  cds <- learn_graph(cds, use_partition = FALSE)
+  
+  # Set root cluster
+  if(verbose) message(paste0(blue("[TRAJ/Monocle3] "),"Finding start node"))
+  
+  root_cells <- as.vector(
+    rownames(colData(sce))[which(colData(sce)[,clusters] == start)]
+  )
+  
+  # Find starting vertex
+  closest_vertex <- cds@principal_graph_aux[["UMAP"]]$pr_graph_cell_proj_closest_vertex
+  rn = as.numeric(names(which.max(table(closest_vertex[root_cells,]))))
+  root_pr_nodes <- V(principal_graph(cds)[["UMAP"]])$name[rn]
+  
+  if(verbose) message(paste0(blue("[TRAJ/Monocle3] "),"Ordering cells"))
+  
+  cds <- order_cells( 
+    cds, root_pr_nodes=root_pr_nodes)
+  
+  traj.coord <- cds@principal_graph_aux@listData[["UMAP"]][["pseudotime"]]
+  
+  if (invert){
+    PTmax <- max(traj.coord)
+    traj.coord <- -1 * (traj.coord - PTmax)
+    cds@principal_graph_aux@listData[["UMAP"]][["pseudotime"]] <- traj.coord
+  } 
+  
+  colData(sce)$monoclePseudotime = traj.coord
+  
+  # Embedding waypoint curves in 2D. We do this because we allow users to run 
+  # Monocle3 in an arbitrary space that is not UMAP
+  if(!is.null(dr_embed)) {
+    if(verbose) message(paste0(blue("[TRAJ/Monocle3] "),"Embedding in 2D"))
+    
+    wp_coords = t(cds@principal_graph_aux$UMAP$dp_mst)
+    sp_coords = reducedDim(sce, space)[,seq_len(ndims)]
+    
+    nns = queryKNN(query = wp_coords,
+                   X =  sp_coords,
+                   k = 1)$index[,1]
+    
+    matched = data.frame("wp" = rownames(wp_coords), 
+                         "sp" = rownames(sp_coords)[nns],
+                         row.names = rownames(wp_coords))
+    
+    names(nns) = matched$sp
+    wpsp_coords = reducedDim(sce, dr_embed)[nns,1:2]
+    rownames(wpsp_coords) = rownames(wp_coords)
+    
+    segs = as_data_frame(cds@principal_graph$UMAP)
+    
+    segs$x0 = wpsp_coords[segs$from,1]
+    segs$y0 = wpsp_coords[segs$from,2]
+    segs$x1 = wpsp_coords[segs$to,1]
+    segs$y1 = wpsp_coords[segs$to,2]
+    
+    segs$from = matched[segs$from, "sp"]
+    segs$to = matched[segs$to, "sp"]
+    
+    metadata(sce)[["Monocle_embedded_curves"]] = segs
+  }
+  
+  if(add_metadata) {
+    if(verbose) message(paste0(blue("[TRAJ/Monocle3] "), "Adding metadata"))
+    metadata(sce)[["Monocle_principal_graph"]] = cds@principal_graph$UMAP
+    metadata(sce)[["Monocle_principal_graph_aux"]] = cds@principal_graph_aux$UMAP
+  }
+  
+  if(verbose) message(paste0(blue("[TRAJ/Monocle3] "),"Done."))
+  
+  sce
+}
+
+#' @importFrom slingshot slingshot slingLineages slingCurves embedCurves
+#' @importFrom SummarizedExperiment colData
+#' @importFrom SingleCellExperiment reducedDim
+#' @importFrom TSCAN testPseudotime
+#' 
+#' @noRd
+
+.getSlingshotTrajectories <- function(sce, dr = "PCA", 
+                                      ndims = 20, 
+                                      clusters, 
+                                      dr_embed = NULL,
+                                      start = "auto",
+                                      omega = TRUE,
+                                      omega_scale = 1.5,
+                                      do_de = FALSE,
+                                      batch_de = NULL,
+                                      add_metadata = TRUE,
+                                      verbose = FALSE,
+                                      BPPARAM = SerialParam()){
+  
+  if(verbose) message(paste0(blue("[TRAJ/Slingshot] "),"Finding trajectories"))
+  
+  sce <- slingshot(sce,
+                   reducedDim = dr,
+                   clusterLabels = clusters,
+                   start.clus = start,
+                   omega = omega,
+                   omega_scale = omega_scale)
+  
+  metadata(sce)[["Slingshot_lineages"]] = slingLineages(sce)
+  
+  if(!is.null(dr_embed)) {
+    if(verbose) message(paste0(blue("[TRAJ/Slingshot] "),"Embedding curves"))
+        ap = max(ncol(sce), 1000)
+        embedded = lapply(slingCurves(embedCurves(sce, newDimRed = dr_embed, 
+                                                  approx_points = ap)),
+                          function(x) x$s)
+        
+        embedded = lapply(embedded, function(x) {
+          data.frame(x0 = x[seq_len(ap-1),1], 
+                     y0 = x[seq_len(ap-1),2], 
+                     x1 = x[2:ap,1], 
+                     y1 = x[2:ap,2])
+                  })
+        
+        embedded = do.call(rbind, embedded)
+        
+        metadata(sce)[["Slingshot_embedded_curves"]] = embedded
+  }
+  
+  if(do_de) {
+    if(verbose) message(paste0(blue("[TRAJ/Slingshot] "),"Calculating DE along lineages"))
+    if(!is.null(batch_de)) batch = factor(colData(sce)[,batch_de]) else batch = NULL
+    
+    sling_colnames = paste0("slingPseudotime_", seq_along(slingLineages(sce)))
+    
+    sling_tests <- lapply(sling_colnames, function(x)
+      testPseudotime(assay(sce, "logcounts"),
+                     pseudotime = colData(sce)[,x],
+                     block = batch,
+                     BPPARAM = BPPARAM)
+    )
+    
+    names(sling_tests) <- names(slingLineages(sce))
+    
+    metadata(sce)[["pseudotime_DE"]] = sling_tests
+  }
+  
+  if(add_metadata) {
+    if(verbose) message(paste0(blue("[TRAJ/Slingshot] "),"Adding metadata"))
+    metadata(sce)[["Slingshot_MST"]] = metadata(sce$slingshot)[["mst"]]
+    metadata(sce)[["Slingshot_curves"]] = metadata(sce$slingshot)[["curves"]]
+    metadata(sce)[["Slingshot_weights"]] = assay(sce$slingshot, "weights")
+    metadata(sce)[["Slingshot_params"]] = metadata(sce$slingshot)[["slingParams"]]
+  }
+  
+  sce$slingshot <- NULL
+  
+  sce
+}
+
 
 #' Make metacells
 #' 
@@ -99,7 +359,7 @@ findTrajectories <- function(sce, space = "PCA", clusters, method = "slingshot",
 #'     is 10. 
 #' @param group character, name of the `colData` column in which cells should be 
 #'     grouped separately. Default is NULL.
-#' @param space character, name of the `reducedDim` slot in which k-means clustering
+#' @param dr character, name of the `reducedDim` slot in which k-means clustering
 #'     will be performed. Default is "PCA". 
 #' @param ndims numeric, the number of dimensions of the space in which clustering
 #'     will be performed. Default is 20.     
@@ -112,13 +372,13 @@ findTrajectories <- function(sce, space = "PCA", clusters, method = "slingshot",
 #' 
 #' @export
 
-makeMetacells  <- function(sce, w = 10, group = NULL, space = "PCA", ndims = 20) {
+makeMetacells  <- function(sce, w = 10, group = NULL, dr = "PCA", ndims = 20) {
 
   if(!is.null(group)) {
     gv = as.character(unique(colData(sce)[,group]))
     clustl = lapply(gv, function(x) {
       s = sce[,colData(sce)[,group] == x]
-      spc = reducedDim(s, space)[,seq_len(ndims)]
+      spc = reducedDim(s, dr)[,seq_len(ndims)]
       clust = kmeans(spc, centers = floor(ncol(s)/w), iter.max = 50)
       memb = paste0(x, "_", clust$cluster)
       names(memb) = colnames(s)
@@ -133,8 +393,8 @@ makeMetacells  <- function(sce, w = 10, group = NULL, space = "PCA", ndims = 20)
     ref = ref[!duplicated(ref),]
     rownames(ref) = ref$membership
   } else {
-    space = reducedDim(sce, space)
-    clust = kmeans(space, centers = floor(ncol(sce)/w), iter.max = 50)
+    dr = reducedDim(sce, dr)
+    clust = kmeans(dr, centers = floor(ncol(sce)/w), iter.max = 50)
     memberships = clust$cluster
     names(memberships) = colnames(sce)
   }
