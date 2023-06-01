@@ -230,7 +230,7 @@ findTrajectories <- function(sce, dr = "PCA", clusters, method = "slingshot",
     if(verbose) message(paste0(blue("[TRAJ/Monocle3] "),"Embedding in 2D"))
     
     wp_coords = t(cds@principal_graph_aux$UMAP$dp_mst)
-    sp_coords = reducedDim(sce, space)[,seq_len(ndims)]
+    sp_coords = reducedDim(sce, dr)[,seq_len(ndims)]
     
     nns = queryKNN(query = wp_coords,
                    X =  sp_coords,
