@@ -107,6 +107,7 @@ plotSilhouette <- function(sce, name) {
 #' @importFrom SingleCellExperiment reducedDimNames reducedDim
 #' @importFrom SummarizedExperiment colData
 #' @importFrom colorspace sequential_hcl
+#' @importFrom scales rescale
 #' @importFrom qualpalr qualpal
 #' @importFrom ggplot2 ggplot aes scale_colour_gradientn guides geom_point
 #' @importFrom ggplot2 guide_legend .data theme_void geom_segment geom_text coord_fixed
