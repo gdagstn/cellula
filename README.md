@@ -73,7 +73,7 @@ dependencies. You can install them as follows:
 ```{r}
 BiocManager::install(c("scran", "scuttle", "bluster", "scater", "batchelor", "DropletUtils", 
                       "AUCell", "harmony", "GSVA", "gdagstn/oveRlay", "UCell", 
-                      "slingshot", "TSCAN"))
+                      "slingshot", "TSCAN", "cole-trapnell-lab/monocle3""))
 ```
 
 # Usage
