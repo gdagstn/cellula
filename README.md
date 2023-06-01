@@ -389,25 +389,40 @@ The `downsampleCells()` function returns a `SingleCellExperiment` object with fe
 
 # Inferring trajectories
 
-At the time of writing `cellula` only implements a wrapper around the `slingshot` method[[17]](#17) for pseudotemporal trajectory inference, and the `testPseudotime()` method from `TSCAN`[[18]](#18) for differential expression along a trajectory. 
+At the time of writing `cellula` only implements a wrapper around the `slingshot` method[[17]](#17) and the `monocle3` method [[18]](#18) for pseudotemporal trajectory inference, and the `testPseudotime()` method from `TSCAN`[[19]](#19) for differential expression along a trajectory. More trajectory inference and differential expression methods will be implemented in the future.
 
-The `findTrajectories()` function takes a `SingleCellExperiment` object as input, and requires the user to specify the cluster label which will be used as an input to the MST creation in `slingshot`. 
+The `monocle3` method has been originally developed to work on 2D embeddings such as UMAP, but given the distortion introduced by these embeddings this function allows users to input any embedding (such as PCA). Moreover, the `monocle3` method originally allows partitions to be specified. In the current implementation partitions have been disabled.
+
+The `findTrajectories()` function takes a `SingleCellExperiment` object as input, and requires the user to specify the method (one of `"slingshot"` or `"monocle"`), the cluster label which will be used as an input to the MST creation in `slingshot`, or to identify the starting node in `monocle3`. 
 
 Other important parameters are: 
-- `space` - the reduced dimensional reduction in which trajectories will be estimated (default is "PCA") 
+- `dr` - the reduced dimensional reduction in which trajectories will be estimated (default is "PCA") 
 - `start` - the starting cluster for trajectory estimation, defaulting to "auto" for an entropy-based method
-- `omega` - whether or not to use a synthetic cluster to estimate disjointed trajectories, as detailed in `?slingshot::getLineages`
+- `omega` - `slingshot` only. Whether or not to use a synthetic cluster to estimate disjointed trajectories, as detailed in `?slingshot::getLineages`
+- `invert` - `monocle` only. Whether or not to invert the direction of the pseudotime vector.
+- `dr_embed` - an additional 2D dimensional reduction slot in which to embed the trajectories (`slingshot` curves or `monocle` principal graph). Yields slightly different results according to the method.
 - `doDE` - whether or not to perform differential expression on every trajectory. 
 
-The output is the same object used in the input, with some additional fields:
+The output is the same object used in the input, with some additional fields.
 
-- the `colData` slot will contain a column containing the `slingshot` object, plus the `slingPseudotime_N` pseudotime values for each lineage, where N is the number of the lineage. This is the normal output of `slingshot`. 
-- the `metadata` slot will contain three new elements:
+- the `colData` slot will contain a column containing the `slingPseudotime_N` pseudotime values for each lineage, where N is the number of the lineage (`slingshot`) or just a column named `pseudotime` with pseudotime values for each cell (`monocle`).
+- the `metadata` slot will several new elements depending on the method. 
+
+  For `slingshot`:
   - `Slingshot_lineages`: the output of `slingLineages()`, i.e. the result of the MST construction 
-  - `Slingshot_embedded_curves`: the output of `embedCurves()`, i.e. the projection of low-dimensional principal curves onto a 2D embedding such as UMAP. Optional and only created if the parameter `dr_embed` is set to TRUE.
+  - `Slingshot_embedded_curves`: the output of `embedCurves()`, i.e. the projection of low-dimensional principal curves onto a 2D embedding such as UMAP. Optional and only created if the parameter `dr_embed` is an available dimensionality reduction slot in the object.
+  - `Slingshot_MST`: the MST used to determine lineages by `slingshot`. Optional and only added if the parameter `add_metadata` is set to TRUE.
+   - `Slingshot_curves`: the principal curves constructed by `slingshot`. Optional and only added if the parameter `add_metadata` is set to TRUE.
+    - `Slingshot_weights`: the weights assigned per cell within each lineage by `slingshot`. Optional and only added if the parameter `add_metadata` is set to TRUE.
+     - `Slingshot_params`: the params used in the `slingshot` call. Optional and only added if the parameter `add_metadata` is set to TRUE.
   - `pseudotime_DE`: the results of the differential expression test. This is a list where each lineage is tested separately. Optional and only created if `doDE` is set to TRUE.
   
-In this example we use the `Harmony`-integrated space ("PCA_Harmony"), the SNN_0.5 clustering and the starting cluster **8**:
+  For `monocle`:
+  - `Monocle_embedded_curves`: the projection of the nodes of the principal graph to their nearest neighbor in 2D. Optional and only created if the parameter `dr_embed` is an available dimensionality reduction slot in the object.
+  - `Monocle_principal_graph`: the `igraph` object with the principal graph.
+  - `Moncole_principal_graph_aux`: the rest of the `CellDataSet` object with additional information on the principal graph.
+  
+In this example we download a dataset that captures early haematopoietic differentiation , the  the `Harmony`-integrated space ("PCA_Harmony"), the SNN_0.5 clustering and the starting cluster **8**:
 
 ```{r}
 sce <- findTrajectories(sce, space = "PCA_Harmony", 
@@ -464,5 +479,7 @@ sce_meta <- makeMetacells(sce, group = "SNN_0.5", space = "PCA_Harmony", w = 10)
 
 <a id="17">[17]</a> Street et al. BMC Genomics. 2018 Jun 19;19(1): 477.
 
-<a id="18">[18]</a> Ji and Ji https://www.bioconductor.org/packages/release/bioc/html/TSCAN.html
+<a id="18">[18]</a> Cao et al. Nature. 2019 Feb;566(7745):496-502
+
+<a id="19">[19]</a> Ji and Ji https://www.bioconductor.org/packages/release/bioc/html/TSCAN.html
 
