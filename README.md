@@ -675,15 +675,15 @@ sce2 = findTrajectories(sce2, dr = "PCA",
 Now we can visualize results on the UMAP since we specified a `dr_embed`
 parameter. Notice how `slingshot` will identify different pseudotimes
 (one per lineage) while `monocle3` will identify a single pseudotime.
-Moreover, the `plot_UMAP()` function can include a `trajectories`
+Moreover, the `plot_UMAP()` function can include a `trajectory`
 argument which points to the name of the element in the `metadata` slot
 containing segments to draw trajectories.
 
 ```{r}
  plot_UMAP(sce2, umap_slot = "UMAP", color_by = "slingPseudotime_1", 
-           label_by = "SNN_0.64", trajectories = "Slingshot_embedded_curves")
+           label_by = "SNN_0.64", trajectory = "Slingshot_embedded_curves")
  plot_UMAP(sce2, umap_slot = "UMAP", color_by = "monoclePseudotime", 
-           label_by = "SNN_0.64", trajectories = "Monocle_embedded_curves")
+           label_by = "SNN_0.64", trajectory = "Monocle_embedded_curves")
                                  
 ```
 

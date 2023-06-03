@@ -97,7 +97,7 @@ plotSilhouette <- function(sce, name) {
 #'     is \code{NULL}, meaning an automatic palette will be generated.
 #' @param trajectory a character string indicating the `metadata` slot containing
 #'     segment trajectories to be plotted. Usually either 
-#'     \code{"Slingshot_embedded_curves"} or \code{"Monocle_embedded_curves}.  
+#'     \code{"Slingshot_embedded_curves"} or \code{"Monocle_embedded_curves"}.  
 #' @param rescale logical, should coordinates be rescaled between 0 and 1? Default is TRUE.
 #'
 #' @return a ggplot object showing the UMAP coordinates colored, shaped and
