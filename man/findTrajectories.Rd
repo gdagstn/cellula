@@ -12,6 +12,7 @@ findTrajectories(
   ndims = 20,
   dr_embed = NULL,
   start = "auto",
+  Monocle_lg_control = NULL,
   omega = TRUE,
   omega_scale = 1.5,
   invert = FALSE,
@@ -39,12 +40,18 @@ see Details for more information.}
 of columns in `dr` is < `ndims`, it will be used instead.}
 
 \item{dr_embed}{character, the name of the `reducedDim` slot where curves should
-be embedded for plotting. Default is NULL, meaning no embedding will be
-performed.}
+be embedded for plotting. If `method = "monocle"` and `dr_embed = "FR"`, 
+an alternative 2D embedding for the `monocle` trajectories is created (see
+Details).
+Default is NULL, meaning no embedding will be performed.}
 
 \item{start}{character, the name of the cluster to be used as starting point.
 Default is "auto", implying an entropy-based method will be used to guess
 the best starting point.}
+
+\item{Monocle_lg_control}{list or NULL (default). A list of control parameters
+for the \code{learn_graph()} function from `monocle3`. See `?learn_graph()`
+for more information. Only used when `method = "monocle"`.}
 
 \item{omega}{logical, should the `omega` method for MST calculation be used?
 Default is TRUE. See `?slingshot::getLineages` for more information.}
@@ -120,6 +127,19 @@ embedding of the Monocle trajectories is re-calculated by picking the nearest
 neighbors in PCA to the "waypoints" calculated by the algorithm. This can 
 result in slightly more convoluted trajectories when visualized in UMAP, which
 is attributable to the distortion.
+
+To overcome this, an alternative embedding 
+is available through `dr_embed = "FR"`. In this embedding the principal graph
+of the trajectory is laid out using the Fruchterman-Reingold layout (hence
+the name) and cells are randomly placed around their closest vertex (as 
+calculated in PCA space) according to a 2D Gaussian distribution in which the
+standard deviation is proportional to the square root of the number of cells
+close to the vertex. Then, cell identities are ordered according to their
+pseudotime value. Finally, this 2D embedding is given as an input to UMAP to 
+optimize non-overlapping distribution of points. This results in a more pleasing
+embedding in which cells are distributed along trajectories that were still
+derived in high-dimensional space. This implementation was inspired by the
+PAGA initialization for UMAP by Wolf and colleagues (2019).
 
 The final result is a `SingleCellExperiment` object with 
 some additional fields:
