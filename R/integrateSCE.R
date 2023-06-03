@@ -2,20 +2,20 @@
 #'
 #' Pipeline for automatic processing and integration of SingleCellExperiment objects
 #'
-#' @param sce a SingleCellExperiment object
-#' @param batch character, the name of the column in `colData(sce)` with batch labels
+#' @param sce a \code{SingleCellExperiment} object
+#' @param batch character, the name of the column in \code{colData(sce)} with batch labels
 #' @param hvgs character, vector of highly variable gene IDs
 #' @param hvg_ntop numeric, the number of top HVGs to retain. Default is 2000.
-#' @param method character, the integration method. One of "fastMNN", "Harmony",
-#'     "Seurat", "LIGER", and "regression". Default is "fastMNN".
+#' @param method character, the integration method. One of \code{"fastMNN"}, \code{"Harmony"},
+#'     \code{"Seurat"}, \code{"LIGER"}, and \code{"regression"}. Default is \code{"fastMNN"}.
 #' @param ndims numeric, the number of dimensions to use for integration. Default
-#'     is 20. For LIGER, it is the value of the k parameter in `optimizeALS()`
+#'     is 20. For LIGER, it is the value of the k parameter in \code{rliger::optimizeALS()}
 #' @param neighbor_n the number of neighbors used to compute UMAP. Default is
 #'     NULL, which results in the rounded squared root of the number of cells.
 #' @param verbose logical, display messages on progress? Default is FALSE.
-#' @param parallel_param a BiocParallel object specifying the parallelization backend
+#' @param parallel_param a \code{BiocParallel} object specifying the parallelization backend
 #'     to be used in some steps of the pipeline. Note: for Seurat options, the
-#'     `future` framework should be set up with maximum size and number of cores.
+#'     \code{future} framework should be set up with maximum size and number of cores.
 #'
 #' @return a `SingleCellExperiment` object with integrated dimensionality reduction.
 #'     In the case of LIGER integration, only the `H.norm` slot will be returned.

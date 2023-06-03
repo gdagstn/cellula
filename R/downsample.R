@@ -7,11 +7,11 @@
 #'     downsampling
 #' @param chunksize numeric, the size (in number of samples) to be processed at
 #'     a time
-#' @param BPPARAM a BiocParallel BPPARAM object. Default is SerialParam(), meaning
-#'     no parallelization will be used.
-#' @param verbose logical, should progress be displayed? Default is TRUE.
+#' @param BPPARAM a \code{BiocParallel} \code{BPPARAM} object. 
+#'     Default is \code{SerialParam()}, meaning no parallelization will be used.
+#' @param verbose logical, should progress be displayed? Default is \code{TRUE}.
 #'
-#' @return a sparse matrix of class "dgCMatrix"
+#' @return a sparse matrix of class \code{"dgCMatrix"}
 #'
 #' @author Giuseppe D'Agostino, inspired by Scott R. Tyler's \code{downsample} package
 #'
@@ -77,18 +77,18 @@ downsampleCounts <- function(mat,
 #'
 #' Downsamples a SingleCellExperiment to a proportion of cells 
 #'
-#' @param sce a SingleCellExperiment object
-#' @param sample_by character, the column name of the colData slot for sampling. 
-#'     Cells will be downsampled within each level of `sample_by`.
+#' @param sce a \code{SingleCellExperiment} object
+#' @param sample_by character, the column name of \code{colData(sce)} for sampling. 
+#'     Cells will be downsampled within each level of \code{sample_by}.
 #' @param min numeric, the minimum number of cells to retain within each level of
-#'     `sample_by`. Strictly positive
+#'     \code{sample_by}. Strictly positive.
 #' @param proportion numeric, the target proportion of cells to downsample within
-#'     each level of `sample_by`. 
-#' @param BPPARAM a BiocParallel BPPARAM object. Default is SerialParam(), meaning
-#'     no parallelization will be used.
-#' @param verbose logical, should progress be displayed? Default is TRUE.
+#'     each level of \code{sample_by}. 
+#' @param BPPARAM a \code{BiocParallel} \code{BPPARAM} object. 
+#'     Default is \code{SerialParam()}, meaning no parallelization will be used.
+#' @param verbose logical, should progress be displayed? Default is \code{TRUE}.
 #'
-#' @return a SingleCellExperiment object with fewer cells than the original
+#' @return a \code{SingleCellExperiment} object with fewer cells than the original
 #'
 #' @author Giuseppe D'Agostino
 #'

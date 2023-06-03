@@ -3,35 +3,35 @@
 #' Very simple wrapper to SNN graph and Louvain/Leiden clustering using
 #' multiple resolutions
 #'
-#' @param sce a SingleCellExperiment object
+#' @param sce a \code{SingleCellExperiment} object
 #' @param neighbors numeric, number of neighbors for SNN graph edge construction.
 #'     Default is 10.
 #' @param weighting_scheme character, the weighting scheme for SNN graph construction.
-#'     One of "jaccard", "rank", "number". Default is "jaccard".
-#' @param sweep_on character, the parameter used for sweeping. Can be "clustering",
-#'     meaning values of `k` will be looped through as resolution, or "SNN",
-#'     meaning values of `k`will be looped through as number of neighbors.
+#'     One of \code{"jaccard"}, \code{"rank"}, \code{"number"}. Default is \code{"jaccard"}.
+#' @param sweep_on character, the parameter used for sweeping. Can be \code{"clustering"},
+#'     meaning values of \code{k} will be looped through as resolution, or \code{"SNN"},
+#'     meaning values of \code{k} will be looped through as number of neighbors.
 #' @param method character, the type of graph-based clustering to use. One of
-#'     "louvain" or leiden". Default is "louvain".
-#' @param k numeric, vector of parameter sweep for graph cosntruction or clustering.
+#'     \code{"louvain"} or \code{"leiden"}. Default is \code{"louvain"}.
+#' @param k numeric, vector of parameter sweep for graph construction or clustering.
 #' @param space a matrix of lower dimensional embedding such as the PCA coordinates.
-#'     if NULL (default), the "PCA" slot from `reducedDims(sce)`
-#' @param ndims numeric, the number of dimensions (columns of `space`) to use to
+#'     if \code{NULL} (default), the \code{"PCA"} slot from \code{reducedDims(sce)}.
+#' @param ndims numeric, the number of dimensions (columns of \code{space}) to use to
 #'     build the SNN graph. Default is 20
 #' @param calculate_modularity logical, should pairwise modularity between
-#'     clusters be calculated? Default is TRUE
+#'     clusters be calculated? Default is \code{TRUE}
 #' @param calculate_silhouette logical, should approximate silhouette widths be
-#'     calculated? Default is TRUE
+#'     calculated? Default is \code{TRUE}
 #' @param leiden_iterations numeric, the number of iterations of Leiden clustering.
 #'     Default is 5.
-#' @param prefix character, the prefix of the column names on `colData`
-#'     where clustering results are stored. Default is "SNN_".
-#' @param verbose logical, should messages be written? Default is FALSE
+#' @param prefix character, the prefix of the column names on \code{colData(sce)}
+#'     where clustering results are stored. Default is \code{SNN_}.
+#' @param verbose logical, should messages be written? Default is \code{FALSE}
 #'
-#' @return a `SingleCellExperiment` object with cluster memberships in the
-#'     `colData` table, named according to prefix and respective value of `k`.
-#'     Optionally, silhouette and/or modularity values are stored in the `metadata`
-#'     slot of the `SingleCellExperiment` object, one for every value of `k`.
+#' @return a \code{SingleCellExperiment} object with cluster memberships in the
+#'     \code{colData} table, named according to prefix and respective value of \code{k}.
+#'     Optionally, silhouette and/or modularity values are stored in the \code{metadata}
+#'     slot of the \code{SingleCellExperiment} object, one for every value of \code{k}.
 #'
 #' @importFrom SummarizedExperiment colData colData<-
 #' @importFrom crayon blue
@@ -152,14 +152,14 @@ makeGraphsAndClusters <- function(sce,
 #' Applies a meta-clustering procedure through cluster linking to identify
 #' consensus clusters
 #'
-#' @param sce a SingleCellExperiment object
+#' @param sce a \code{SingleCellExperiment} object
 #' @param clusters character, the column names where cluster assignments can be
-#'    found in colData
+#'    found in \code{colData(sce)}
 #' @param threshold numeric, the score threshold to determine metacluster assignment.
 #'    Default is 0.5, must be between 0 and 1.
-#' @param do_plot logical, should the metacluster plot be printed? Default is TRUE.
-#' @param denominator character, one of "min", "max", "union". Default is "union".
-#'    See ?bluster::linkClusters for details.
+#' @param do_plot logical, should the metacluster plot be printed? Default is \code{TRUE}.
+#' @param denominator character, one of \code{"min"}, \code{"max"}, \code{"union"}. 
+#'    Default is \code{"union".} See \code{?bluster::linkClusters} for details.
 #'
 #' @return a SingleCellExperiment object with three additional columns:
 #'    - metacluster_max indicating the most frequent metacluster assignment

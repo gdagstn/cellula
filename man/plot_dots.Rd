@@ -17,11 +17,11 @@ plot_dots(
 )
 }
 \arguments{
-\item{sce}{a SingleCellExperiment object}
+\item{sce}{a \code{SingleCellExperiment} object}
 
 \item{genes}{character string, the genes to be plotted (matched with rownames)}
 
-\item{group_by}{character, column name in the colData slot of the SCE object,
+\item{group_by}{character, column name in the \code{colData} slot of \code{sce},
 e.g. "cluster". Will be used to assign calculate proportions.
 Must be categorical (factor or coercible character).}
 

@@ -2,29 +2,29 @@
 #'
 #' Automatic assignment of cell type identities in SingleCellExperiment objects
 #'
-#' @param sce a SingleCellExperiment object
+#' @param sce a \code{SingleCellExperiment} object
 #' @param genesets named list of character vectors, genesets used to calculate
 #'     labels and/or assign scores. Alternatively, a character vector to calculate
 #'     a single score from.
-#' @param method character, the method for scoring. One of "AUC", "Seurat",
-#'     "ssGSEA" or "UCell".
+#' @param method character, the method for scoring. One of \code{"AUC"}, \code{"Seurat"},
+#'     \code{"ssGSEA"} or \code{"UCell"}.
 #' @param verbose logical, should messages on progress be printed? Default is TRUE
-#' @param name character, the name of the column in the colData of sce where final
+#' @param name character, the name of the column in \code{colData(sce)} where final
 #'     labels will be stored
 #' @param return_scores logical, should the scores for each cell and each geneset
-#'     be saved in the object metadata slot? Default is FALSE.
-#' @param kcdf character, which kernel to use for the CDF. One of "Poisson" or
-#'     "Gaussian". Only used when method = "ssGSEA".
+#'     be saved in the object metadata slot? Default is \code{FALSE}.
+#' @param kcdf character, which kernel to use for the CDF. One of \code{"Poisson"} or
+#'     \code{"Gaussian"}. Only used when \code{method = "ssGSEA"}.
 #' @param annotation character, which assay name to use for rank calculation.
-#'     Only used when method = "ssGSEA".
+#'     Only used when \code{method = "ssGSEA"}.
 #' @param ... other arguments passed internally to \code{AUCell::AUCell_calcAUC()}
 #'     ("AUC" method), \code{Seurat::AddModuleScore()} ("Seurat" method),
 #'     \code{GSVA::gsva()}("ssGSEA" method), or \code{UCell::ScoreSignatures_UCell()}
 #'     ("UCell" method).
 #'
-#' @return  a `SingleCellExperiment` object with a column named `"name"` containing
+#' @return  a \code{SingleCellExperiment} object with a column named \code{"name"} containing
 #'     the highest scoring label for a method. Optionally, the single scores from
-#'     each method for each geneset are saved in the `metadata` slot.
+#'     each method for each geneset are saved in the \code{metadata} slot.
 #'
 #' @details This is a wrapper around four methods for assigning to each cell a
 #'    score for the expression of a given geneset.
@@ -46,7 +46,7 @@
 #'    If a list of genesets is given, all methods result in a final label assignment
 #'    (i.e. the names of the user-provided geneset for which each single cell has
 #'    the highest score). If only a single geneset is provided, the score for that
-#'    geneset is added to the `colData` slot.
+#'    geneset is added to the \code{colData} slot.
 #'
 #'    Please note that scores are not comparable between themselves - AUC,
 #'    ssGSEA, and UCell are strictly positive, whereas the Module Score can also

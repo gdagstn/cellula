@@ -15,10 +15,10 @@ doNormAndReduce(
 )
 }
 \arguments{
-\item{sce}{a SingleCellExperiment object}
+\item{sce}{a \code{SingleCellExperiment} object}
 
-\item{batch}{character, the name of the column in `colData(sce)` with batch labels.
-Default is NULL meaning no batches will be considered, and data will be
+\item{batch}{character, the name of the column in \code{colData(sce)} with batch labels.
+Default is \code{NULL} meaning no batches will be considered, and data will be
 processed as a single batch.}
 
 \item{name}{character, name of the folder and file where results are stored}
@@ -28,14 +28,15 @@ Default is 20.}
 
 \item{hvg_ntop}{numeric, number of top HVGs to retain}
 
-\item{verbose}{logical, display messages on progress? Default is FALSE.}
+\item{verbose}{logical, display messages on progress? Default is \code{FALSE}.}
 
-\item{parallel_param}{a BiocParallel object specifying the parallelization backend
-to be used in some steps of the pipeline.}
+\item{parallel_param}{a \code{BiocParallel} object specifying the parallelization backend
+to be used in some steps of the pipeline. Default is \code{SerialParam()},
+meaning no parallelization will be used.}
 }
 \value{
-a SingleCellExperiment object containing normalized values and a non-integrated
-   PCA and UMAP dimensionality reductions.
+a \code{SingleCellExperiment} object containing normalized values and a non-integrated
+   \code{PCA} and \code{UMAP} dimensionality reductions.
 }
 \description{
 Pipeline for automatic processing and integration of SingleCellExperiment objects

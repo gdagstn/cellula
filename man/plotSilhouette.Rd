@@ -7,9 +7,9 @@
 plotSilhouette(sce, name)
 }
 \arguments{
-\item{sce}{a SingleCellExperiment object}
+\item{sce}{a \code{SingleCellExperiment} object}
 
-\item{name}{character, the name in the metadata slot of the SCE object, e.g.
+\item{name}{character, the name in the metadata slot of the \code{SingleCellExperiment} object, e.g.
 "silhouette_SNN_100"}
 }
 \value{

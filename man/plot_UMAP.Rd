@@ -19,24 +19,24 @@ plot_UMAP(
 )
 }
 \arguments{
-\item{sce}{a SingleCellExperiment object}
+\item{sce}{a \code{SingleCellExperiment} object}
 
-\item{umap_slot}{character, the name in the reducedDim slot of the SCE object, e.g.
-"UMAP_Harmony"}
+\item{umap_slot}{character, the name in the reducedDim slot of \code{sce}, e.g.
+\code{"UMAP_Harmony"}}
 
-\item{color_by}{character, column name in the colData slot of the SCE object,
+\item{color_by}{character, column name in the \code{colData} slot of \code{sce},
 e.g. "cluster". Will be used to assign colors. Automatically detects
 whether the variable is categorical or continuous.}
 
-\item{shape_by}{character, column name in the colData slot of the SCE object,
+\item{shape_by}{character, column name in the \code{colData} slot of  \code{sce},
 e.g. "cluster". Will be used to assign shapes. Can only be used for
 categorical variables.}
 
-\item{group_by}{character, column name in the colData slot of the SCE object,
+\item{group_by}{character, column name in the \code{colData} slot of the \code{sce},
 e.g. "individual". Will be used to facet the plot. Can only be used for
 categorical variables.}
 
-\item{label_by}{character, column name in the colData slot of the SCE object,
+\item{label_by}{character, column name in the \code{colData} slot of \code{sce},
 e.g. "cluster". Will be used to add labels to the plot. Can only be used
 for categorical variables.}
 
@@ -45,11 +45,11 @@ for categorical variables.}
 \item{label_size}{numeric, the size of the font for the labels. Default is 2.}
 
 \item{color_palette}{a character string containing colors to be used. Default
-is NULL, meaning an automatic palette will be generated.}
+is \code{NULL}, meaning an automatic palette will be generated.}
 
 \item{trajectory}{a character string indicating the `metadata` slot containing
 segment trajectories to be plotted. Usually either 
-`"Slingshot_embedded_curves"` or `"Monocle_embedded_curves`.}
+\code{"Slingshot_embedded_curves"} or \code{"Monocle_embedded_curves}.}
 
 \item{rescale}{logical, should coordinates be rescaled between 0 and 1? Default is TRUE.}
 }

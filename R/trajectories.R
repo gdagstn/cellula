@@ -22,7 +22,7 @@
 #'     the best starting point.
 #' @param Monocle_lg_control list or NULL (default). A list of control parameters
 #'     for the \code{learn_graph()} function from \code{monocle3}. 
-#'     See \code{?monocle3::learn_graph()}
+#'     See \code{?monocle3::learn_graph}
 #'     for more information. Only used when \code{method = "monocle"}.     
 #' @param omega logical, should the \code{omega} method for MST calculation be used?
 #'     Default is TRUE. See \code{?slingshot::getLineages} for more information.

@@ -2,20 +2,21 @@
 #'
 #' Pipeline for automatic processing and integration of SingleCellExperiment objects
 #'
-#' @param sce a SingleCellExperiment object
-#' @param batch character, the name of the column in `colData(sce)` with batch labels.
-#'     Default is NULL meaning no batches will be considered, and data will be
+#' @param sce a \code{SingleCellExperiment} object
+#' @param batch character, the name of the column in \code{colData(sce)} with batch labels.
+#'     Default is \code{NULL} meaning no batches will be considered, and data will be
 #'     processed as a single batch.
 #' @param name character, name of the folder and file where results are stored
 #' @param ndims numeric, number of dimensions (PCs) to be used for UMAP construction.
 #'     Default is 20.
 #' @param hvg_ntop numeric, number of top HVGs to retain
-#' @param verbose logical, display messages on progress? Default is FALSE.
-#' @param parallel_param a BiocParallel object specifying the parallelization backend
-#'     to be used in some steps of the pipeline.
+#' @param verbose logical, display messages on progress? Default is \code{FALSE}.
+#' @param parallel_param a \code{BiocParallel} object specifying the parallelization backend
+#'     to be used in some steps of the pipeline. Default is \code{SerialParam()},
+#'     meaning no parallelization will be used.
 #'
-#' @return a SingleCellExperiment object containing normalized values and a non-integrated
-#'    PCA and UMAP dimensionality reductions.
+#' @return a \code{SingleCellExperiment} object containing normalized values and a non-integrated
+#'    \code{PCA} and \code{UMAP} dimensionality reductions.
 #'
 #' @importFrom SummarizedExperiment colData rowData assay
 #' @importFrom scran quickCluster computeSumFactors modelGeneVar getTopHVGs

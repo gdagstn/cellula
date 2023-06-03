@@ -7,12 +7,12 @@
 plotModularity(sce, name, type = "heatmap")
 }
 \arguments{
-\item{sce}{a SingleCellExperiment object}
+\item{sce}{a \code{SingleCellExperiment} object}
 
-\item{name}{character, the name in the metadata slot of the SCE object, e.g.
+\item{name}{character, the name in the \code{metadata slot} of the \code{SingleCellExperiment} object, e.g.
 "modularity_SNN_100"}
 
-\item{type}{character, one of "heatmap" or "graph" for different plot types}
+\item{type}{character, one of \code{"heatmap"} or \code{"graph"} for different plot types}
 }
 \value{
 a heatmap of pairwise modularity

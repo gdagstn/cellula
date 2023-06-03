@@ -17,26 +17,26 @@ integrateSCE(
 )
 }
 \arguments{
-\item{sce}{a SingleCellExperiment object}
+\item{sce}{a \code{SingleCellExperiment} object}
 
-\item{batch}{character, the name of the column in `colData(sce)` with batch labels}
+\item{batch}{character, the name of the column in \code{colData(sce)} with batch labels}
 
 \item{hvgs}{character, vector of highly variable gene IDs}
 
 \item{hvg_ntop}{numeric, the number of top HVGs to retain. Default is 2000.}
 
-\item{method}{character, the integration method. One of "fastMNN", "Harmony",
-"Seurat", "LIGER", and "regression". Default is "fastMNN".}
+\item{method}{character, the integration method. One of \code{"fastMNN"}, \code{"Harmony"},
+\code{"Seurat"}, \code{"LIGER"}, and \code{"regression"}. Default is \code{"fastMNN"}.}
 
 \item{ndims}{numeric, the number of dimensions to use for integration. Default
-is 20. For LIGER, it is the value of the k parameter in `optimizeALS()`}
+is 20. For LIGER, it is the value of the k parameter in \code{rliger::optimizeALS()}}
 
 \item{neighbor_n}{the number of neighbors used to compute UMAP. Default is
 NULL, which results in the rounded squared root of the number of cells.}
 
-\item{parallel_param}{a BiocParallel object specifying the parallelization backend
+\item{parallel_param}{a \code{BiocParallel} object specifying the parallelization backend
 to be used in some steps of the pipeline. Note: for Seurat options, the
-`future` framework should be set up with maximum size and number of cores.}
+\code{future} framework should be set up with maximum size and number of cores.}
 
 \item{verbose}{logical, display messages on progress? Default is FALSE.}
 }

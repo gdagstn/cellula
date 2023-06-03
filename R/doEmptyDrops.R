@@ -2,19 +2,20 @@
 #'
 #' Pipeline for automatic processing and integration of SingleCellExperiment objects
 #'
-#' @param sce a SingleCellExperiment object
-#' @param batch character, the name of the column in `colData(sce)` with batch labels.
+#' @param sce a \code{SingleCellExperiment} object
+#' @param batch character, the name of the column in \code{colData(sce)} with batch labels.
 #'     Default is NULL meaning no batches will be considered, and data will be
 #'     processed as a single batch.
-#' @param emptydrops_cutoff either "auto" (default, barcode rank inflection point)
+#' @param emptydrops_cutoff either \code{"auto"} (default, barcode rank inflection point)
 #'     or a numeric. Cells with total reads below this cutoff are used to calculate
 #'     ambient RNA profiles and are removed.
 #' @param emptydrops_alpha numeric, the FDR threshold to call an empty barcode.
-#' @param verbose logical, display messages on progress? Default is FALSE.
-#' @param parallel_param a BiocParallel object specifying the parallelization backend
-#'     to be used in some steps of the pipeline.
+#' @param verbose logical, display messages on progress? Default is \code{FALSE}.
+#' @param parallel_param a \code{BiocParallel} object specifying the parallelization backend
+#'     to be used in some steps of the pipeline. Default is \code{SerialParam()} 
+#'     meaning no parallelization will be used.
 #'
-#' @return a SingleCellExperiment object without empty droplets as assigned by emptyDrops
+#' @return a \code{SingleCellExperiment} object without empty droplets as assigned by \code{emptyDrops}
 #'
 #' @importFrom SummarizedExperiment colData
 #' @importFrom crayon blue

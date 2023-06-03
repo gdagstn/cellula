@@ -13,18 +13,18 @@ metaCluster(
 )
 }
 \arguments{
-\item{sce}{a SingleCellExperiment object}
+\item{sce}{a \code{SingleCellExperiment} object}
 
 \item{clusters}{character, the column names where cluster assignments can be
-found in colData}
+found in \code{colData(sce)}}
 
 \item{threshold}{numeric, the score threshold to determine metacluster assignment.
 Default is 0.5, must be between 0 and 1.}
 
-\item{do_plot}{logical, should the metacluster plot be printed? Default is TRUE.}
+\item{do_plot}{logical, should the metacluster plot be printed? Default is \code{TRUE}.}
 
-\item{denominator}{character, one of "min", "max", "union". Default is "union".
-See ?bluster::linkClusters for details.}
+\item{denominator}{character, one of \code{"min"}, \code{"max"}, \code{"union"}. 
+Default is \code{"union".} See \code{?bluster::linkClusters} for details.}
 }
 \value{
 a SingleCellExperiment object with three additional columns:

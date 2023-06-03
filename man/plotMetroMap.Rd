@@ -17,7 +17,7 @@ plotMetroMap(
 )
 }
 \arguments{
-\item{sce}{a `SingleCellExperiment` class object}
+\item{sce}{a \code{SingleCellExperiment} class object}
 
 \item{coords_by}{character, a grouping variable to define the clusters.}
 
@@ -25,23 +25,24 @@ plotMetroMap(
 base for plotting}
 
 \item{snap}{logical, should points and lines be snapped to a regular grid?
-default is TRUE.}
+default is \code{TRUE}.}
 
 \item{res}{numeric, the resolution of the grid for snapping. Higher = smaller
 spacing between grid points, and more points. Default is 30.}
 
-\item{overlay}{logical, should an overlay contour be drawn? Default is TRUE}
+\item{overlay}{logical, should an overlay contour be drawn? Default is \code{TRUE}}
 
 \item{overlay_res}{the overlay resolution. Default is 60.}
 
 \item{include_cells}{logical, should cells be plotted in the background? 
-Default is FALSE.}
+Default is \code{FALSE}.}
 
-\item{labels}{logical, should cluster labels be plotted? Default is TRUE.}
+\item{labels}{logical, should cluster labels be plotted? Default is \code{TRUE}.}
 }
 \value{
 A plot where lineages are represented as metro lines.
 }
 \description{
 Plots a metro map-like representation of trajectories
+STILL UNDER DEVELOPMENT!
 }

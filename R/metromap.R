@@ -1,20 +1,21 @@
 #' Plot Metro Map
 #'
 #' Plots a metro map-like representation of trajectories
+#' STILL UNDER DEVELOPMENT!
 #'
-#' @param sce a `SingleCellExperiment` class object
+#' @param sce a \code{SingleCellExperiment} class object
 #' @param coords_by character, a grouping variable to define the clusters.
 #' @param dimred character, the name of the 2D dimensional reduction to use as
 #'     base for plotting
 #' @param snap logical, should points and lines be snapped to a regular grid?
-#'     default is TRUE.
+#'     default is \code{TRUE}.
 #' @param res numeric, the resolution of the grid for snapping. Higher = smaller
 #'     spacing between grid points, and more points. Default is 30.
-#' @param overlay logical, should an overlay contour be drawn? Default is TRUE
+#' @param overlay logical, should an overlay contour be drawn? Default is \code{TRUE}
 #' @param overlay_res the overlay resolution. Default is 60.
 #' @param include_cells logical, should cells be plotted in the background? 
-#'     Default is FALSE.
-#' @param labels logical, should cluster labels be plotted? Default is TRUE.
+#'     Default is \code{FALSE}.
+#' @param labels logical, should cluster labels be plotted? Default is \code{TRUE}.
 #'
 #' @returns A plot where lineages are represented as metro lines.
 #'

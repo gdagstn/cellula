@@ -2,10 +2,10 @@
 #'
 #' Plots a heatmap showing pairwise cluster modularity from a SCE object
 #'
-#' @param sce a SingleCellExperiment object
-#' @param name character, the name in the metadata slot of the SCE object, e.g.
+#' @param sce a \code{SingleCellExperiment} object
+#' @param name character, the name in the \code{metadata slot} of the \code{SingleCellExperiment} object, e.g.
 #'     "modularity_SNN_100"
-#' @param type character, one of "heatmap" or "graph" for different plot types
+#' @param type character, one of \code{"heatmap"} or \code{"graph"} for different plot types
 #'
 #' @return a heatmap of pairwise modularity
 #'
@@ -15,7 +15,6 @@
 #' @importFrom S4Vectors metadata metadata<-
 #'
 #' @export
-
 
 plotModularity <- function(sce, name, type = "heatmap") {
   name = paste0("modularity_", name)
@@ -50,8 +49,8 @@ plotModularity <- function(sce, name, type = "heatmap") {
 #' Plots a beesswarm plot showing the approximate width of each cell within
 #' each cluster
 #'
-#' @param sce a SingleCellExperiment object
-#' @param name character, the name in the metadata slot of the SCE object, e.g.
+#' @param sce a \code{SingleCellExperiment} object
+#' @param name character, the name in the metadata slot of the \code{SingleCellExperiment} object, e.g.
 #'     "silhouette_SNN_100"
 #'
 #' @return a beeswarm plot of silhouette widths
@@ -77,28 +76,28 @@ plotSilhouette <- function(sce, name) {
 #'
 #' Plots the UMAP from a SingleCellExperiment object
 #'
-#' @param sce a SingleCellExperiment object
-#' @param umap_slot character, the name in the reducedDim slot of the SCE object, e.g.
-#'     "UMAP_Harmony"
-#' @param color_by character, column name in the colData slot of the SCE object,
+#' @param sce a \code{SingleCellExperiment} object
+#' @param umap_slot character, the name in the reducedDim slot of \code{sce}, e.g.
+#'     \code{"UMAP_Harmony"}
+#' @param color_by character, column name in the \code{colData} slot of \code{sce},
 #'     e.g. "cluster". Will be used to assign colors. Automatically detects
 #'     whether the variable is categorical or continuous.
-#' @param shape_by character, column name in the colData slot of the SCE object,
+#' @param shape_by character, column name in the \code{colData} slot of  \code{sce},
 #'     e.g. "cluster". Will be used to assign shapes. Can only be used for
 #'     categorical variables.
-#' @param group_by character, column name in the colData slot of the SCE object,
+#' @param group_by character, column name in the \code{colData} slot of the \code{sce},
 #'     e.g. "individual". Will be used to facet the plot. Can only be used for
 #'     categorical variables.
-#' @param label_by character, column name in the colData slot of the SCE object,
+#' @param label_by character, column name in the \code{colData} slot of \code{sce},
 #'     e.g. "cluster". Will be used to add labels to the plot. Can only be used
 #'     for categorical variables.
 #' @param point_size numeric, the size of the points in the plot. Default is 0.7.
 #' @param label_size numeric, the size of the font for the labels. Default is 2.
 #' @param color_palette a character string containing colors to be used. Default
-#'     is NULL, meaning an automatic palette will be generated.
+#'     is \code{NULL}, meaning an automatic palette will be generated.
 #' @param trajectory a character string indicating the `metadata` slot containing
 #'     segment trajectories to be plotted. Usually either 
-#'     `"Slingshot_embedded_curves"` or `"Monocle_embedded_curves`.  
+#'     \code{"Slingshot_embedded_curves"} or \code{"Monocle_embedded_curves}.  
 #' @param rescale logical, should coordinates be rescaled between 0 and 1? Default is TRUE.
 #'
 #' @return a ggplot object showing the UMAP coordinates colored, shaped and
@@ -356,9 +355,9 @@ plot_UMAP <- function(sce,
 #'
 #' Plots a dot plot with gene expression from a SingleCellExperiment object
 #'
-#' @param sce a SingleCellExperiment object
+#' @param sce a \code{SingleCellExperiment} object
 #' @param genes character string, the genes to be plotted (matched with rownames)
-#' @param group_by character, column name in the colData slot of the SCE object,
+#' @param group_by character, column name in the \code{colData} slot of \code{sce},
 #'     e.g. "cluster". Will be used to assign calculate proportions.
 #'     Must be categorical (factor or coercible character).
 #' @param cluster_genes logical, should genes be clustered? Default is TRUE
@@ -518,21 +517,21 @@ plot_dots <- function(sce,
 #'
 #' Plot data from the colData of the SCE object
 #'
-#' @param sce a SingleCellExperiment object
-#' @param y character, the column from colData(sce) whose values need to be plotted
-#' @param x character, the column from colData(sce) to be used as a grouping variable
-#'     default is NULL, which means all points belong to one violin plot only
-#' @param color_by character, the column name from colData(sce) to be used as a
-#'     colouring variable. If NULL (default), violins (and points) will not be colored.
-#' @param group_by character, the column name from colData(sce) to be used as a
-#'     facetting variable. Default is NULL.
+#' @param sce a \code{SingleCellExperiment} object
+#' @param y character, the column from \code{colData(sce)} whose values need to be plotted
+#' @param x character, the column from \code{colData(sce)} to be used as a grouping variable
+#'     default is \code{NULL}, which means all points belong to one violin plot only
+#' @param color_by character, the column name from \code{colData(sce)} to be used as a
+#'     colouring variable. If \code{NULL} (default), violins (and points) will not be colored.
+#' @param group_by character, the column name from \code{colData(sce)} to be used as a
+#'     facetting variable. Default is \code{NULL}.
 #' @param color_palette character string of colors for categorical plots or heatmap.
-#'     Default is NULL.
+#'     Default is \code{NULL}.
 #' @param contour logical, should contours be plotted on the scatterplot?
-#'     default is TRUE.
+#'     default is \code{TRUE}.
 #' @param clustered logical, should rows and columns be clustered in the confusion
-#'     matrix heatmap? Default is TRUE.
-#' @param plot_cells logical, should cells be plotted as well? Default is FALSE
+#'     matrix heatmap? Default is \code{TRUE}.
+#' @param plot_cells logical, should cells be plotted as well? Default is \code{FALSE}
 #'     for speed.
 #'
 #' @returns a ggplot with different types of visualization depending on the

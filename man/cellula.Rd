@@ -28,39 +28,39 @@ cellula(
 )
 }
 \arguments{
-\item{sce}{a SingleCellExperiment object}
+\item{sce}{a \code{SingleCellExperiment} object}
 
-\item{batch}{character, the name of the column in `colData(sce)` with batch labels}
+\item{batch}{character, the name of the column in \code{colData(sce)} with batch labels}
 
 \item{name}{character, the name of the project/folder where files will be saved.
-If NULL, a random name will be generated}
+If \code{NULL}, a random name will be generated}
 
-\item{do_qc}{logical, should QC steps be performed? Default is TRUE}
+\item{do_qc}{logical, should QC steps be performed? Default is \code{TRUE}}
 
 \item{do_norm}{logical, should normalization and dimensionality reduction be
-performed? Default is TRUE}
+performed? Default is \code{TRUE}}
 
-\item{geneset_list}{named list of gene IDs (must coincide with rownames of the
-SCE object) that will be used by AUCell. Default is NULL meaning no AUC
+\item{geneset_list}{named list of gene IDs (must coincide with rownames of
+\code{sce}) that will be used by \code{AUCell}. Default is \code{NULL} meaning no AUC
 will be calculated.}
 
 \item{discard}{logical, should values that do not meet QC thresholds be discarded?
-Default is TRUE.}
+Default is \code{TRUE}.}
 
 \item{subset_mito}{logical, should mitochondrial transcripts be used for QC?
-Default is TRUE.}
+Default is \code{TRUE}}
 
 \item{subset_ribo}{logical, should ribosomal transcripts be used for QC?
-Default is TRUE.}
+Default is \code{TRUE}}
 
 \item{subset_malat1}{logical, should MALAT1 transcripts be used for QC?
-Default is TRUE.}
+Default is \code{TRUE}}
 
-\item{detect_doublets}{logical, should `scDblFinder` be run? Default is TRUE.}
+\item{detect_doublets}{logical, should \code{scDblFinder} be run? Default is \code{TRUE}}
 
-\item{run_emptydrops}{logical, should `emptyDrops` be run? Default is TRUE.}
+\item{run_emptydrops}{logical, should \code{emptyDrops} be run? Default is \code{FALSE}.}
 
-\item{emptydrops_cutoff}{either "auto" (default, barcode rank inflection point)
+\item{emptydrops_cutoff}{either \code{"auto"} (default, barcode rank inflection point)
 or a numeric. Cells with total reads below this cutoff are used to calculate
 ambient RNA profiles and are removed.}
 
@@ -69,22 +69,24 @@ ambient RNA profiles and are removed.}
 \item{hvg_ntop}{numeric, the number of top highly variable genes to be selected.
 Default is 2000.}
 
-\item{integration_method}{character, one of "fastMNN", "Harmony", "Seurat",
-"LIGER", or "regression".}
+\item{integration_method}{character, one of \code{"fastMNN"}, \code{"Harmony"}, \code{"Seurat"},
+\code{"LIGER"}, or \code{"regression"}. See \code{?integrateSCE} for more 
+information.}
 
 \item{ndims}{numeric, the number of dimensions to retain in the reduced dimension
 embedding for downstream applications. Default is 20.}
 
-\item{verbose}{logical, display messages on progress? Default is FALSE.}
+\item{verbose}{logical, display messages on progress? Default is \code{FALSE}.}
 
-\item{save_plots}{logical, should plots be drawn and saved? Default is TRUE}
+\item{save_plots}{logical, should plots be drawn and saved? Default is \code{TRUE}}
 
-\item{parallel_param}{a BiocParallel object specifying the parallelization backend
-to be used in some steps of the pipeline. Note: for Seurat options, the
-`future` framework should be set up with maximum size and number of cores.}
+\item{parallel_param}{a \code{BiocParallel} object specifying the parallelization backend
+to be used in some steps of the pipeline. Default is \code{SerialParam()}
+meaning no parallelization will be used. Note: for Seurat options, the
+\code{future} framework should be set up with maximum size and number of cores.}
 }
 \value{
-a `SingleCellExperiment` object with normalized data, doublet assignment
+a \code{SingleCellExperiment} object with normalized data, doublet assignment
    (if calculated), uncorrected and corrected PCA and UMAP coordinates according
    to the method of choice.
 }

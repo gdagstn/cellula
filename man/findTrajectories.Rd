@@ -39,7 +39,7 @@ see Details for more information.}
 \item{ndims}{numeric, the number of dimensions to use in `dr`. If the number
 of columns in \code{dr} is < \code{ndims}, it will be used instead.}
 
-\item{dr_embed}{character, the name of the `reducedDim` slot where curves should
+\item{dr_embed}{character, the name of the \code{reducedDim} slot where curves should
 be embedded for plotting. If \code{method = "monocle"} and \code{dr_embed = "FR"}, 
 an alternative 2D embedding for the \code{monocle} trajectories is created (see
 Details).
@@ -51,7 +51,7 @@ the best starting point.}
 
 \item{Monocle_lg_control}{list or NULL (default). A list of control parameters
 for the \code{learn_graph()} function from \code{monocle3}. 
-See \code{?monocle3::learn_graph()}
+See \code{?monocle3::learn_graph}
 for more information. Only used when \code{method = "monocle"}.}
 
 \item{omega}{logical, should the \code{omega} method for MST calculation be used?

@@ -14,24 +14,24 @@ downsampleCells(
 )
 }
 \arguments{
-\item{sce}{a SingleCellExperiment object}
+\item{sce}{a \code{SingleCellExperiment} object}
 
-\item{sample_by}{character, the column name of the colData slot for sampling. 
-Cells will be downsampled within each level of `sample_by`.}
+\item{sample_by}{character, the column name of \code{colData(sce)} for sampling. 
+Cells will be downsampled within each level of \code{sample_by}.}
 
 \item{proportion}{numeric, the target proportion of cells to downsample within
-each level of `sample_by`.}
+each level of \code{sample_by}.}
 
 \item{min}{numeric, the minimum number of cells to retain within each level of
-`sample_by`. Strictly positive}
+\code{sample_by}. Strictly positive.}
 
-\item{verbose}{logical, should progress be displayed? Default is TRUE.}
+\item{verbose}{logical, should progress be displayed? Default is \code{TRUE}.}
 
-\item{BPPARAM}{a BiocParallel BPPARAM object. Default is SerialParam(), meaning
-no parallelization will be used.}
+\item{BPPARAM}{a \code{BiocParallel} \code{BPPARAM} object. 
+Default is \code{SerialParam()}, meaning no parallelization will be used.}
 }
 \value{
-a SingleCellExperiment object with fewer cells than the original
+a \code{SingleCellExperiment} object with fewer cells than the original
 }
 \description{
 Downsamples a SingleCellExperiment to a proportion of cells

@@ -21,48 +21,48 @@ makeGraphsAndClusters(
 )
 }
 \arguments{
-\item{sce}{a SingleCellExperiment object}
+\item{sce}{a \code{SingleCellExperiment} object}
 
 \item{neighbors}{numeric, number of neighbors for SNN graph edge construction.
 Default is 10.}
 
 \item{weighting_scheme}{character, the weighting scheme for SNN graph construction.
-One of "jaccard", "rank", "number". Default is "jaccard".}
+One of \code{"jaccard"}, \code{"rank"}, \code{"number"}. Default is \code{"jaccard"}.}
 
-\item{sweep_on}{character, the parameter used for sweeping. Can be "clustering",
-meaning values of `k` will be looped through as resolution, or "SNN",
-meaning values of `k`will be looped through as number of neighbors.}
+\item{sweep_on}{character, the parameter used for sweeping. Can be \code{"clustering"},
+meaning values of \code{k} will be looped through as resolution, or \code{"SNN"},
+meaning values of \code{k} will be looped through as number of neighbors.}
 
 \item{method}{character, the type of graph-based clustering to use. One of
-"louvain" or leiden". Default is "louvain".}
+\code{"louvain"} or \code{"leiden"}. Default is \code{"louvain"}.}
 
-\item{k}{numeric, vector of parameter sweep for graph cosntruction or clustering.}
+\item{k}{numeric, vector of parameter sweep for graph construction or clustering.}
 
 \item{space}{a matrix of lower dimensional embedding such as the PCA coordinates.
-if NULL (default), the "PCA" slot from `reducedDims(sce)`}
+if \code{NULL} (default), the \code{"PCA"} slot from \code{reducedDims(sce)}.}
 
-\item{ndims}{numeric, the number of dimensions (columns of `space`) to use to
+\item{ndims}{numeric, the number of dimensions (columns of \code{space}) to use to
 build the SNN graph. Default is 20}
 
 \item{calculate_modularity}{logical, should pairwise modularity between
-clusters be calculated? Default is TRUE}
+clusters be calculated? Default is \code{TRUE}}
 
 \item{calculate_silhouette}{logical, should approximate silhouette widths be
-calculated? Default is TRUE}
+calculated? Default is \code{TRUE}}
 
 \item{leiden_iterations}{numeric, the number of iterations of Leiden clustering.
 Default is 5.}
 
-\item{prefix}{character, the prefix of the column names on `colData`
-where clustering results are stored. Default is "SNN_".}
+\item{prefix}{character, the prefix of the column names on \code{colData(sce)}
+where clustering results are stored. Default is \code{SNN_}.}
 
-\item{verbose}{logical, should messages be written? Default is FALSE}
+\item{verbose}{logical, should messages be written? Default is \code{FALSE}}
 }
 \value{
-a `SingleCellExperiment` object with cluster memberships in the
-    `colData` table, named according to prefix and respective value of `k`.
-    Optionally, silhouette and/or modularity values are stored in the `metadata`
-    slot of the `SingleCellExperiment` object, one for every value of `k`.
+a \code{SingleCellExperiment} object with cluster memberships in the
+    \code{colData} table, named according to prefix and respective value of \code{k}.
+    Optionally, silhouette and/or modularity values are stored in the \code{metadata}
+    slot of the \code{SingleCellExperiment} object, one for every value of \code{k}.
 }
 \description{
 Very simple wrapper to SNN graph and Louvain/Leiden clustering using

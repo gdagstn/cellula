@@ -2,31 +2,32 @@
 #'
 #' Pipeline for automatic processing and integration of SingleCellExperiment objects
 #'
-#' @param sce a SingleCellExperiment object
-#' @param batch character, the name of the column in `colData(sce)` with batch labels.
-#'     Default is NULL meaning no batches will be considered, and data will be
+#' @param sce a \code{SingleCellExperiment} object
+#' @param batch character, the name of the column in \code{colData(sce)} with batch labels.
+#'     Default is \code{NULL} meaning no batches will be considered, and data will be
 #'     processed as a single batch.
 #' @param name character, the name of the file/folder.
 #' @param discard logical, should values that do not meet QC thresholds be discarded?
-#'     Default is TRUE.
+#'     Default is \code{TRUE}.
 #' @param subset_mito logical, should mitochondrial transcripts be used for QC?
-#'     Default is TRUE.
+#'     Default is \code{TRUE}
 #' @param subset_ribo logical, should ribosomal transcripts be used for QC?
-#'     Default is TRUE.
+#'     Default is \code{TRUE}
 #' @param subset_malat1 logical, should MALAT1 transcripts be used for QC?
-#'     Default is TRUE.
-#' @param detect_doublets logical, should `scDblFinder` be run? Default is TRUE.
-#' @param run_emptydrops logical, should `emptyDrops` be run? Default is TRUE.
-#' @param emptydrops_cutoff either "auto" (default, barcode rank inflection point)
+#'     Default is \code{TRUE}
+#' @param detect_doublets logical, should \code{scDblFinder} be run? Default is \code{TRUE}
+#' @param run_emptydrops logical, should `emptyDrops` be run? Default is \code{TRUE}
+#' @param emptydrops_cutoff either \code{"auto"} (default, barcode rank inflection point)
 #'     or a numeric. Cells with total reads below this cutoff are used to calculate
 #'     ambient RNA profiles and are removed.
 #' @param emptydrops_alpha numeric, the FDR threshold to call an empty barcode.
-#' @param verbose logical, display messages on progress? Default is FALSE.
-#' @param save_plots logical, should plots be drawn and saved? Default is TRUE
-#' @param parallel_param a BiocParallel object specifying the parallelization backend
-#'     to be used in some steps of the pipeline.
+#' @param verbose logical, display messages on progress? Default is \code{FALSE}
+#' @param save_plots logical, should plots be drawn and saved? Default is \code{TRUE}
+#' @param parallel_param a \code{BiocParallel} object specifying the parallelization backend
+#'     to be used in some steps of the pipeline. Default is \code{SerialParam()}
+#'     meaning no parallelization will be used.
 #'
-#' @return  a `SingleCellExperiment` object with QC including doublet assignment
+#' @return  a \code{SingleCellExperiment} object with QC including doublet assignment
 #'
 #' @importFrom SummarizedExperiment colData rowData assay
 #' @importFrom DropletUtils emptyDrops barcodeRanks

@@ -17,29 +17,29 @@ plot_Coldata(
 )
 }
 \arguments{
-\item{sce}{a SingleCellExperiment object}
+\item{sce}{a \code{SingleCellExperiment} object}
 
-\item{y}{character, the column from colData(sce) whose values need to be plotted}
+\item{y}{character, the column from \code{colData(sce)} whose values need to be plotted}
 
-\item{x}{character, the column from colData(sce) to be used as a grouping variable
-default is NULL, which means all points belong to one violin plot only}
+\item{x}{character, the column from \code{colData(sce)} to be used as a grouping variable
+default is \code{NULL}, which means all points belong to one violin plot only}
 
-\item{color_by}{character, the column name from colData(sce) to be used as a
-colouring variable. If NULL (default), violins (and points) will not be colored.}
+\item{color_by}{character, the column name from \code{colData(sce)} to be used as a
+colouring variable. If \code{NULL} (default), violins (and points) will not be colored.}
 
-\item{group_by}{character, the column name from colData(sce) to be used as a
-facetting variable. Default is NULL.}
+\item{group_by}{character, the column name from \code{colData(sce)} to be used as a
+facetting variable. Default is \code{NULL}.}
 
 \item{color_palette}{character string of colors for categorical plots or heatmap.
-Default is NULL.}
+Default is \code{NULL}.}
 
 \item{contour}{logical, should contours be plotted on the scatterplot?
-default is TRUE.}
+default is \code{TRUE}.}
 
 \item{clustered}{logical, should rows and columns be clustered in the confusion
-matrix heatmap? Default is TRUE.}
+matrix heatmap? Default is \code{TRUE}.}
 
-\item{plot_cells}{logical, should cells be plotted as well? Default is FALSE
+\item{plot_cells}{logical, should cells be plotted as well? Default is \code{FALSE}
 for speed.}
 }
 \value{

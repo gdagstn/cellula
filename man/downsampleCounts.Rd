@@ -21,13 +21,13 @@ downsampling}
 \item{chunksize}{numeric, the size (in number of samples) to be processed at
 a time}
 
-\item{BPPARAM}{a BiocParallel BPPARAM object. Default is SerialParam(), meaning
-no parallelization will be used.}
+\item{BPPARAM}{a \code{BiocParallel} \code{BPPARAM} object. 
+Default is \code{SerialParam()}, meaning no parallelization will be used.}
 
-\item{verbose}{logical, should progress be displayed? Default is TRUE.}
+\item{verbose}{logical, should progress be displayed? Default is \code{TRUE}.}
 }
 \value{
-a sparse matrix of class "dgCMatrix"
+a sparse matrix of class \code{"dgCMatrix"}
 }
 \description{
 Downsamples a count matrix to a predetermined total count

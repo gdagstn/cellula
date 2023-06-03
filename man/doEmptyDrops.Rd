@@ -14,25 +14,26 @@ doEmptyDrops(
 )
 }
 \arguments{
-\item{sce}{a SingleCellExperiment object}
+\item{sce}{a \code{SingleCellExperiment} object}
 
-\item{batch}{character, the name of the column in `colData(sce)` with batch labels.
+\item{batch}{character, the name of the column in \code{colData(sce)} with batch labels.
 Default is NULL meaning no batches will be considered, and data will be
 processed as a single batch.}
 
-\item{emptydrops_cutoff}{either "auto" (default, barcode rank inflection point)
+\item{emptydrops_cutoff}{either \code{"auto"} (default, barcode rank inflection point)
 or a numeric. Cells with total reads below this cutoff are used to calculate
 ambient RNA profiles and are removed.}
 
 \item{emptydrops_alpha}{numeric, the FDR threshold to call an empty barcode.}
 
-\item{verbose}{logical, display messages on progress? Default is FALSE.}
+\item{verbose}{logical, display messages on progress? Default is \code{FALSE}.}
 
-\item{parallel_param}{a BiocParallel object specifying the parallelization backend
-to be used in some steps of the pipeline.}
+\item{parallel_param}{a \code{BiocParallel} object specifying the parallelization backend
+to be used in some steps of the pipeline. Default is \code{SerialParam()} 
+meaning no parallelization will be used.}
 }
 \value{
-a SingleCellExperiment object without empty droplets as assigned by emptyDrops
+a \code{SingleCellExperiment} object without empty droplets as assigned by \code{emptyDrops}
 }
 \description{
 Pipeline for automatic processing and integration of SingleCellExperiment objects
