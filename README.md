@@ -580,7 +580,7 @@ or not to use a synthetic cluster to estimate disjointed trajectories,
 as detailed in `?slingshot::getLineages`
 
   - `Monocle_lg_control` - `monocle` only. A list of control parameters 
-  for the `learn_graph()` function from 'monocle3'. 
+  for the `learn_graph()` function from `monocle3`. 
   
   - `invert` - `monocle` only.
 Whether or not to invert the direction of the pseudotime vector. 
