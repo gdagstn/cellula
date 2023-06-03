@@ -13,11 +13,16 @@
 #' @param ndims numeric, the number of dimensions to use in `dr`. If the number
 #'     of columns in `dr` is < `ndims`, it will be used instead.
 #' @param dr_embed character, the name of the `reducedDim` slot where curves should
-#'     be embedded for plotting. Default is NULL, meaning no embedding will be
-#'     performed.
+#'     be embedded for plotting. If `method = "monocle"` and `dr_embed = "FR"`, 
+#'     an alternative 2D embedding for the `monocle` trajectories is created (see
+#'     Details).
+#'     Default is NULL, meaning no embedding will be performed. 
 #' @param start character, the name of the cluster to be used as starting point.
 #'     Default is "auto", implying an entropy-based method will be used to guess
 #'     the best starting point.
+#' @param Monocle_lg_control list or NULL (default). A list of control parameters
+#'     for the \code{learn_graph()} function from `monocle3`. See `?learn_graph()`
+#'     for more information. Only used when `method = "monocle"`.     
 #' @param omega logical, should the `omega` method for MST calculation be used?
 #'     Default is TRUE. See `?slingshot::getLineages` for more information.
 #' @param omega_scale numeric, the value of the `omega_scale` parameter. 
@@ -89,6 +94,19 @@
 #' result in slightly more convoluted trajectories when visualized in UMAP, which
 #' is attributable to the distortion.
 #' 
+#' To overcome this, an alternative embedding 
+#' is available through `dr_embed = "FR"`. In this embedding the principal graph
+#' of the trajectory is laid out using the Fruchterman-Reingold layout (hence
+#' the name) and cells are randomly placed around their closest vertex (as 
+#' calculated in PCA space) according to a 2D Gaussian distribution in which the
+#' standard deviation is proportional to the square root of the number of cells
+#' close to the vertex. Then, cell identities are ordered according to their
+#' pseudotime value. Finally, this 2D embedding is given as an input to UMAP to 
+#' optimize non-overlapping distribution of points. This results in a more pleasing
+#' embedding in which cells are distributed along trajectories that were still
+#' derived in high-dimensional space. This implementation was inspired by the
+#' PAGA initialization for UMAP by Wolf and colleagues (2019).
+#' 
 #' The final result is a `SingleCellExperiment` object with 
 #' some additional fields:
 #' \itemize{
@@ -107,7 +125,8 @@
 #' @export
 
 findTrajectories <- function(sce, dr = "PCA", clusters, method = "slingshot",
-                             ndims = 20, dr_embed = NULL, start = "auto", omega = TRUE,
+                             ndims = 20, dr_embed = NULL, start = "auto", 
+                             Monocle_lg_control = NULL, omega = TRUE,
                              omega_scale = 1.5, invert = FALSE, do_de = FALSE, batch_de = NULL,
                              add_metadata = TRUE, verbose = FALSE, 
                              BPPARAM = SerialParam()) {
@@ -135,6 +154,7 @@ findTrajectories <- function(sce, dr = "PCA", clusters, method = "slingshot",
     
     sce = .getMonocleTrajectories(sce = sce, dr = dr, ndims = ndims,
                                   clusters = clusters, start = start, 
+                                  Monocle_lg_control = Monocle_lg_control,
                                   dr_embed = dr_embed, invert = invert,
                                   add_metadata = add_metadata, verbose = verbose)
   }
@@ -156,6 +176,7 @@ findTrajectories <- function(sce, dr = "PCA", clusters, method = "slingshot",
                                     ndims = 20, 
                                     clusters, 
                                     start,
+                                    Monocle_lg_control = NULL,
                                     dr_embed = "UMAP",
                                     invert = FALSE,
                                     add_metadata = TRUE,
@@ -195,7 +216,8 @@ findTrajectories <- function(sce, dr = "PCA", clusters, method = "slingshot",
   
   if(verbose) message(paste0(blue("[TRAJ/Monocle3] "),"Learning graph"))
   
-  cds <- learn_graph(cds, use_partition = FALSE)
+  cds <- learn_graph(cds, use_partition = FALSE, 
+                     learn_graph_control = Monocle_lg_control)
   
   # Set root cluster
   if(verbose) message(paste0(blue("[TRAJ/Monocle3] "),"Finding start node"))
@@ -226,7 +248,19 @@ findTrajectories <- function(sce, dr = "PCA", clusters, method = "slingshot",
   
   # Embedding waypoint curves in 2D. We do this because we allow users to run 
   # Monocle3 in an arbitrary space that is not UMAP
-  if(!is.null(dr_embed)) {
+  
+  if(dr_embed == "FR") {
+    if(verbose) message(paste0(blue("[TRAJ/Monocle3] "),"Embedding in 2D"))
+    
+    frembed = .embedFR(cds = cds, sce = sce, dr = dr)
+    
+    metadata(sce)[["Monocle_embedded_curves"]] = frembed$segs
+    
+    #reducedDim(sce, "FR") = frembed$init
+    
+    reducedDim(sce, "UMAP_FR") = frembed$dr_embed
+    
+  } else if(!is.null(dr_embed) & (dr_embed != "FR")) {
     if(verbose) message(paste0(blue("[TRAJ/Monocle3] "),"Embedding in 2D"))
     
     wp_coords = t(cds@principal_graph_aux$UMAP$dp_mst)
@@ -266,6 +300,63 @@ findTrajectories <- function(sce, dr = "PCA", clusters, method = "slingshot",
   if(verbose) message(paste0(blue("[TRAJ/Monocle3] "),"Done."))
   
   sce
+}
+
+
+#' @importFrom SummarizedExperiment colData 
+#' @importFrom SingleCellExperiment reducedDim
+#' @importFrom BiocNeighbors queryKNN
+#' @importFrom igraph V as_data_frame layout_with_fr subgraph
+#' @importFrom stats rnorm
+#' 
+#' @noRd
+
+.embedFR <- function(cds, sce, dr) {
+  
+  wp_coords = t(cds@principal_graph_aux$UMAP$dp_mst)
+  sp_coords = reducedDim(sce, dr)[,seq_len(ndims)]
+  
+  gv = cds@principal_graph$UMAP
+  gv = as_data_frame(gv)
+  cvert = as.data.frame(cds@principal_graph_aux$UMAP$pr_graph_cell_proj_closest_vertex)
+  verts = lapply(split(cvert, cvert$V1), rownames)
+  names(verts) = names(V(cds@principal_graph$UMAP))
+  gv$weight = (apply(gv[,1:2], 1, function(x) max(length(verts[[x[1]]]), length(verts[[x[2]]]))))
+  l = layout_with_fr(graph_from_data_frame(gv))
+  rownames(l) = names(V(graph_from_data_frame(gv)))
+  
+  coords = list()
+  ptree =  cds@principal_graph_aux$UMAP$pr_graph_cell_proj_tree
+  for(i in names(verts)) {
+    xs = rnorm(n = length(verts[[i]]), mean = l[i,1], sd = 0.15*sqrt(length(verts[[i]])))
+    ys = rnorm(n = length(verts[[i]]), mean = l[i,2], sd = 0.15*sqrt(length(verts[[i]])))
+    pts = data.frame(x = xs, y = ys, row.names = verts[[i]]) #random assignment
+    order_pt = names(V(subgraph(ptree, verts[[i]])))
+    pts = pts[order_pt,]
+    pts$order = order_pt
+    coords[[i]] = pts
+  }
+  
+  coords = do.call(rbind, coords)
+  rownames(coords) = as.character(coords$order)
+  init = as.matrix(coords[colnames(sce),1:2])
+  
+  frum = umap(init, 
+              init = init, 
+              n_neighbors = floor(sqrt(ncol(sce))), 
+              min_dist = 1)
+  
+  segs = as_data_frame(cds@principal_graph$UMAP)
+  
+  nns = queryKNN(init, l, k = 1)
+  matched = data.frame(wp = rownames(l), sp = nns$index, row.names = rownames(l))
+  
+  segs$x0 = frum[matched[segs$from,2],1]
+  segs$y0 = frum[matched[segs$from,2],2]
+  segs$x1 = frum[matched[segs$to,2],1]
+  segs$y1 = frum[matched[segs$to,2],2]
+  
+  return(list(segs = segs, dr_embed = frum))
 }
 
 #' @importFrom slingshot slingshot slingLineages slingCurves embedCurves

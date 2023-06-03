@@ -567,17 +567,28 @@ as input, and requires the user to specify the method (one of
 an input to the MST creation in `slingshot`, or to identify the starting
 node in `monocle3`.
 
-Other important parameters are: - `dr` - the reduced dimensional
-reduction in which trajectories will be estimated (default is "PCA") -
-`start` - the starting cluster for trajectory estimation, defaulting to
-"auto" for an entropy-based method - `omega` - `slingshot` only. Whether
+Other important parameters are: 
+
+  - `dr` - the reduced dimensional
+reduction in which trajectories will be estimated (default is "PCA") 
+
+  - `start` - the starting cluster for trajectory estimation, defaulting to
+"auto" for an entropy-based method 
+
+  - `omega` - `slingshot` only. Whether
 or not to use a synthetic cluster to estimate disjointed trajectories,
-as detailed in `?slingshot::getLineages` - `invert` - `monocle` only.
-Whether or not to invert the direction of the pseudotime vector. -
-`dr_embed` - an additional 2D dimensional reduction slot in which to
+as detailed in `?slingshot::getLineages`
+
+  - `rge` - `monocle` only. The method for graph learning. Must be one of `
+
+  - `invert` - `monocle` only.
+Whether or not to invert the direction of the pseudotime vector. 
+
+  - `dr_embed` - an additional 2D dimensional reduction slot in which to
 embed the trajectories (`slingshot` curves or `monocle` principal
-graph). Yields slightly different results according to the method. -
-`doDE` - whether or not to perform differential expression on every
+graph). Yields slightly different results according to the method. 
+
+  - `doDE` - whether or not to perform differential expression on every
 trajectory.
 
 The output is the same object used in the input, with some additional
