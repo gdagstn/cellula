@@ -579,8 +579,9 @@ reduction in which trajectories will be estimated (default is "PCA")
 or not to use a synthetic cluster to estimate disjointed trajectories,
 as detailed in `?slingshot::getLineages`
 
-  - `rge` - `monocle` only. The method for graph learning. Must be one of `
-
+  - `Monocle_lg_control` - `monocle` only. A list of control parameters 
+  for the `learn_graph()` function from 'monocle3'. 
+  
   - `invert` - `monocle` only.
 Whether or not to invert the direction of the pseudotime vector. 
 
@@ -693,12 +694,12 @@ containing segments to draw trajectories.
 Since the 2D embedding of `monocle3` PCA-derived trajectories may be hard to 
 understand, given the distortions introduced by UMAP, `cellula` includes an additional 
 2D embedding method, `dr_embed = "FR"`, inspired by the PAGA embedding 
-initialization technique[[21]](#21)
+initialization technique [[21]](#21).
 
 Briefly, once the principal graph has been calculated, it is laid out in 2D 
 using the Fruchterman-Reingold algorithm. Then each cell is randomly plotted 
 around their closest vertex in the graph, and reordered according to pseudotime
-value. This semi-random layout is uses as an initialization for UMAP, which will
+value. This semi-random layout is used as an initialization for UMAP, which will
 optimize the point positions. The resulting layout is more visually pleasing and
 reflects more accurately the positions of cells with respect to the trajectory 
 (although not necessarily to each other). 
