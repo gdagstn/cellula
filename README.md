@@ -637,7 +637,7 @@ fields.
         dimensionality reduction slot in the object.
     -   `Monocle_principal_graph`: the `igraph` object with the
         principal graph.
-    -   `Moncole_principal_graph_aux`: the rest of the `CellDataSet`
+    -   `Monocle_principal_graph_aux`: the rest of the `CellDataSet`
         object with additional information on the principal graph.
 
 In this example we download a dataset that captures early haematopoietic
