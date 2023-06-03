@@ -306,7 +306,7 @@ findTrajectories <- function(sce, dr = "PCA", clusters, method = "slingshot",
 #' @importFrom SummarizedExperiment colData 
 #' @importFrom SingleCellExperiment reducedDim
 #' @importFrom BiocNeighbors queryKNN
-#' @importFrom igraph V as_data_frame layout_with_fr subgraph
+#' @importFrom igraph V as_data_frame layout_with_fr subgraph graph_from_data_frame
 #' @importFrom stats rnorm
 #' 
 #' @noRd

@@ -690,6 +690,29 @@ containing segments to draw trajectories.
 
 <img src="https://github-production-user-asset-6210df.s3.amazonaws.com/21171362/242682289-8b43ed43-ab82-4d03-901a-d7109d3a3d52.png" width=400>
 
+Since the 2D embedding of `monocle3` PCA-derived trajectories may be hard to 
+understand, given the distortions introduced by UMAP, `cellula` includes an additional 
+2D embedding method, `dr_embed = "FR"`, inspired by the PAGA embedding 
+initialization technique[[21]](#21)
+Briefly, once the principal graph has been calculated, it is laid out in 2D 
+using the Fruchterman-Reingold algorithm. Then each cell is randomly plotted 
+around their closest vertex in the graph, and reordered according to pseudotime
+value. This semi-random layout is uses as an initialization for UMAP, which will
+optimize the point positions. The resulting layout is more visually pleasing and
+reflects accurately the positions of cells with respect to the trajectory (although
+not necessarily to each other). 
+
+```{r}
+sce2 = findTrajectories(sce2, clusters = "SNN_0.64", method = "monocle",
+        dr = "PCA", ndims = 20, start = "7", dr_embed = "FR")
+        
+plot_UMAP(sce2, umap_slot = "UMAP_FR", color_by = "monoclePseudotime", 
+           label_by = "SNN_0.64", trajectories = "Slingshot_embedded_curves")
+           
+```           
+
+
+
 ## Metacells
 
 In order to speed up calculations and overcome sparsity, cells can be
@@ -765,3 +788,5 @@ giy083.
 <https://www.bioconductor.org/packages/release/bioc/html/TSCAN.html>
 
 <a id="20">[20]</a> Nestorowa et al. Blood. 2016 Aug 25;128(8):e20-31
+
+
