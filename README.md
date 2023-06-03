@@ -694,13 +694,16 @@ Since the 2D embedding of `monocle3` PCA-derived trajectories may be hard to
 understand, given the distortions introduced by UMAP, `cellula` includes an additional 
 2D embedding method, `dr_embed = "FR"`, inspired by the PAGA embedding 
 initialization technique[[21]](#21)
+
 Briefly, once the principal graph has been calculated, it is laid out in 2D 
 using the Fruchterman-Reingold algorithm. Then each cell is randomly plotted 
 around their closest vertex in the graph, and reordered according to pseudotime
 value. This semi-random layout is uses as an initialization for UMAP, which will
 optimize the point positions. The resulting layout is more visually pleasing and
-reflects accurately the positions of cells with respect to the trajectory (although
-not necessarily to each other). 
+reflects more accurately the positions of cells with respect to the trajectory 
+(although not necessarily to each other). 
+
+This FR-initialized UMAP is stored in a `reducedDim` slot named `UMAP_FR`. 
 
 ```{r}
 sce2 = findTrajectories(sce2, clusters = "SNN_0.64", method = "monocle",
