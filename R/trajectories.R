@@ -146,7 +146,7 @@ findTrajectories <- function(sce, dr = "PCA", clusters, method = "slingshot",
     start = unique(colData(sce)[,clusters])[which.max(ent_means)]
   }
   
-  if(ndims > ncol(reducedDims(sce, dr))) ndims = ncol(reducedDims(sce, dr))
+  if(ndims > ncol(reducedDim(sce, dr))) ndims = ncol(reducedDim(sce, dr))
   
   if(method == "slingshot"){
     
@@ -217,7 +217,6 @@ findTrajectories <- function(sce, dr = "PCA", clusters, method = "slingshot",
   cds@clusters@listData[["UMAP"]][["clusters"]] <- list_cluster
   
   # Could be a space-holder, but essentially fills out louvain parameters
-  
   cds@clusters@listData[["UMAP"]][["louvain_res"]] <- "NA"
   
   if(verbose) message(paste0(blue("[TRAJ/Monocle3] "),"Learning graph"))
@@ -308,7 +307,6 @@ findTrajectories <- function(sce, dr = "PCA", clusters, method = "slingshot",
   sce
 }
 
-
 #' @importFrom SummarizedExperiment colData 
 #' @importFrom SingleCellExperiment reducedDim
 #' @importFrom BiocNeighbors queryKNN
@@ -319,25 +317,30 @@ findTrajectories <- function(sce, dr = "PCA", clusters, method = "slingshot",
 
 .embedFR <- function(cds, sce, dr, ndims) {
   
-  wp_coords = t(cds@principal_graph_aux$UMAP$dp_mst)
-  sp_coords = reducedDim(sce, dr)[,seq_len(ndims)]
-  
-  gv = cds@principal_graph$UMAP
-  gv = as_data_frame(gv)
+  gv = as_data_frame(cds@principal_graph$UMAP)
   cvert = as.data.frame(cds@principal_graph_aux$UMAP$pr_graph_cell_proj_closest_vertex)
   verts = lapply(split(cvert, cvert$V1), rownames)
   names(verts) = names(V(cds@principal_graph$UMAP))
-  gv$weight = (apply(gv[,1:2], 1, function(x) max(length(verts[[x[1]]]), length(verts[[x[2]]]))))
+  gv$weight = apply(gv[,1:2], 1, function(x) max(length(verts[[x[1]]]), length(verts[[x[2]]])))
+  
   l = layout_with_fr(graph_from_data_frame(gv))
   rownames(l) = names(V(graph_from_data_frame(gv)))
   
   coords = list()
   ptree =  cds@principal_graph_aux$UMAP$pr_graph_cell_proj_tree
+  
+  traj.coord <- cds@principal_graph_aux@listData[["UMAP"]][["pseudotime"]]
+  
   for(i in names(verts)) {
     xs = rnorm(n = length(verts[[i]]), mean = l[i,1], sd = 0.15*sqrt(length(verts[[i]])))
     ys = rnorm(n = length(verts[[i]]), mean = l[i,2], sd = 0.15*sqrt(length(verts[[i]])))
     pts = data.frame(x = xs, y = ys, row.names = verts[[i]]) #random assignment
+    
     order_pt = names(V(subgraph(ptree, verts[[i]])))
+    
+    extreme_pts = traj.coord[c(order_pt[1], order_pt[length(order_pt)])]
+    if(diff(extreme_pts) < 0) order_pt = rev(order_pt)
+      
     pts = pts[order_pt,]
     pts$order = order_pt
     coords[[i]] = pts
