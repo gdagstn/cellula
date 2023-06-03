@@ -252,7 +252,7 @@ findTrajectories <- function(sce, dr = "PCA", clusters, method = "slingshot",
   if(dr_embed == "FR") {
     if(verbose) message(paste0(blue("[TRAJ/Monocle3] "),"Embedding in 2D"))
     
-    frembed = .embedFR(cds = cds, sce = sce, dr = dr)
+    frembed = .embedFR(cds = cds, sce = sce, dr = dr, ndims = ndims)
     
     metadata(sce)[["Monocle_embedded_curves"]] = frembed$segs
     
@@ -311,7 +311,7 @@ findTrajectories <- function(sce, dr = "PCA", clusters, method = "slingshot",
 #' 
 #' @noRd
 
-.embedFR <- function(cds, sce, dr) {
+.embedFR <- function(cds, sce, dr, ndims) {
   
   wp_coords = t(cds@principal_graph_aux$UMAP$dp_mst)
   sp_coords = reducedDim(sce, dr)[,seq_len(ndims)]
