@@ -707,11 +707,13 @@ sce2 = findTrajectories(sce2, clusters = "SNN_0.64", method = "monocle",
         dr = "PCA", ndims = 20, start = "7", dr_embed = "FR")
         
 plot_UMAP(sce2, umap_slot = "UMAP_FR", color_by = "monoclePseudotime", 
-           label_by = "SNN_0.64", trajectories = "Slingshot_embedded_curves")
+           label_by = "SNN_0.64", trajectories = "Monocle_embedded_curves")
            
 ```           
+<img src="https://github-production-user-asset-6210df.s3.amazonaws.com/21171362/243069896-c1c933d0-8f23-4d73-b25c-5374eed73cb2.png" width=400>
 
 
+It should be noted that this layout is, in a way, optimized for trajectories rather than global cell-cell similarity and as always should only be treated as a visualization tool.
 
 ## Metacells
 
@@ -788,5 +790,7 @@ giy083.
 <https://www.bioconductor.org/packages/release/bioc/html/TSCAN.html>
 
 <a id="20">[20]</a> Nestorowa et al. Blood. 2016 Aug 25;128(8):e20-31
+
+<a id="21">[21]</a> Wolf et al. Genome Biol. 2019 Mar 19;20(1):59
 
 
