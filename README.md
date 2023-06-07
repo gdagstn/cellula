@@ -113,12 +113,17 @@ Plots are separated according to whether the cells were discarded or not
 in the filtering step.
 
 The `cellula()` function is a wrapper around a few modules or
-sub-pipelines that have different degrees of customization.
+sub-pipelines that have different degrees of customization. 
+
+There are other independent functions that are not run through `cellula()` 
+as they need some user input, e.g. `findTrajectories()` requires the user
+to specify the starting cluster (through `makeGraphsAndClusters()`), or 
+the cluster labels to use. 
 
 The scheme is:
 
 ```         
-cellula
+cellula()
     ├── Quality Control [QC]
     |    ├── run emptyDrops (optional) [QC/EMPTY]
     |    ├── score mito/ribo/malat1 subsets (optional)
@@ -163,6 +168,26 @@ cellula
               ├── ssGSEA
               ├── UCell
               └── AUCell
+              
+  makeGraphsAndClusters()
+    └── Multi-resolution clustering [CLU]
+          ├── sweep on Louvain/Leiden resolution or SNN neighbor numbers
+          ├── calculate modularity (optional)
+          └── calculate silhouette (optional)
+              
+  findTrajectories()            
+    └── Trajectory estimation [TRAJ]
+          ├── slingshot [TRAJ/slingshot]
+          |   ├── get lineages
+          |   ├── calculate principal curves
+          |   ├── embed in 2D (optional)
+          |   └── calculate per-lineage DE (optional)
+          └── monocle3 [TRAJ/monocle]
+              ├── convert to CellDataSet
+              ├── learn graph
+              └── embed in 2D (optional)
+                   ├── populate FR layout (if dr_embed = "FR")
+                   └── UMAP on FR layout (if dr_embed = "FR")
              
 ```
 
