@@ -55,15 +55,16 @@ makeGraphsAndClusters <- function(sce,
                                   prefix = "SNN_",
                                   verbose = FALSE) {
   
+  #Sanity checks
   #Error prefix
   ep = "{cellula::makeGraphsAndClusters} - "
   
   if(!is(sce, "SingleCellExperiment")) 
     stop(paste0(ep, "Must provide a SingleCellExperiment object"))
-
-  match.arg(method, c("leiden", "louvain"))
-  match.arg(weighting_scheme, c("jaccard", "rank", "number"))
-
+  if(!method %in% c("leiden", "louvain"))
+    stop(paste0(ep, "method not recognized - must be one of \"leiden\" or \"louvain\""))
+  if(!weighting_scheme %in%  c("jaccard", "rank", "number"))
+    stop(paste0(ep, "method not recognized - must be one of \"jaccard\", \"rank\", or \"number\""))
   if(is.null(space)) {
     if(length(reducedDim(sce)) == 0) stop(paste0(ep, " there are no dimensionality reductions in the SingleCellExperiment object."))
     space = reducedDim(sce, "PCA")[,seq_len(ndims)]
@@ -180,6 +181,7 @@ metaCluster <- function(sce,
                         do_plot = TRUE,
                         denominator = "union") {
 
+  #Sanity checks
   #Error prefix
   ep = "{cellula::metaCluster} - "
   

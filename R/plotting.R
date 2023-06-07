@@ -560,8 +560,7 @@ plot_Coldata <- function(sce,
   ## Sanity checks
   # Error prefix
   ep = "{cellula::plot_Coldata()} - "
-
-  # Checks
+  
   if(!is(sce, "SingleCellExperiment"))
     stop(paste0(ep, "Must provide a SingleCellExperiment object"))
 

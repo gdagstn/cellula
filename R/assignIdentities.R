@@ -68,7 +68,16 @@ assignIdentities <- function(sce,
                              kcdf = "Gaussian",
                              annotation = "logcounts",
                              ...) {
+  ## Sanity checks
+  # Error prefix
+  ep = "{cellula::assignIdentities()} - "
+  
+  if(!is(sce, "SingleCellExperiment"))
+    stop(paste0(ep, "Must provide a SingleCellExperiment object"))
+  if(method %in% c("AUC", "Seurat", "ssGSEA", "UCell")) 
+    stop(paste0(ep, "method not recognized - must be one of \"AUC\", \"Seurat\", \"ssGSEA\", \"UCell\""))
 
+  
   if(is(genesets, "character")) {
     if(is.null(name)) name = "signature"
     genesets = list(genesets)

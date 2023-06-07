@@ -2,7 +2,8 @@
 #'
 #' Downsamples a count matrix to a predetermined total count
 #'
-#' @param mat a matrix where rows are genes/features and columns are samples
+#' @param sce a \code{SingleCellExperiment} object from which the \code{counts}
+#'     assay will be taken.
 #' @param target numeric, the total number of counts per sample to be reached by
 #'     downsampling
 #' @param chunksize numeric, the size (in number of samples) to be processed at
@@ -11,22 +12,34 @@
 #'     Default is \code{SerialParam()}, meaning no parallelization will be used.
 #' @param verbose logical, should progress be displayed? Default is \code{TRUE}.
 #'
-#' @return a sparse matrix of class \code{"dgCMatrix"}
+#' @return a sparse matrix of class \code{"dgCMatrix"} with sampled counts
 #'
 #' @author Giuseppe D'Agostino, inspired by Scott R. Tyler's \code{downsample} package
 #'
 #' @importFrom methods as
 #' @importFrom BiocParallel SerialParam bplapply
 #' @importFrom Matrix sparseVector colSums
+#' @importFrom SummarizedExperiment assay
 #' 
 #' @export
 
-downsampleCounts <- function(mat,
+downsampleCounts <- function(sce,
                              target = NULL,
                              chunksize = 1000,
                              BPPARAM = SerialParam(progressbar = verbose),
                              verbose = TRUE) {
-
+  
+  ## Sanity checks
+  # Error prefix
+  ep = "{cellula::downsampleCounts()} - "
+  
+  if(!is(sce, "SingleCellExperiment")) 
+    stop(paste0(ep, "sce must be a SingleCellExperiment object"))
+  if(!is.null(target) & !is(target, numeric)) 
+    stop(paste0(ep, "target must be a numeric or NULL"))
+  
+  mat = assay(sce, "counts")
+  
   all_genes = rownames(mat)
 
   if(is.null(target)) target = min(colSums(mat))
@@ -101,12 +114,23 @@ downsampleCounts <- function(mat,
 downsampleCells <- function(sce, sample_by, proportion = 0.1, min = 10, 
                             verbose = TRUE, BPPARAM = SerialParam()) {
   
-  if(!is(sce, "SingleCellExperiment")) stop("sce must be a SingleCellExperiment object")
-  if(min <= 0) stop("min must be strictly positive")
-  if(!is(min, "numeric")) stop("min must be a numeric")
-  if(!is(proportion, "numeric")) stop("proportion must be a numeric")
-  if(proportion > 1 | proportion < 0) stop("proportion must be between 0 and 1 excluded")
-  if(!sample_by %in% colnames(colData(sce))) stop(sample_by, " is not a column in colData(sce)")
+  
+  ## Sanity checks
+  # Error prefix
+  ep = "{cellula::downsampleCells()} - "
+  
+  if(!is(sce, "SingleCellExperiment")) 
+    stop(paste0(ep, "sce must be a SingleCellExperiment object"))
+  if(min <= 0) 
+    stop(paste0(ep, "min must be strictly positive"))
+  if(!is(min, "numeric")) 
+    stop(paste0(ep, "min must be a numeric"))
+  if(!is(proportion, "numeric")) 
+    stop(paste0(ep, "proportion must be a numeric"))
+  if(proportion > 1 | proportion < 0) 
+    stop(paste0(ep, "proportion must be between 0 and 1 excluded"))
+  if(!sample_by %in% colnames(colData(sce))) 
+    stop(paste0(ep, sample_by, " is not a column in colData(sce)"))
 
       sampled = bplapply(unique(colData(sce)[,by]), function(x) {
     if(verbose) cat("Downsampling cells in ", x)

@@ -135,9 +135,26 @@ findTrajectories <- function(sce, dr = "PCA", clusters, method = "slingshot",
                              omega_scale = 1.5, invert = FALSE, do_de = FALSE, batch_de = NULL,
                              add_metadata = TRUE, verbose = FALSE, 
                              BPPARAM = SerialParam()) {
-
-  if(!(start %in% colData(sce)[,clusters])) stop("Could not find the start cluster!")
-    
+  
+  ## Sanity checks
+  # Error prefix
+  ep = "{cellula::findTrajectories()} - "
+  
+  if(!is(sce, "SingleCellExperiment"))
+    stop(paste0(ep, "Must provide a SingleCellExperiment object"))
+  if(!(method %in% c("slingshot", "monocle"))) 
+    stop(paste0(ep, "method not recognized - must be one of \"slingshot\" or \"monocle\""))
+  if(!(clusters %in% colnames(colData(sce)))) 
+    stop(paste0(ep,"clusters column not found in the colData of the object"))
+  if(!is(colData(sce)[,clusters], "character") & !is(colData(sce)[,clusters], "factor")) 
+    stop(paste0(ep,"clusters column should contain a factor or a character"))
+  if(!(dr %in% names(reducedDim(sce)))) 
+    stop(paste0(ep,"dr reduction not found among the reducedDims of the object"))
+  if(dr_embed != "FR" & !(dr_embed %in% names(reducedDim(sce)))) 
+    stop(paste0(ep,"dr_embed reduction not found among the reducedDims of the object"))
+  if(start != "auto" & !(start %in% colData(sce)[,clusters])) 
+    stop(paste0(ep,"Could not find the start cluster in clusters"))
+  
   if(start == "auto") {
     if(!any(colnames(colData(sce)) == "entropy"))
       if(verbose) cat("Calculating per-cell entropy\n")
@@ -301,6 +318,8 @@ findTrajectories <- function(sce, dr = "PCA", clusters, method = "slingshot",
     metadata(sce)[["Monocle_principal_graph"]] = cds@principal_graph$UMAP
     metadata(sce)[["Monocle_principal_graph_aux"]] = cds@principal_graph_aux$UMAP
   }
+  
+  
   
   if(verbose) message(paste0(blue("[TRAJ/Monocle3] "),"Done."))
   

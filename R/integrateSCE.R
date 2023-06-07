@@ -48,18 +48,33 @@ integrateSCE = function(sce,
                         neighbor_n = NULL,
                         parallel_param = SerialParam(),
                         verbose = FALSE){
+  ## Sanity checks
+  # Error prefix
+  ep = "{cellula::integrateSCE()} - "
   
-  if(is.null(neighbor_n)) neighbor_n = floor(sqrt(ncol(sce)))
+  if(!is(sce, "SingleCellExperiment"))
+    stop(paste0(ep, "Must provide a SingleCellExperiment object"))
+  if(!(method %in% c("fastMNN", "Harmony", "Seurat", "LIGER", "regression"))) 
+    stop(paste0(ep, "method not recognized - must be one of \"fastMNN\", \"Harmony\", \"Seurat\", \"LIGER\", or \"regression\""))
+  if(!(batch %in% colnames(colData(sce)))) 
+    stop(paste0(ep,"batch column not found in the colData of the object"))
+  if(hvg_ntop > nrows(sce))
+    stop(paste0(ep, "hvg_ntop cannot be higher than the number of features (nrow) in the object"))
+  
+  if(is.null(neighbor_n)) {
+    cat(blue("[INT/fastMNN]"), "neighbor_n was not supplied. Defaulting to floor(sqrt(ncells))\n")
+    neighbor_n = floor(sqrt(ncol(sce)))
+  }
   
   if(method == "fastMNN") {
     
     #fastMNN
-    if(verbose) cat(blue("[INT/fastMNN]"), "Correcting batch effect using fastMNN.\n")
+    if(verbose) cat(blue("[INT/fastMNN]"), "Correcting batch effect using fastMNN\n")
     
     if(is.null(hvgs)) {
       if(!is.null(metadata(sce)$hvgs)) hvgs = metadata(sce)$hvgs
     } else {
-      stop("{cellula::integrateSCE()} - Highly variable genes not supplied and not previously calculated.")
+      stop(paste0(ep, "Highly variable genes not supplied and not previously calculated"))
     }
     
     sce_corr <- fastMNN(sce,
@@ -72,14 +87,14 @@ integrateSCE = function(sce,
     
     
     # UMAP
-    if(verbose) cat(blue("[INT/fastMNN]"), "Running UMAP on MNN-corrected space.\n")
+    if(verbose) cat(blue("[INT/fastMNN]"), "Running UMAP on MNN-corrected space\n")
     
     reducedDim(sce, "UMAP_MNN") <- umap(reducedDim(sce, "PCA_MNN")[,seq_len(ndims)],
                                         n_neighbors = neighbor_n,
                                         min_dist = 0.7)
   } else if(method == "Harmony") {
     
-    if(verbose) cat(blue("[INT/Harmony]"), "Correcting batch effect using Harmony.\n")
+    if(verbose) cat(blue("[INT/Harmony]"), "Correcting batch effect using Harmony\n")
     
     harmony_corr <- HarmonyMatrix(reducedDim(sce, "PCA")[,seq_len(ndims)],
                                   meta_data = colData(sce)[,batch],
@@ -87,7 +102,7 @@ integrateSCE = function(sce,
     
     reducedDim(sce, "PCA_Harmony") <- harmony_corr
     
-    if(verbose) cat(blue("[INT/Harmony]"), "Running UMAP on Harmony-corrected space.\n")
+    if(verbose) cat(blue("[INT/Harmony]"), "Running UMAP on Harmony-corrected space\n")
     
     reducedDim(sce, "UMAP_Harmony") <- umap(reducedDim(sce, "PCA_Harmony")[,seq_len(ndims)],
                                             n_neighbors = neighbor_n,

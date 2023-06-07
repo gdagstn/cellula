@@ -34,7 +34,18 @@ doNormAndReduce <- function(sce, batch = NULL, name,
                             hvg_ntop = 2000,
                             verbose = TRUE,
                             parallel_param = SerialParam()) {
-
+  
+  #Sanity checks
+  # Error prefix
+  ep = "{cellula::doNormAndReduce()} - "
+  
+  if(!is(sce, "SingleCellExperiment"))
+    stop(paste0(ep, "Must provide a SingleCellExperiment object"))
+  if(!is.null(batch) & !batch %in% colnames(colData(sce))) 
+    stop(paste0(ep, "batch column not found in the colData of the object"))
+  if(hvg_ntop > nrows(sce))
+    stop(paste0(ep, "hvg_ntop cannot be higher than the number of features (nrow) in the object"))
+  
   if(verbose) cat(blue("[NORM]"), "Calculating size factors and normalizing. \n")
 
   # Size factors
@@ -68,8 +79,6 @@ doNormAndReduce <- function(sce, batch = NULL, name,
 
   saveRDS(sce, file = paste0("./", name, "/", name, "_tempSCE.RDS"))
 
-  #if(!is.null(stopat) & stopat == "NORM") return(sce)
-
   # HVGs
 
   if(verbose) cat(blue("[DR]"), "Selecting HVGs. \n")
@@ -101,7 +110,7 @@ doNormAndReduce <- function(sce, batch = NULL, name,
   # UMAP
   if(verbose) cat(blue("[DR]"), "Running UMAP on uncorrected PCA \n")
 
-  neighbor_n <- sqrt(ncol(sce))
+  neighbor_n <- floor(sqrt(ncol(sce)))
 
   reducedDim(sce, "UMAP") <- umap(reducedDim(sce, "PCA")[,seq_len(ndims)],
                                   n_neighbors = neighbor_n,
