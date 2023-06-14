@@ -75,7 +75,7 @@
 #'    The user can pass additional arguments to each function using the `...`
 #'    argument.
 #'
-#' @importFrom BiocParallel SerialParam BPPARAM
+#' @importFrom BiocParallel SerialParam 
 #' @export
 
 assignIdentities <- function(sce,
