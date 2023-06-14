@@ -141,7 +141,9 @@ cellula <- function(sce,
   }
 
   if(verbose) cat(blue("[INT]"), "Integration. \n")
+  
   hvgs = metadata(sce)$hvgs
+  
   if(!is.null(batch)) {
     sce = integrateSCE(sce,
                        batch = batch,
