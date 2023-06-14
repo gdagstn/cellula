@@ -167,7 +167,8 @@ cellula()
               ├── Seurat AddModuleScore
               ├── ssGSEA
               ├── UCell
-              └── AUCell
+              ├── AUCell
+              └── Jaitin
               
   makeGraphsAndClusters()
     └── Multi-resolution clustering [CLU]
@@ -456,16 +457,17 @@ plot_UMAP(sce, umap_slot = "UMAP_Harmony", color_by = "metacluster_score", label
 
 # Assigning cell identities
 
-`cellula` implements 4 methods for automated cell identity assignment,
-based on the Bioconductor `AUCell` [package]()[[12]](#12), the `GSVA`
-`ssGSEA` implementation[[13]](#13), the `Seurat` `AddModuleScore()`
-function or the `UCell` method[[14]](#14).
+`cellula` implements 5 methods for automated cell identity assignment, 4 of which
+are signature-based, and one reference-based. The methods are based on the 
+Bioconductor `AUCell` [package]()[[12]](#12), the `GSVA` `ssGSEA` 
+implementation[[13]](#13), the `Seurat` `AddModuleScore()` function, the `UCell`
+method[[14]](#14) and the `Jaitin` method[[15]](#15).
 
-The function requires a `genesets` named list containing genes to be
-used for scoring every single cell. These can be obtained through other
-packages, e.g. `msigdbr`. For instance, if we wanted to take all the
-Muraro et al.[[15]](#15). signature genes, present in the C8 collection,
-we would do:
+For the first 4 methods (`"AUCell"`, `"ssGSEA"`, `"AddModuleScore"` and `"UCell"`) the function 
+requires user-defined `genesets`, i.e. a named list containing genes to be used 
+for scoring every single cell. These can be obtained through other packages, 
+e.g. `msigdbr`. For instance, if we wanted to take all the Muraro et al.[[16]](#16). 
+signature genes, present in the C8 collection, we would do:
 
 ```{r}
 library(msigdbr)
@@ -486,9 +488,19 @@ sce = assignIdentities(sce,
                        method = "AUC")
 ```
 
-Other methods are "Seurat", "UCell", and "ssGSEA".
+Other signature-based methods are `"Seurat"`, `"UCell"`, and `"ssGSEA"`.
 
-This will create a column named "labels_AUC" (or anything else the user
+A reference-based method, `"Jaitin"`, is available. This method uses a matrix of
+gene expression as a reference, and then calculates the posterior probability 
+for each cell in the `sce` object that its transcriptome matches any of the 
+reference ones. The reference with the highest probability is selected as the 
+best label. Importantly, for the "`Jaitin`" method it is possible to choose the
+`assay` to be used. If the user supplies a matrix of log-normalized counts as a
+reference, the `assay` argument should point to a similarly normalized data,
+e.g. `"logcounts"`. Finally, `"Jaitin"` is very slow but can be easily parallelized
+by supplying a `BPPARAM` object.
+
+`assignIdentities()` will create a column named "labels_AUC" (or anything else the user
 determines using the `name` argument) in the `colData(sce)`. Assignments
 can be plotted:
 
@@ -548,7 +560,7 @@ downsampled **C'**), we randomly pick 40 counts from a (0.5, 0.3, 0.2)
 vector of probabilities.
 
 This is a sort of downsampling by simulation and is described in Scott
-Tyler's [work](https://github.com/scottyler89/downsample)[[16]](#16),
+Tyler's [work](https://github.com/scottyler89/downsample)[[17]](#17),
 reimplemented in `cellula` with a slightly faster optimization.
 
 The `downsampleCounts()` uses a minimum count number that is
@@ -574,9 +586,9 @@ with fewer cells than the input, as defined by the `proportion` and
 # Inferring trajectories
 
 At the time of writing `cellula` only implements a wrapper around the
-`slingshot` method[[17]](#17) and the `monocle3` method [[18]](#18) for
+`slingshot` method[[18]](#18) and the `monocle3` method [[19]](#19) for
 pseudotemporal trajectory inference, and the `testPseudotime()` method
-from `TSCAN`[[19]](#19) for differential expression along a trajectory.
+from `TSCAN`[[20]](#20) for differential expression along a trajectory.
 More trajectory inference and differential expression methods will be
 implemented in the future.
 
@@ -666,7 +678,7 @@ fields.
         object with additional information on the principal graph.
 
 In this example we download a dataset that captures early haematopoietic
-differentiation from Nestorowa et al. [[20]](#20) and we do a quick
+differentiation from Nestorowa et al. [[21]](#21) and we do a quick
 processing and clustering.
 
 ```{r}
@@ -718,8 +730,8 @@ containing segments to draw trajectories.
 
 Since the 2D embedding of `monocle3` PCA-derived trajectories may be hard to 
 understand, given the distortions introduced by UMAP, `cellula` includes an additional 
-2D embedding method, `dr_embed = "FR"`, inspired by the PAGA embedding 
-initialization technique [[21]](#21).
+2D embedding method, `dr_embed = "FR"`, inspired båy the PAGA embedding 
+initialization technique [[22]](#22).
 
 Briefly, once the principal graph has been calculated, it is laid out in 2D 
 using the Fruchterman-Reingold algorithm. Then each cell is randomly plotted 
@@ -807,19 +819,21 @@ giy083.
 <a id="14">[14]</a> Andreatta and Carmona Comput Struct Biotechnol J.
 2021 Jun 30;19: 3796-3798.
 
-<a id="15">[15]</a> Muraro et al. Cell Syst. 2016 Oct 26;3(4):385-394.e3
+<a id="15">[15]</a> Jaitin et al. 2015 Science 343, 776-779
 
-<a id="16">[16]</a> Tyler et al. biorXiv 2021 11.15.468733
+<a id="16">[16]</a> Muraro et al. Cell Syst. 2016 Oct 26;3(4):385-394.e3
 
-<a id="17">[17]</a> Street et al. BMC Genomics. 2018 Jun 19;19(1): 477.
+<a id="17">[17]</a> Tyler et al. biorXiv 2021 11.15.468733
 
-<a id="18">[18]</a> Cao et al. Nature. 2019 Feb;566(7745):496-502
+<a id="18">[18]</a> Street et al. BMC Genomics. 2018 Jun 19;19(1): 477.
 
-<a id="19">[19]</a> Ji and Ji
+<a id="19">[19]</a> Cao et al. Nature. 2019 Feb;566(7745):496-502
+
+<a id="20">[20]</a> Ji and Ji
 <https://www.bioconductor.org/packages/release/bioc/html/TSCAN.html>
 
-<a id="20">[20]</a> Nestorowa et al. Blood. 2016 Aug 25;128(8):e20-31
+<a id="21">[21]</a> Nestorowa et al. Blood. 2016 Aug 25;128(8):e20-31
 
-<a id="21">[21]</a> Wolf et al. Genome Biol. 2019 Mar 19;20(1):59
+<a id="22">[22]</a> Wolf et al. Genome Biol. 2019 Mar 19;20(1):59
 
 
