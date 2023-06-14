@@ -72,10 +72,10 @@ integrateSCE = function(sce,
     if(verbose) cat(blue("[INT/fastMNN]"), "Correcting batch effect using fastMNN\n")
     
     if(is.null(hvgs)) {
-      if(!is.null(metadata(sce)$hvgs)) hvgs = metadata(sce)$hvgs
-    } else {
-      stop(paste0(ep, "Highly variable genes not supplied and not previously calculated"))
-    }
+      if(!is.null(metadata(sce)$hvgs)) {
+        hvgs = metadata(sce)$hvgs
+        } else stop(paste0(ep, "Highly variable genes not supplied and not previously calculated"))
+      }
     
     sce_corr <- fastMNN(sce,
                         batch = colData(sce)[,batch],
