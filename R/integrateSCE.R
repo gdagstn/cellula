@@ -58,7 +58,7 @@ integrateSCE = function(sce,
     stop(paste0(ep, "method not recognized - must be one of \"fastMNN\", \"Harmony\", \"Seurat\", \"LIGER\", or \"regression\""))
   if(!(batch %in% colnames(colData(sce)))) 
     stop(paste0(ep,"batch column not found in the colData of the object"))
-  if(hvg_ntop > nrows(sce))
+  if(hvg_ntop > nrow(sce))
     stop(paste0(ep, "hvg_ntop cannot be higher than the number of features (nrow) in the object"))
   
   if(is.null(neighbor_n)) {
