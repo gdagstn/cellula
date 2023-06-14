@@ -16,6 +16,7 @@ makeGraphsAndClusters(
   calculate_modularity = TRUE,
   calculate_silhouette = TRUE,
   leiden_iterations = 5L,
+  save_graphs = FALSE,
   prefix = "SNN_",
   verbose = FALSE
 )
@@ -52,6 +53,9 @@ calculated? Default is \code{TRUE}}
 
 \item{leiden_iterations}{numeric, the number of iterations of Leiden clustering.
 Default is 5.}
+
+\item{save_graphs}{logical, should the \code{igraph} graph objects be saved in
+the metadata of \code{sce}? Default is FALSE.}
 
 \item{prefix}{character, the prefix of the column names on \code{colData(sce)}
 where clustering results are stored. Default is \code{SNN_}.}

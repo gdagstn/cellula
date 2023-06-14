@@ -5,7 +5,7 @@
 \title{Downsample counts}
 \usage{
 downsampleCounts(
-  mat,
+  sce,
   target = NULL,
   chunksize = 1000,
   BPPARAM = SerialParam(progressbar = verbose),
@@ -13,7 +13,8 @@ downsampleCounts(
 )
 }
 \arguments{
-\item{mat}{a matrix where rows are genes/features and columns are samples}
+\item{sce}{a \code{SingleCellExperiment} object from which the \code{counts}
+assay will be taken.}
 
 \item{target}{numeric, the total number of counts per sample to be reached by
 downsampling}
@@ -27,7 +28,7 @@ Default is \code{SerialParam()}, meaning no parallelization will be used.}
 \item{verbose}{logical, should progress be displayed? Default is \code{TRUE}.}
 }
 \value{
-a sparse matrix of class \code{"dgCMatrix"}
+a sparse matrix of class \code{"dgCMatrix"} with sampled counts
 }
 \description{
 Downsamples a count matrix to a predetermined total count

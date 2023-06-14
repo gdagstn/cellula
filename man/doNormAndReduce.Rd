@@ -7,7 +7,7 @@
 doNormAndReduce(
   sce,
   batch = NULL,
-  name,
+  name = NULL,
   ndims = 20,
   hvg_ntop = 2000,
   verbose = TRUE,

@@ -8,11 +8,14 @@ assignIdentities(
   sce,
   genesets,
   method,
+  ref = NULL,
+  assay = NULL,
   verbose = TRUE,
   name = NULL,
   return_scores = FALSE,
   kcdf = "Gaussian",
   annotation = "logcounts",
+  BPPARAM = SerialParam(),
   ...
 )
 }
@@ -24,7 +27,13 @@ labels and/or assign scores. Alternatively, a character vector to calculate
 a single score from.}
 
 \item{method}{character, the method for scoring. One of \code{"AUC"}, \code{"Seurat"},
-\code{"ssGSEA"} or \code{"UCell"}.}
+\code{"ssGSEA"}, \code{"UCell"}, or \code{"Jaitin"}.}
+
+\item{ref}{a matrix containing expression values from reference transcriptomes. 
+Only used when \code{method = "Jaitin"}.}
+
+\item{assay}{the name of the slot in \code{sce} containing expression values 
+to calculate the log-likelihood. Only used when \code{method = "Jaitin"}.}
 
 \item{verbose}{logical, should messages on progress be printed? Default is TRUE}
 
@@ -39,6 +48,9 @@ be saved in the object metadata slot? Default is \code{FALSE}.}
 
 \item{annotation}{character, which assay name to use for rank calculation.
 Only used when \code{method = "ssGSEA"}.}
+
+\item{BPPARAM}{a \code{BPPARAM} object from \code{BiocParallel}. Default is 
+\code{SerialParam()}, meaning no parallelization will be used.}
 
 \item{...}{other arguments passed internally to \code{AUCell::AUCell_calcAUC()}
 ("AUC" method), \code{Seurat::AddModuleScore()} ("Seurat" method),
@@ -55,7 +67,9 @@ Automatic assignment of cell type identities in SingleCellExperiment objects
 }
 \details{
 This is a wrapper around four methods for assigning to each cell a
-   score for the expression of a given geneset.
+   score for the expression of a given geneset, and a method that uses a reference
+   transcriptome as prior probability distribution to estimate the posterior 
+   probability that a cell is similar to the reference via a multinomial model.
    \itemize{
     \item{ The "AUC" method
     (\href{https://www.nature.com/articles/nmeth.4463}{Aibar et al. 2017}) calculates
@@ -69,16 +83,27 @@ This is a wrapper around four methods for assigning to each cell a
 
    \item{The "UCell" method (\href{https://www.sciencedirect.com/science/article/pii/S2001037021002816}{Andreatta and Carmona 2020})
     calculates an enrichment score using a Mann-Whitney U-test.}
+    
+   \item{The "Jaitin" method (\href{https://www.ncbi.nlm.nih.gov/pmc/articles/PMC4412462/}{Jaitin et al. 2016}) calculates the posterior probability of a single cell being close to a 
+    reference transcriptome.}
    }
 
    If a list of genesets is given, all methods result in a final label assignment
    (i.e. the names of the user-provided geneset for which each single cell has
    the highest score). If only a single geneset is provided, the score for that
    geneset is added to the \code{colData} slot.
+   
+   For the \code{"Jaitin"} method, the \code{ref} object is a matrix containing
+   genes in each row, and samples in each column. It is important to specify the
+   \code{assay} slot depending on what the reference contains. If the reference
+   contains raw counts, it is advisable to use \code{assay = "counts"}; if it 
+   contains log-normalized counts, it is advisable to use \code{assay = "logcounts"}.
+   The resulting scores, optionally saved in the \code{metadata}, are the posterior
+   probabilities. 
 
    Please note that scores are not comparable between themselves - AUC,
-   ssGSEA, and UCell are strictly positive, whereas the Module Score can also
-   be negative; UCell and AUCell are normalized between 0 and 1, whereas
+   ssGSEA, UCell and Jaitin are strictly positive, whereas the Module Score can also
+   be negative; UCell, AUCell and Jaitin are normalized between 0 and 1, whereas
    ssGSEA is not.
 
    The user can pass additional arguments to each function using the `...`
