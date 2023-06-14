@@ -29,7 +29,7 @@
 #' @importFrom S4Vectors metadata metadata<-
 #'
 #' @export
-doNormAndReduce <- function(sce, batch = NULL, name,
+doNormAndReduce <- function(sce, batch = NULL, name = NULL,
                             ndims = 20,
                             hvg_ntop = 2000,
                             verbose = TRUE,
@@ -41,9 +41,11 @@ doNormAndReduce <- function(sce, batch = NULL, name,
   
   if(!is(sce, "SingleCellExperiment"))
     stop(paste0(ep, "Must provide a SingleCellExperiment object"))
-  if(!is.null(batch) & !batch %in% colnames(colData(sce))) 
-    stop(paste0(ep, "batch column not found in the colData of the object"))
-  if(hvg_ntop > nrows(sce))
+  if(!is.null(batch)) {
+    if(!batch %in% colnames(colData(sce)))
+      stop(paste0(ep, "batch column not found in the colData of the object"))
+  }
+  if(hvg_ntop > nrow(sce))
     stop(paste0(ep, "hvg_ntop cannot be higher than the number of features (nrow) in the object"))
   
   if(verbose) cat(blue("[NORM]"), "Calculating size factors and normalizing. \n")
@@ -75,10 +77,11 @@ doNormAndReduce <- function(sce, batch = NULL, name,
   } else {
     sce <- logNormCounts(sce)
   }
-  if(verbose) cat("Saving temporary file. \n")
-
-  saveRDS(sce, file = paste0("./", name, "/", name, "_tempSCE.RDS"))
-
+  
+  if(!is.null(name)) {
+    if(verbose) cat("Saving temporary file. \n")
+    saveRDS(sce, file = paste0("./", name, "/", name, "_tempSCE.RDS"))
+  }
   # HVGs
 
   if(verbose) cat(blue("[DR]"), "Selecting HVGs. \n")
@@ -103,9 +106,10 @@ doNormAndReduce <- function(sce, batch = NULL, name,
                 ncomponents	= ndims)#,
   #BPPARAM = parallel_param)
 
-  if(verbose) cat("Saving temporary file. \n")
-
-  saveRDS(sce, file = paste0("./", name, "/", name, "_tempSCE.RDS"))
+  if(!is.null(name)) {
+    if(verbose) cat("Saving temporary file. \n")
+    saveRDS(sce, file = paste0("./", name, "/", name, "_tempSCE.RDS"))
+  }
 
   # UMAP
   if(verbose) cat(blue("[DR]"), "Running UMAP on uncorrected PCA \n")

@@ -24,6 +24,8 @@
 #'     calculated? Default is \code{TRUE}
 #' @param leiden_iterations numeric, the number of iterations of Leiden clustering.
 #'     Default is 5.
+#' @param save_graphs logical, should the \code{igraph} graph objects be saved in
+#'     the metadata of \code{sce}? Default is FALSE.
 #' @param prefix character, the prefix of the column names on \code{colData(sce)}
 #'     where clustering results are stored. Default is \code{SNN_}.
 #' @param verbose logical, should messages be written? Default is \code{FALSE}
@@ -52,6 +54,7 @@ makeGraphsAndClusters <- function(sce,
                                   calculate_modularity = TRUE,
                                   calculate_silhouette = TRUE,
                                   leiden_iterations = 5L,
+                                  save_graphs = FALSE,
                                   prefix = "SNN_",
                                   verbose = FALSE) {
   
@@ -108,6 +111,10 @@ makeGraphsAndClusters <- function(sce,
         silhouette$cluster <- cl
         metadata(sce)[[paste0("silhouette_", gname)]] = silhouette
       }
+      
+      if(save_graphs) {
+        metadata(sce)[[paste0("SNN_", neighbors, "_", weighting_scheme)]] = g
+      }
     }
     # Case 2: parameter sweep on SNN neighbor number
   } else if(sweep_on == "SNN" & !is.null(k)) {
@@ -119,6 +126,11 @@ makeGraphsAndClusters <- function(sce,
       g = makeSNNGraph(space,
                        k = i,
                        type = weighting_scheme)
+      
+      if(save_graphs) {
+        metadata(sce)[[paste0("SNN_", i, "_", weighting_scheme)]] = g
+      }
+      
       if(method == "louvain") {
         cl = factor(cluster_louvain(g)$membership)
       } else if(method == "leiden") {
