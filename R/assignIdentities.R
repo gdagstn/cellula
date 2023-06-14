@@ -139,7 +139,7 @@ assignIdentities <- function(sce,
                                                    verbose,
                                                    name = name,
                                                    return_scores = return_scores,
-                                                   BPPARAM = BPPARAM
+                                                   BPPARAM = BPPARAM,
                                                    ...)}
          )
 
