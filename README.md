@@ -607,7 +607,7 @@ node in `monocle3`.
 Other important parameters are: 
 
   - `dr` - the reduced dimensional
-reduction in which trajectories will be estimated (default is "PCA") 
+embedding in which trajectories will be estimated (default is "PCA") 
 
   - `start` - the starting cluster for trajectory estimation, defaulting to
 "auto" for an entropy-based method 

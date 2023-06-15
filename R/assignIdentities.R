@@ -79,7 +79,7 @@
 #' @export
 
 assignIdentities <- function(sce,
-                             genesets,
+                             genesets = NULL,
                              method,
                              ref = NULL,
                              assay = NULL,
@@ -96,7 +96,7 @@ assignIdentities <- function(sce,
   
   if(!is(sce, "SingleCellExperiment"))
     stop(paste0(ep, "Must provide a SingleCellExperiment object"))
-  if(method %in% c("AUC", "Seurat", "ssGSEA", "UCell", "Jaitin")) 
+  if(!method %in% c("AUC", "Seurat", "ssGSEA", "UCell", "Jaitin")) 
     stop(paste0(ep, "method not recognized - must be one of \"AUC\", \"Seurat\", \"ssGSEA\", \"UCell\", \"Jaitin\""))
 
   
@@ -354,8 +354,18 @@ assignIdentities <- function(sce,
     common = intersect(rownames(ref), rowData(sce)$ID)
     if(length(common) == 0) {
       common = intersect(rownames(ref), rowData(sce)$Symbol)
-      if(length(common) == 0) stop(paste0(ep, "no genes in common were found in any slot (rownames, rowData ID and Symbol)"))
+      if(length(common) == 0) {
+        stop(paste0(ep, "no genes in common were found in any slot (rownames, rowData ID and Symbol)"))
+      } else {
+        old.rownames = rownames(sce)
+        rownames(sce) = rowData(sce)$Symbol
+      }
+    } else {
+      old.rownames = rownames(sce)
+      rownames(sce) = rowData(sce)$ID
     }
+  } else {
+    old.rownames = rownames(sce)
   }
   
   if(length(common) < floor(0.1 * nrow(sce))) warning(paste0(ep, "less than 10% genes in common between object and reference"))
@@ -389,5 +399,7 @@ assignIdentities <- function(sce,
   
   colData(sce)[,labelname] = cmat_top
   
+  rownames(sce) = old.rownames
+    
   return(sce)
 }
