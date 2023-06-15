@@ -497,8 +497,7 @@ reference ones. The reference with the highest probability is selected as the
 best label. Importantly, for the "`Jaitin`" method it is possible to choose the
 `assay` to be used. If the user supplies a matrix of log-normalized counts as a
 reference, the `assay` argument should point to a similarly normalized data,
-e.g. `"logcounts"`. Finally, `"Jaitin"` is very slow but can be easily parallelized
-by supplying a `BPPARAM` object.
+e.g. `"logcounts"`. 
 
 `assignIdentities()` will create a column named "labels_AUC" (or anything else the user
 determines using the `name` argument) in the `colData(sce)`. Assignments

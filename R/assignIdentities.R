@@ -11,7 +11,8 @@
 #' @param ref a matrix containing expression values from reference transcriptomes. 
 #'     Only used when \code{method = "Jaitin"}.  
 #' @param assay the name of the slot in \code{sce} containing expression values 
-#'     to calculate the log-likelihood. Only used when \code{method = "Jaitin"}.
+#'     to calculate the log-likelihood. Only used when \code{method = "Jaitin"} or
+#'     \code{method = "ssGSEA"}.
 #' @param verbose logical, should messages on progress be printed? Default is TRUE
 #' @param name character, the name of the column in \code{colData(sce)} where final
 #'     labels will be stored
@@ -19,10 +20,6 @@
 #'     be saved in the object metadata slot? Default is \code{FALSE}.
 #' @param kcdf character, which kernel to use for the CDF. One of \code{"Poisson"} or
 #'     \code{"Gaussian"}. Only used when \code{method = "ssGSEA"}.
-#' @param annotation character, which assay name to use for rank calculation.
-#'     Only used when \code{method = "ssGSEA"}.
-#' @param BPPARAM a \code{BPPARAM} object from \code{BiocParallel}. Default is 
-#'     \code{SerialParam()}, meaning no parallelization will be used.
 #' @param ... other arguments passed internally to \code{AUCell::AUCell_calcAUC()}
 #'     ("AUC" method), \code{Seurat::AddModuleScore()} ("Seurat" method),
 #'     \code{GSVA::gsva()}("ssGSEA" method), or \code{UCell::ScoreSignatures_UCell()}
@@ -87,8 +84,6 @@ assignIdentities <- function(sce,
                              name = NULL,
                              return_scores = FALSE,
                              kcdf = "Gaussian",
-                             annotation = "logcounts",
-                             BPPARAM = SerialParam(),
                              ...) {
   ## Sanity checks
   # Error prefix
@@ -123,8 +118,8 @@ assignIdentities <- function(sce,
                                                     genesets,
                                                     verbose,
                                                     name = name,
+                                                    assay = assay,
                                                     return_scores = return_scores,
-                                                    annotation = annotation,
                                                     kcdf = kcdf,
                                                     ...)},
          "UCell" = {sce = .assignIdentities_UCell(sce,
@@ -259,7 +254,7 @@ assignIdentities <- function(sce,
 
   ss = gsva(sce,
             gset.idx.list = genesets,
-            annotation = annotation,
+            annotation = assay,
             method = "ssgsea",
             kcdf = kcdf,
             verbose = verbose,
@@ -328,8 +323,9 @@ assignIdentities <- function(sce,
   return(sce)
 }
 
-#' @importFrom BiocParallel SerialParam MulticoreParam bplapply
 #' @importFrom crayon blue
+#' @importFrom matrixStats colMaxs
+#' @importFrom Matrix t
 #' @importFrom SummarizedExperiment colData assay
 #' @importFrom S4Vectors metadata
 
@@ -338,8 +334,7 @@ assignIdentities <- function(sce,
                                      assay = "counts",
                                      verbose = FALSE,
                                      name = NULL,
-                                     return_scores = FALSE,
-                                     BPPARAM = SerialParam()){
+                                     return_scores = FALSE){
   
   if(is.null(name)) labelname = "labels_Jaitin" else labelname = name
   
@@ -370,34 +365,32 @@ assignIdentities <- function(sce,
   
   if(length(common) < floor(0.1 * nrow(sce))) warning(paste0(ep, "less than 10% genes in common between object and reference"))
   
-  ref_common = ref[common,]
+  rl = t(t(ref)/colSums(ref))
+  
+  ref_common = rl[common,]
+  ref_common[ref_common == 0] = 1e-8
   counts_common = assay(sce, assay)[common,]
   
   if(verbose) cat(blue("[ANNO/JAITIN]"), "Calculating log-likelihood \n")
+
+  loglik = as(t(t(counts_common) %*% log(ref_common)), "matrix")
   
-  rl = log(t(t(ref_common) / colSums(ref_common))+1)
-  
-  loglik = bplapply(seq_len(ncol(sce)), function(x) 
-    colSums(counts_common[,x] * rl), 
-    BPPARAM = BPPARAM)
+  colnames(loglik) = colnames(sce)
+  rownames(loglik) = colnames(ref)
   
   if(verbose) cat(blue("[ANNO/JAITIN]"), "Calculating posterior probabilities \n")
   
-  posterior = bplapply(loglik, function(x) 
-    exp(x-max(x)-log(sum(x/max(x)))), 
-    BPPARAM = BPPARAM)
-  
-  cmat = do.call(rbind, posterior)
-  
+  posterior = exp(t(loglik)-colMaxs(loglik)-log(rowSums(t(loglik)/colMaxs(loglik))))
+
   if(verbose) cat(blue("[ANNO/JAITIN]"), "Deciding best labels \n")
   
-  cmat_top = colnames(cmat)[apply(cmat, 1, which.max)]
+  toplabel = colnames(posterior)[apply(posterior, 1, which.max)]
   
-  if(return_scores) metadata(sce)$JaitinScores = cmat
+  if(return_scores) metadata(sce)[[paste0(labelname, "_scores")]] = posterior
   
   if(verbose) cat(blue("[ANNO/JAITIN]"), "All done \n")
   
-  colData(sce)[,labelname] = cmat_top
+  colData(sce)[,labelname] = toplabel
   
   rownames(sce) = old.rownames
     

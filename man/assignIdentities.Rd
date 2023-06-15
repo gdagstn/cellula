@@ -6,7 +6,7 @@
 \usage{
 assignIdentities(
   sce,
-  genesets,
+  genesets = NULL,
   method,
   ref = NULL,
   assay = NULL,
