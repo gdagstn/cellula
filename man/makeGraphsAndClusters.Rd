@@ -11,7 +11,7 @@ makeGraphsAndClusters(
   sweep_on = "clustering",
   method = "louvain",
   k = seq(0.1, 1, length.out = 6),
-  space = NULL,
+  dr = "PCA",
   ndims = 20L,
   calculate_modularity = TRUE,
   calculate_silhouette = TRUE,
@@ -39,11 +39,12 @@ meaning values of \code{k} will be looped through as number of neighbors.}
 
 \item{k}{numeric, vector of parameter sweep for graph construction or clustering.}
 
-\item{space}{a matrix of lower dimensional embedding such as the PCA coordinates.
-if \code{NULL} (default), the \code{"PCA"} slot from \code{reducedDims(sce)}.}
+\item{dr}{character, the name of the slot from \code{reducedDims(sce)}.
+The default is \code{"PCA"}.}
 
 \item{ndims}{numeric, the number of dimensions (columns of \code{space}) to use to
-build the SNN graph. Default is 20}
+build the SNN graph. If the reduction supplied by the user has fewer 
+dimensions, they will all be used. Default is 20.}
 
 \item{calculate_modularity}{logical, should pairwise modularity between
 clusters be calculated? Default is \code{TRUE}}

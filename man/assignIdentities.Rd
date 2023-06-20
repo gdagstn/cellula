@@ -14,7 +14,6 @@ assignIdentities(
   name = NULL,
   return_scores = FALSE,
   kcdf = "Gaussian",
-  annotation = "logcounts",
   BPPARAM = SerialParam(),
   ...
 )
@@ -33,7 +32,8 @@ a single score from.}
 Only used when \code{method = "Jaitin"}.}
 
 \item{assay}{the name of the slot in \code{sce} containing expression values 
-to calculate the log-likelihood. Only used when \code{method = "Jaitin"}.}
+to calculate the log-likelihood. Only used when \code{method = "Jaitin"} or
+\code{method = "ssGSEA"}.}
 
 \item{verbose}{logical, should messages on progress be printed? Default is TRUE}
 
@@ -46,11 +46,8 @@ be saved in the object metadata slot? Default is \code{FALSE}.}
 \item{kcdf}{character, which kernel to use for the CDF. One of \code{"Poisson"} or
 \code{"Gaussian"}. Only used when \code{method = "ssGSEA"}.}
 
-\item{annotation}{character, which assay name to use for rank calculation.
-Only used when \code{method = "ssGSEA"}.}
-
-\item{BPPARAM}{a \code{BPPARAM} object from \code{BiocParallel}. Default is 
-\code{SerialParam()}, meaning no parallelization will be used.}
+\item{BPPARAM}{a \code{BiocParallel} BPPARAM specifying the parallelization. 
+Only used when \code{method = "AUC"}. Default is \code{SerialParam()}}
 
 \item{...}{other arguments passed internally to \code{AUCell::AUCell_calcAUC()}
 ("AUC" method), \code{Seurat::AddModuleScore()} ("Seurat" method),

@@ -14,10 +14,11 @@
 #' @param method character, the type of graph-based clustering to use. One of
 #'     \code{"louvain"} or \code{"leiden"}. Default is \code{"louvain"}.
 #' @param k numeric, vector of parameter sweep for graph construction or clustering.
-#' @param space a matrix of lower dimensional embedding such as the PCA coordinates.
-#'     if \code{NULL} (default), the \code{"PCA"} slot from \code{reducedDims(sce)}.
+#' @param dr character, the name of the slot from \code{reducedDims(sce)}.
+#'     The default is \code{"PCA"}.
 #' @param ndims numeric, the number of dimensions (columns of \code{space}) to use to
-#'     build the SNN graph. Default is 20
+#'     build the SNN graph. If the reduction supplied by the user has fewer 
+#'     dimensions, they will all be used. Default is 20.
 #' @param calculate_modularity logical, should pairwise modularity between
 #'     clusters be calculated? Default is \code{TRUE}
 #' @param calculate_silhouette logical, should approximate silhouette widths be
@@ -49,7 +50,7 @@ makeGraphsAndClusters <- function(sce,
                                   sweep_on = "clustering",
                                   method = "louvain",
                                   k = seq(0.1, 1, length.out = 6),
-                                  space = NULL,
+                                  dr = "PCA",
                                   ndims = 20L,
                                   calculate_modularity = TRUE,
                                   calculate_silhouette = TRUE,
@@ -63,21 +64,40 @@ makeGraphsAndClusters <- function(sce,
   ep = "{cellula::makeGraphsAndClusters} - "
   
   if(!is(sce, "SingleCellExperiment")) 
-    stop(paste0(ep, "Must provide a SingleCellExperiment object"))
+    stop(paste0(ep, "must provide a SingleCellExperiment object"))
   if(!method %in% c("leiden", "louvain"))
     stop(paste0(ep, "method not recognized - must be one of \"leiden\" or \"louvain\""))
   if(!weighting_scheme %in%  c("jaccard", "rank", "number"))
     stop(paste0(ep, "method not recognized - must be one of \"jaccard\", \"rank\", or \"number\""))
-  if(is.null(space)) {
-    if(length(reducedDim(sce)) == 0) stop(paste0(ep, " there are no dimensionality reductions in the SingleCellExperiment object."))
-    space = reducedDim(sce, "PCA")[,seq_len(ndims)]
+  if(length(reducedDim(sce)) == 0) stop(paste0(ep, "there are no dimensionality reductions in the SingleCellExperiment object."))
+  if(!dr %in% names(reducedDim(sce))) stop(paste0(ep, "the dr name supplied was not found in the SingleCellExperiment object"))
+    
+  if(is.null(metadata(sce)$cellula_log)) {
+    clog = .initLog()
+  } else {
+    clog = metadata(sce)$cellula_log
   }
-
+  clog$clustering$neighbors = neighbors
+  clog$clustering$weighting_scheme = weighting_scheme
+  clog$clustering$clustering_sweep = sweep_on
+  if(sweep_on == "clustering") {
+    clog$clustering$resolution_ks = k
+  } else if(sweep_on = "SNN") {
+    clog$clustering$graph_ks = k
+  }
+  clog$clustering$clustering_method = method
+  clog$clustering$dr = dr
+  clog$clustering$ndims = ndims
+  clog$clustering$leiden_iterations = leiden_iterations
+  
   # Case 1: parameter sweep on clustering resolution
 
   if(sweep_on == "clustering" & !is.null(neighbors)) {
 
     if(verbose) cat(blue("[CLU]"), "Creating SNN graph.\n")
+    
+    space = reducedDim(sce, dr)
+    if(ncol(space) > ndims) space = space[,seq_len(ndims)]
 
     g = makeSNNGraph(space,
                      k = neighbors,
@@ -155,7 +175,7 @@ makeGraphsAndClusters <- function(sce,
       }
     }
   }
-
+  metadata(sce)$cellula_log) = clog
   return(sce)
 }
 
@@ -199,7 +219,7 @@ metaCluster <- function(sce,
   
   if(threshold > 1 | threshold < 0) stop(paste0(ep, "threshold must be between 0 and 1"))
   if(any(!clusters %in% colnames(colData(sce)))) stop(paste0(ep, "some cluster column names were not found in colData"))
-  if(!is(sce, "SingleCellExperiment")) stop(paste0(ep, "Must provide a SingleCellExperiment object"))
+  if(!is(sce, "SingleCellExperiment")) stop(paste0(ep, "must provide a SingleCellExperiment object"))
   if((!denominator %in% c("union", "max", "min"))) stop(paste0(ep, "denominator must be one of \"union\", \"max\", \"min\""))
 
   linked <- linkClusters(colData(sce)[,clusters], denominator = denominator)

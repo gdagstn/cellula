@@ -26,6 +26,7 @@
 #' @importFrom uwot umap
 #' @importFrom SingleCellExperiment reducedDim reducedDim<- counts logcounts
 #' @importFrom BiocParallel SerialParam
+#' @importFrom scater runPCA
 #' @importFrom S4Vectors metadata metadata<-
 #'
 #' @export
@@ -40,13 +41,19 @@ doNormAndReduce <- function(sce, batch = NULL, name = NULL,
   ep = "{cellula::doNormAndReduce()} - "
   
   if(!is(sce, "SingleCellExperiment"))
-    stop(paste0(ep, "Must provide a SingleCellExperiment object"))
+    stop(paste0(ep, "must provide a SingleCellExperiment object"))
   if(!is.null(batch)) {
     if(!batch %in% colnames(colData(sce)))
       stop(paste0(ep, "batch column not found in the colData of the object"))
   }
   if(hvg_ntop > nrow(sce))
     stop(paste0(ep, "hvg_ntop cannot be higher than the number of features (nrow) in the object"))
+  
+  if(is.null(metadata(sce)$cellula_log)) {
+    clog = .initParams()
+  } else {
+    clog = metadata(sce)$cellula_log
+  }
   
   if(verbose) cat(blue("[NORM]"), "Calculating size factors and normalizing. \n")
 
@@ -58,10 +65,13 @@ doNormAndReduce <- function(sce, batch = NULL, name = NULL,
                          block = colData(sce)[,batch],
                          min.size = floor(sqrt(min(table(colData(sce)[,batch])))),
                          BPPARAM = parallel_param)
+    clog$norm_reduce$precluster_min_size = floor(sqrt(min(table(colData(sce)[,batch]))))
+
   } else {
     sce_cl <- quickCluster(sce,
                            min.size = floor(sqrt(ncol(sce))),
                            BPPARAM = parallel_param)
+    clog$norm_reduce$precluster_min_size = floor(sqrt(ncol(sce)))
   }
 
   if(verbose) cat(blue("[NORM]"),"   Calculating pooled factors. \n")
@@ -74,8 +84,10 @@ doNormAndReduce <- function(sce, batch = NULL, name = NULL,
   if(!is.null(batch)) {
     sce <- multiBatchNorm(sce,
                           batch = colData(sce)[,batch])
+    clog$norm_reduce$norm_strategy = "multiBatchNorm"
   } else {
     sce <- logNormCounts(sce)
+    clog$norm_reduce$norm_strategy = "logNormCounts"
   }
   
   if(!is.null(name)) {
@@ -95,7 +107,9 @@ doNormAndReduce <- function(sce, batch = NULL, name = NULL,
 
   hvgs <- getTopHVGs(vargenes, n = hvg_ntop)
   metadata(sce)$hvgs <- hvgs
-
+  
+  clog$norm_reduce$hvg_ntop = hvg_ntop
+  
   # PCA
 
   if(verbose) cat(blue("[DR]"), "Running PCA. \n")
@@ -119,6 +133,13 @@ doNormAndReduce <- function(sce, batch = NULL, name = NULL,
   reducedDim(sce, "UMAP") <- umap(reducedDim(sce, "PCA")[,seq_len(ndims)],
                                   n_neighbors = neighbor_n,
                                   min_dist = 0.7)
-
+  
+  clog$norm_reduce$umap_min_dist = 0.7
+  clog$norm_reduce$umap_n_neighbors = neighbor_n
+  clog$norm_reduce$umap_other = formals(umap)[!formalArgs(umap) %in% c("n_neighbors", "min_dist", "X")]
+  clog$norm_reduce$parallel_param = parallel_param
+  
+  metadata(sce)$cellula_log = clog
+    
   return(sce)
 }

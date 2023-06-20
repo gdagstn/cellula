@@ -85,8 +85,14 @@ cellula <- function(sce,
  if(!is.null(batch)) {
    if(!batch %in% colnames(colData(sce)))
     stop(paste0("Batch label \"", batch, "\" not found."))
+   if(!is.factor(colData(sce)[,batch]))
+     colData(sce)[,batch] = as.factor(colData(sce)[,batch])
  }
-
+  
+  if(is.null(metadata(sce)$cellula_log)) {
+    clog = .initLog()
+  }
+  
   # Make folder
   if(is.null(name)) {
     name = adjective_animal()
@@ -94,19 +100,18 @@ cellula <- function(sce,
   }
 
   dir.create(name)
+  clog$name = name
+  clog$dir = paste0(getwd(), "/name")
   
- if(!is.null(batch)) {
-   if(!is.factor(colData(sce)[,batch]))
-     colData(sce)[,batch] = as.factor(colData(sce)[,batch])
- }
-
   if(verbose) {
     cat("Working on object", name, "\n")
     ncells = ncol(sce)
     cat("Input cells: ", ncells, "\n")
+      clog$qc$input_cells = ncells
     if(!is.null(batch)) {
       cat("By batch:\n")
       print(table(colData(sce)[,batch]))
+      clog$qc$input_by_batch = table(colData(sce)[,batch])
     }
   }
 
@@ -123,6 +128,22 @@ cellula <- function(sce,
                 verbose = verbose,
                 save_plots = save_plots,
                 parallel_param = parallel_param)
+    
+    clog$qc$do_qc = do_qc
+    clog$qc$discard = discard
+    clog$qc$subset_mito = subset_mito
+    clog$qc$subset_ribo = subset_ribo
+    clog$qc$subset_malat1 = subset_malat1
+    clog$qc$detect_doublets = detect_doublets
+    clog$qc$run_emptydrops = run_emptydrops
+    clog$qc$emptydrops_cutoff = emptydrops_cutoff
+    clog$qc$emptydrops_alpha = emptydrops_alpha
+    clog$qc$parallel_param = parallel_param
+    clog$qc$output_cells = ncol(sce)
+    if(!is.null(batch)) clog$qc$output_by_batch = table(colData(sce)[,batch])
+    
+    metadata(sce)$cellula_log = clog
+    
     if(verbose) cat("Saving temporary file. \n")
 
     saveRDS(sce, file = paste0("./", name, "/", name, "_tempSCE.RDS"))
@@ -137,14 +158,14 @@ cellula <- function(sce,
                            parallel_param = parallel_param)
 
     if(verbose) cat("Saving temporary file. \n")
+  
     saveRDS(sce, file = paste0("./", name, "/", name, "_tempSCE.RDS"))
   }
 
-  if(verbose) cat(blue("[INT]"), "Integration. \n")
-  
   hvgs = metadata(sce)$hvgs
   
   if(!is.null(batch)) {
+    if(verbose) cat(blue("[INT]"), "Integration. \n")
     sce = integrateSCE(sce,
                        batch = batch,
                        hvgs = hvgs,
@@ -155,10 +176,6 @@ cellula <- function(sce,
                        verbose = verbose)
   }
 
-  if(verbose) cat("Done.\nSaving temporary file. \n")
-
-  saveRDS(sce, file = paste0("./", name, "/", name, "_tempSCE.RDS"))
-
   if(verbose) cat("Saving final object.\n")
   saveRDS(sce, file = paste0("./", name, "/", name, "_PS_INT_SCE.RDS"))
 
@@ -166,8 +183,90 @@ cellula <- function(sce,
   file.remove(paste0("./", name, "/", name, "_tempSCE.RDS"))
 
   if(verbose) cat("All done. Input cells: ", ncells, ", final cell number: ", ncol(sce), ".\n")
+  metadata(sce)$cellula_log[["output_cells"]] = ncol(sce)
+  
+  if(!is.null(batch)) {
+    metadata(sce)$cellula_log[["output_by_batch"]] = table(colData(sce)[,batch])
+  }
+  
   return(sce)
 }
 
-
-
+#' @noRd
+.initLog <- function() {
+  
+  list("name" = NULL,
+       "dir" = NULL,
+       "batch" = NULL,
+       
+       "qc" = list("do_qc" = NULL,
+                   "input_cells" = NULL,
+                   "input_by_batch" = NULL,
+                   "output_cells" = NULL,
+                   "output_by_batch" = NULL,
+                   "discard" = NULL,
+                   "subset_mito" = NULL,
+                   "subset_ribo" = NULL,
+                   "subset_malat1" = NULL,
+                   "detect_doublets" = NULL,
+                   "run_emptydrops" = NULL,
+                   "emptydrops_cutoff" = NULL,
+                   "emptydrops_alpha" = NULL,
+                   "save_plots" = NULL),
+    
+       
+       "norm_reduce" = list("hvg_ntop" = NULL,
+                            "pca" = NULL,
+                            "umap_min_dist" = NULL,
+                            "umap_n_neighbors" = NULL,
+                            "umap_other" = NULL,
+                            "parallel_param" = NULL),
+       
+      
+       "integration" = list("integration_method" = NULL,
+                            "ndims" = NULL,
+                            "parallel_param" = NULL),
+       
+       "clustering" = list( "neighbors" = NULL,
+                            "weighting_scheme" = NULL,
+                            "clustering_sweep" = NULL,
+                            "graph_ks" = NULL,
+                            "resolution_ks" = NULL,
+                            "clustering_method" = NULL,
+                            "calculate_modularity" = NULL,
+                            "calculate_silhouette" = NULL,
+                            "leiden_iterations" = NULL,
+                            "save_graphs" = NULL,
+                            "prefix" = NULL,
+                            "metacluster" = NULL,
+                            "metacluster_clusters" = NULL,
+                            "metacluster_threshold" = NULL,
+                            "metacluster_denominator" = NULL,
+                            "parallel_param" = NULL),
+       
+       "assign_identities" = list("method" = NULL,
+                                  "genesets" = NULL,
+                                  "ref" = NULL,
+                                  "assay" = NULL,
+                                  "name" = NULL,
+                                  "return_scores" = NULL,
+                                  "kcdf" = NULL,
+                                  "parallel_param" = NULL),
+       
+       "trajectories" = list("method" = NULL,
+                             "dr" = NULL,
+                             "clusters" = NULL,
+                             "ndims" = NULL,
+                             "dr_embed" = NULL,
+                             "start" = NULL,
+                             "Monocle_lg_control" = NULL,
+                             "omega" = NULL,
+                             "omega_scale" = NULL,
+                             "do_de" = NULL,
+                             "de_method" = NULL,
+                             "batch_de" = NULL,
+                             "parallel_param" = NULL),
+  
+       "sessionInfo" = sessionInfo()
+  )
+}

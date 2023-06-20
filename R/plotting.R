@@ -174,8 +174,8 @@ plot_UMAP <- function(sce,
 
   colnames(udf) = c("x", "y")
 
-  if(!is.null(color_by) & (color_by %in% rowData(sce)$Symbol | color_by %in% rowData(sce)$ID)) {
-    feature = which(rowData(sce)$Symbol == color_by | rowData(sce)$ID == color_by)
+  if(!is.null(color_by) & (color_by %in% rowData(sce)$Symbol | color_by %in% rowData(sce)$ID | color_by %in% rownames(sce))) {
+    feature = which(rowData(sce)$Symbol == color_by | rowData(sce)$ID == color_by | rownames(sce) == color_by)
     colData(sce)[,color_by] = as.numeric(assay(sce[feature,], "logcounts"))
   }
 
@@ -215,6 +215,9 @@ plot_UMAP <- function(sce,
         }
       } else {
         pal = color_palette
+        if(!is.null(names(pal)) & all(names(pal) %in% levels(udf[,color_by]))) {
+          pal = pal[levels(udf[,color_by])]
+        }
       }
       cscale = scale_colour_manual(values = pal)
       cguides = guides(color = guide_legend(override.aes = list(size=2)))
@@ -223,6 +226,9 @@ plot_UMAP <- function(sce,
         pal = qualpal(n = length(unique(udf[,color_by])))$hex
       } else {
         pal = color_palette
+        if(!is.null(names(pal)) & all(names(pal) %in% levels(udf[,color_by]))) {
+          pal = pal[levels(udf[,color_by])]
+        }
       }
       cscale = scale_colour_manual(values = pal)
       cguides = guides(color = guide_legend(override.aes = list(size=2)))
@@ -490,6 +496,7 @@ plot_dots <- function(sce,
       cscale +
       theme_minimal() +
       theme(axis.text.y = element_text(face = "italic"),
+            axis.text.x = element_text(angle = 45, hjust = 1),
             panel.border = element_blank(),
             panel.grid.major = element_blank(),
             panel.grid.minor = element_blank(),
@@ -673,7 +680,8 @@ plot_Coldata <- function(sce,
                               bandwidth = 1,
                               alpha = 0.3,
                               size = 0.6,
-                              dodge.width = 1)
+                              dodge.width = 1)  
+      
   }
 
   # Boxplot
@@ -684,7 +692,8 @@ plot_Coldata <- function(sce,
                         position = dodge,
                         show.legend = FALSE) +
     theme_classic() +
-    theme(plot.margin = margin(1, 1, 1, 1, "cm"),
+    theme(axis.text.x = element_text(angle = 45, hjust = 1, face = "italic"),
+          plot.margin = margin(1, 1, 1, 1, "cm"),
           panel.grid.major = element_blank(),
           panel.grid.minor = element_blank(),
           axis.line = element_line(colour = "black")

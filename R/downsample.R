@@ -34,7 +34,7 @@ downsampleCounts <- function(sce,
   ep = "{cellula::downsampleCounts()} - "
   
   if(!is(sce, "SingleCellExperiment")) 
-    stop(paste0(ep, "sce must be a SingleCellExperiment object"))
+    stop(paste0(ep, "must provide a SingleCellExperiment object"))
   if(!is.null(target) & !is(target, numeric)) 
     stop(paste0(ep, "target must be a numeric or NULL"))
   
@@ -111,16 +111,19 @@ downsampleCounts <- function(sce,
 #' 
 #' @export
 
-downsampleCells <- function(sce, sample_by, proportion = 0.1, min = 10, 
-                            verbose = TRUE, BPPARAM = SerialParam()) {
-  
+downsampleCells <- function(sce, 
+                            sample_by, 
+                            proportion = 0.1, 
+                            min = 10, 
+                            verbose = TRUE, 
+                            BPPARAM = SerialParam()) {
   
   ## Sanity checks
   # Error prefix
   ep = "{cellula::downsampleCells()} - "
   
   if(!is(sce, "SingleCellExperiment")) 
-    stop(paste0(ep, "sce must be a SingleCellExperiment object"))
+    stop(paste0(ep, "must provide a SingleCellExperiment object"))
   if(min <= 0) 
     stop(paste0(ep, "min must be strictly positive"))
   if(!is(min, "numeric")) 

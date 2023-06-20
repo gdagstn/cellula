@@ -20,6 +20,8 @@
 #'     be saved in the object metadata slot? Default is \code{FALSE}.
 #' @param kcdf character, which kernel to use for the CDF. One of \code{"Poisson"} or
 #'     \code{"Gaussian"}. Only used when \code{method = "ssGSEA"}.
+#' @param BPPARAM a \code{BiocParallel} BPPARAM specifying the parallelization. 
+#'     Only used when \code{method = "AUC"}. Default is \code{SerialParam()}      
 #' @param ... other arguments passed internally to \code{AUCell::AUCell_calcAUC()}
 #'     ("AUC" method), \code{Seurat::AddModuleScore()} ("Seurat" method),
 #'     \code{GSVA::gsva()}("ssGSEA" method), or \code{UCell::ScoreSignatures_UCell()}
@@ -84,6 +86,7 @@ assignIdentities <- function(sce,
                              name = NULL,
                              return_scores = FALSE,
                              kcdf = "Gaussian",
+                             BPPARAM = SerialParam(),
                              ...) {
   ## Sanity checks
   # Error prefix
@@ -107,6 +110,7 @@ assignIdentities <- function(sce,
                                               verbose,
                                               name = name,
                                               return_scores = return_scores,
+                                              BPPARAM = BPPARAM,
                                               ...)},
          "Seurat" = {sce = .assignIdentities_Seurat(sce,
                                                     genesets,
@@ -134,7 +138,6 @@ assignIdentities <- function(sce,
                                                    verbose,
                                                    name = name,
                                                    return_scores = return_scores,
-                                                   BPPARAM = BPPARAM,
                                                    ...)}
          )
 
@@ -143,6 +146,7 @@ assignIdentities <- function(sce,
 
 #' @importFrom AUCell AUCell_buildRankings AUCell_calcAUC
 #' @importFrom SummarizedExperiment colData
+#' @importFrom BiocParallel SerialParam
 #' @importFrom utils tail
 #' @importFrom S4Vectors metadata
 
@@ -151,6 +155,7 @@ assignIdentities <- function(sce,
                                   verbose,
                                   name = NULL,
                                   return_scores = FALSE,
+                                  BPPARAM = SerialParam(),
                                   ...){
 
     if(is.null(name)) labelname = "labels_AUC" else labelname = name
@@ -159,11 +164,13 @@ assignIdentities <- function(sce,
     rankings <- AUCell_buildRankings(counts(sce),
                                      splitByBlocks = TRUE,
                                      plotStats = FALSE,
-                                     verbose = verbose)
-
+                                     verbose = verbose,
+                                     BPPARAM = BPPARAM)
+    
     aucs <- AUCell_calcAUC(genesets,
                            rankings,
                            aucMaxRank = ceiling(0.2 * nrow(rankings)),
+                           nCores = BPPARAM$workers, 
                            ...)
 
     scores <- as.data.frame(t(assay(aucs)))
@@ -243,7 +250,7 @@ assignIdentities <- function(sce,
                                      genesets,
                                      verbose,
                                      name = NULL,
-                                     annotation = "logcounts",
+                                     assay = "logcounts",
                                      return_scores = FALSE,
                                      kcdf = "Gaussian",
                                      ...) {
@@ -251,7 +258,6 @@ assignIdentities <- function(sce,
   if(is.null(name)) labelname = "labels_ssGSEA" else labelname = name
 
   if(verbose) cat(blue("[ANNO/ssGSEA]"), "Calculating ssGSEA \n")
-
   ss = gsva(sce,
             gset.idx.list = genesets,
             annotation = assay,
