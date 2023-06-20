@@ -82,7 +82,7 @@ makeGraphsAndClusters <- function(sce,
   clog$clustering$clustering_sweep = sweep_on
   if(sweep_on == "clustering") {
     clog$clustering$resolution_ks = k
-  } else if(sweep_on = "SNN") {
+  } else if(sweep_on == "SNN") {
     clog$clustering$graph_ks = k
   }
   clog$clustering$clustering_method = method
