@@ -36,11 +36,11 @@
 #'     Optionally, silhouette and/or modularity values are stored in the \code{metadata}
 #'     slot of the \code{SingleCellExperiment} object, one for every value of \code{k}.
 #'
-#' @importFrom SummarizedExperiment colData colData<-
+#' @importFrom SummarizedExperiment colData colData<- 
 #' @importFrom crayon blue
 #' @importFrom bluster makeSNNGraph pairwiseModularity approxSilhouette
 #' @importFrom igraph cluster_louvain cluster_leiden
-#' @importFrom SingleCellExperiment reducedDim reducedDim<- counts logcounts
+#' @importFrom SingleCellExperiment reducedDim reducedDim<- counts logcounts reducedDimNames
 #'
 #' @export
 
@@ -70,7 +70,7 @@ makeGraphsAndClusters <- function(sce,
   if(!weighting_scheme %in%  c("jaccard", "rank", "number"))
     stop(paste0(ep, "method not recognized - must be one of \"jaccard\", \"rank\", or \"number\""))
   if(length(reducedDim(sce)) == 0) stop(paste0(ep, "there are no dimensionality reductions in the SingleCellExperiment object."))
-  if(!dr %in% names(reducedDim(sce))) stop(paste0(ep, "the dr name supplied was not found in the SingleCellExperiment object"))
+  if(!dr %in% reducedDimNames(sce)) stop(paste0(ep, "the dr name supplied was not found in the SingleCellExperiment object"))
     
   if(is.null(metadata(sce)$cellula_log)) {
     clog = .initLog()
