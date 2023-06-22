@@ -150,7 +150,7 @@ findTrajectories <- function(sce, dr = "PCA", clusters, method = "slingshot",
     stop(paste0(ep,"clusters column should contain a factor or a character"))
   if(!(dr %in% reducedDimNames(sce)))
     stop(paste0(ep,"dr reduction not found among the reducedDims of the object"))
-  if(dr_embed != "FR" & !(dr_embed %in% names(reducedDim(sce)))) 
+  if(dr_embed != "FR" & !(dr_embed %in% reducedDimNames(sce))) 
     stop(paste0(ep,"dr_embed reduction not found among the reducedDims of the object"))
   if(start != "auto" & !(start %in% colData(sce)[,clusters])) 
     stop(paste0(ep,"Could not find the start cluster in clusters"))
