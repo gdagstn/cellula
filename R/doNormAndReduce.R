@@ -50,7 +50,7 @@ doNormAndReduce <- function(sce, batch = NULL, name = NULL,
     stop(paste0(ep, "hvg_ntop cannot be higher than the number of features (nrow) in the object"))
   
   if(is.null(metadata(sce)$cellula_log)) {
-    clog = .initParams()
+    clog = .initLog()
   } else {
     clog = metadata(sce)$cellula_log
   }
