@@ -46,4 +46,5 @@ Imports:
     ggrepel,
     oveRlay,
     pracma,
-    slingshot
+    slingshot,
+    seriation
