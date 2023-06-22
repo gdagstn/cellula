@@ -437,11 +437,12 @@ plot_dots <- function(sce,
     return(final_df)
   })
 
-  if(cluster_genes) {
-    scdf_props_genes = do.call(cbind, lapply(sce_byclust, function(x) x$proportion))
+  if(cluster_genes | cluster_groups) {
+    #scdf_props_genes = do.call(cbind, lapply(sce_byclust, function(x) x$proportion))
     scdf_exp_genes = do.call(cbind, lapply(sce_byclust, function(x) x$mean_expression))
-    hc_props_genes = hclust(dist(scdf_props_genes))$order
-    hc_exp_genes = hclust(dist(scdf_exp_genes))$order
+    #hc_props_genes = hclust(dist(scdf_props_genes))$order
+    #hc_exp_genes = hclust(dist(scdf_exp_genes))$order
+    cmat = seriation::seriate(scdf_exp_genes, method = "BEA_TSP")
   }
 
   if(cluster_groups) {
@@ -454,10 +455,10 @@ plot_dots <- function(sce,
   scdf = do.call(rbind, sce_byclust)
 
   if(cluster_genes) {
-    scdf$gene = factor(scdf$gene, levels = genes[hc_exp_genes])
+    scdf$gene = factor(scdf$gene, levels = genes[as.numeric(cmat[[1]])])
   } else scdf$gene = factor(scdf$gene, levels = rev(genes))
   if(cluster_groups) {
-    scdf$cluster = factor(scdf$cluster, levels = unique(colData(sce)[,group_by])[hc_exp_clusters])
+    scdf$cluster = factor(scdf$cluster, levels = unique(colData(sce)[,group_by])[as.numeric(cmat[[2]])])
   }
 
   scdf$mean_expression[scdf$mean_expression == 0] <- NA

@@ -38,7 +38,7 @@
 
 #' @importFrom TSCAN perCellEntropy
 #' @importFrom SummarizedExperiment colData
-#' @importFrom SingleCellExperiment reducedDim
+#' @importFrom SingleCellExperiment reducedDim reducedDimNames
 #'
 #' @returns a SingleCellExperiment object with pseudotime results
 #' 
@@ -148,7 +148,7 @@ findTrajectories <- function(sce, dr = "PCA", clusters, method = "slingshot",
     stop(paste0(ep,"clusters column not found in the colData of the object"))
   if(!is(colData(sce)[,clusters], "character") & !is(colData(sce)[,clusters], "factor")) 
     stop(paste0(ep,"clusters column should contain a factor or a character"))
-  if(!(dr %in% names(reducedDim(sce)))) 
+  if(!(dr %in% reducedDimNames(sce)))
     stop(paste0(ep,"dr reduction not found among the reducedDims of the object"))
   if(dr_embed != "FR" & !(dr_embed %in% names(reducedDim(sce)))) 
     stop(paste0(ep,"dr_embed reduction not found among the reducedDims of the object"))
