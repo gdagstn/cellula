@@ -381,6 +381,7 @@ plot_UMAP <- function(sce,
 #' @importFrom SummarizedExperiment assay colData assayNames
 #' @importFrom colorspace sequential_hcl
 #' @importFrom stats dist hclust
+#' @importFrom seriation seriate
 #' @importFrom ggplot2 ggplot aes scale_colour_gradientn geom_point
 #' @importFrom ggplot2 theme element_text labs element_blank element_line
 #' @importFrom methods is
@@ -442,14 +443,7 @@ plot_dots <- function(sce,
     scdf_exp_genes = do.call(cbind, lapply(sce_byclust, function(x) x$mean_expression))
     #hc_props_genes = hclust(dist(scdf_props_genes))$order
     #hc_exp_genes = hclust(dist(scdf_exp_genes))$order
-    cmat = seriation::seriate(scdf_exp_genes, method = "BEA_TSP")
-  }
-
-  if(cluster_groups) {
-    scdf_props_clusters = do.call(rbind, lapply(sce_byclust, function(x) x$proportion))
-    scdf_exp_clusters = do.call(rbind, lapply(sce_byclust, function(x) x$mean_expression))
-    hc_props_clusters = hclust(dist(scdf_props_clusters))$order
-    hc_exp_clusters = hclust(dist(scdf_exp_clusters))$order
+    cmat = seriate(scdf_exp_genes, method = "BEA_TSP")
   }
 
   scdf = do.call(rbind, sce_byclust)
@@ -459,7 +453,7 @@ plot_dots <- function(sce,
   } else scdf$gene = factor(scdf$gene, levels = rev(genes))
   if(cluster_groups) {
     scdf$cluster = factor(scdf$cluster, levels = unique(colData(sce)[,group_by])[as.numeric(cmat[[2]])])
-  }
+  } 
 
   scdf$mean_expression[scdf$mean_expression == 0] <- NA
   scdf$proportion[scdf$proportion == 0] <- NA
