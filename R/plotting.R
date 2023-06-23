@@ -439,10 +439,7 @@ plot_dots <- function(sce,
   })
 
   if(cluster_genes | cluster_groups) {
-    #scdf_props_genes = do.call(cbind, lapply(sce_byclust, function(x) x$proportion))
     scdf_exp_genes = do.call(cbind, lapply(sce_byclust, function(x) x$mean_expression))
-    #hc_props_genes = hclust(dist(scdf_props_genes))$order
-    #hc_exp_genes = hclust(dist(scdf_exp_genes))$order
     cmat = seriate(scdf_exp_genes, method = "BEA_TSP")
   }
 
