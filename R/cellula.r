@@ -91,7 +91,7 @@ cellula <- function(sce,
   
   if(is.null(metadata(sce)$cellula_log)) {
     clog = .initLog()
-  }
+  } else clog = metadata(sce)$cellula_log
   
   # Make folder
   if(is.null(name)) {
