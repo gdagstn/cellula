@@ -111,7 +111,6 @@ doNormAndReduce <- function(sce, batch = NULL, name = NULL,
   clog$norm_reduce$hvg_ntop = hvg_ntop
   
   # PCA
-
   if(verbose) cat(blue("[DR]"), "Running PCA. \n")
 
   sce <- runPCA(sce,
@@ -119,11 +118,6 @@ doNormAndReduce <- function(sce, batch = NULL, name = NULL,
                 exprs_values = "logcounts",
                 ncomponents	= ndims)#,
   #BPPARAM = parallel_param)
-
-  if(!is.null(name)) {
-    if(verbose) cat("Saving temporary file. \n")
-    saveRDS(sce, file = paste0("./", name, "/", name, "_tempSCE.RDS"))
-  }
 
   # UMAP
   if(verbose) cat(blue("[DR]"), "Running UMAP on uncorrected PCA \n")
