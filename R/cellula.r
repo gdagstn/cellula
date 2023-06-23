@@ -35,6 +35,8 @@
 #'     embedding for downstream applications. Default is 20.
 #' @param verbose logical, display messages on progress? Default is \code{FALSE}.
 #' @param save_plots logical, should plots be drawn and saved? Default is \code{TRUE}
+#' @param save_temp logical, should temporary files be saved as the pipeline progresses?
+#'     Default is \code{FALSE}
 #' @param parallel_param a \code{BiocParallel} object specifying the parallelization backend
 #'     to be used in some steps of the pipeline. Default is \code{SerialParam()}
 #'     meaning no parallelization will be used. Note: for Seurat options, the
@@ -80,6 +82,7 @@ cellula <- function(sce,
                      ndims = 20,
                      verbose = FALSE,
                      save_plots = TRUE,
+                     save_temp = FALSE,
                      parallel_param = SerialParam()) {
 
  if(!is.null(batch)) {
@@ -144,9 +147,10 @@ cellula <- function(sce,
     
     metadata(sce)$cellula_log = clog
     
-    if(verbose) cat("Saving temporary file. \n")
-
-    saveRDS(sce, file = paste0("./", name, "/", name, "_tempSCE.RDS"))
+    if(save_temp) {
+      if(verbose) cat("Saving temporary file. \n")
+      saveRDS(sce, file = paste0("./", name, "/", name, "_tempSCE.RDS"))
+    }
   }
 
   if(do_norm) {
@@ -157,9 +161,10 @@ cellula <- function(sce,
                            verbose = verbose,
                            parallel_param = parallel_param)
 
-    if(verbose) cat("Saving temporary file. \n")
-  
-    saveRDS(sce, file = paste0("./", name, "/", name, "_tempSCE.RDS"))
+    if(save_temp) {
+      if(verbose) cat("Saving temporary file. \n")
+      saveRDS(sce, file = paste0("./", name, "/", name, "_tempSCE.RDS"))
+    }
   }
 
   hvgs = metadata(sce)$hvgs
@@ -178,10 +183,12 @@ cellula <- function(sce,
 
   if(verbose) cat("Saving final object.\n")
   saveRDS(sce, file = paste0("./", name, "/", name, "_PS_INT_SCE.RDS"))
-
-  if(verbose) cat("Deleting temporary file. \n")
-  file.remove(paste0("./", name, "/", name, "_tempSCE.RDS"))
-
+  
+  if(save_temp) {
+    if(verbose) cat("Deleting temporary file. \n")
+    file.remove(paste0("./", name, "/", name, "_tempSCE.RDS"))
+  }
+  
   if(verbose) cat("All done. Input cells: ", ncells, ", final cell number: ", ncol(sce), ".\n")
   metadata(sce)$cellula_log[["output_cells"]] = ncol(sce)
   

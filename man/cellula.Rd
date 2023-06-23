@@ -24,6 +24,7 @@ cellula(
   ndims = 20,
   verbose = FALSE,
   save_plots = TRUE,
+  save_temp = FALSE,
   parallel_param = SerialParam()
 )
 }
@@ -79,6 +80,9 @@ embedding for downstream applications. Default is 20.}
 \item{verbose}{logical, display messages on progress? Default is \code{FALSE}.}
 
 \item{save_plots}{logical, should plots be drawn and saved? Default is \code{TRUE}}
+
+\item{save_temp}{logical, should temporary files be saved as the pipeline progresses?
+Default is \code{FALSE}}
 
 \item{parallel_param}{a \code{BiocParallel} object specifying the parallelization backend
 to be used in some steps of the pipeline. Default is \code{SerialParam()}
