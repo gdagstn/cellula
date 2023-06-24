@@ -135,19 +135,18 @@ downsampleCells <- function(sce,
   if(!sample_by %in% colnames(colData(sce))) 
     stop(paste0(ep, sample_by, " is not a column in colData(sce)"))
 
-      sampled = bplapply(unique(colData(sce)[,sample_by]), function(x) {
-    if(verbose) cat("Downsampling cells in ", x)
-    curr = sce[, which(colData(sce)[,sample_by] == x)]
+  sampled = bplapply(unique(colData(sce)[,sample_by]), function(x) {
+    if(verbose) message(paste0("[DOWNSAMPLE] Downsampling cells in ", x))
+    curr = sce[, colData(sce)[,sample_by] == x]
     if(ncol(curr) < min) {
       warning("Total cell number for ", x, " is less than min. \nWill retain all cells in ", x, ".")
       min = ncol(curr)
     }
-    subp = max(c(floor(ncol(curr)/proportion), min))
-    keep = colnames(curr)[sample(seq_along(colnames(curr)), subp)]
-    curr[,keep]
+    subp = max(c(floor(ncol(curr)*proportion), min))
+    keep = colnames(curr)[sample(x = seq_along(colnames(curr)), size = subp)]
   },
   BPPARAM = BPPARAM)
-  
-  Reduce(cbind, sampled)
+  keep = Reduce(c, sampled)
+  sce[,keep]
 }
 
