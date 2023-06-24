@@ -137,7 +137,7 @@ downsampleCells <- function(sce,
 
       sampled = bplapply(unique(colData(sce)[,sample_by]), function(x) {
     if(verbose) cat("Downsampling cells in ", x)
-    curr = sce[, which(colData(sce)[,sample_by]) == x]
+    curr = sce[, which(colData(sce)[,sample_by] == x)]
     if(ncol(curr) < min) {
       warning("Total cell number for ", x, " is less than min. \nWill retain all cells in ", x, ".")
       min = ncol(curr)
