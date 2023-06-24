@@ -527,19 +527,24 @@ plot_dots <- function(sce,
 #' @param color_palette character string of colors for categorical plots or heatmap.
 #'     Default is \code{NULL}.
 #' @param contour logical, should contours be plotted on the scatterplot?
-#'     default is \code{TRUE}.
+#'     Default is \code{TRUE}.
 #' @param clustered logical, should rows and columns be clustered in the confusion
 #'     matrix heatmap? Default is \code{TRUE}.
 #' @param plot_cells logical, should cells be plotted as well? Default is \code{FALSE}
 #'     for speed.
+#' @param rotate_labels logical, should x axis labels be rotated by 45 degrees 
+#'     to prevent overlapping text? Only applies to heatmaps and violin plots. 
+#'     Default is \code{TRUE}     
 #'
 #' @returns a ggplot with different types of visualization depending on the
-#'     classes of the columns chosen. If y is a numeric and x is NULL, or a
-#'     categorical (character/facrtor), the function plots a violin + boxplot divided by
-#'     x and/or by color_by. If y and x are both numeric, the function plots a
-#'     scatterplot with optional 2D kernel contouring. If y and x are both
-#'     categorical, the function plots a heatmap of the confusion matrix,
-#'     showing pairwise Jaccard indices. All plots can be facetted.
+#'     classes of the columns chosen. 
+#'     
+#' @details If y is a numeric and x is NULL, or a categorical (character/factor), 
+#'     the function plots a violin + boxplot divided by x and/or by color_by. 
+#'     If y and x are both numeric, the function plots a scatterplot with optional 
+#'     2D kernel contouring. If y and x are both categorical, the function plots 
+#'     a heatmap of the confusion matrix, showing pairwise Jaccard indices. 
+#'     All plots can be facetted.
 #'
 #' @importFrom ggplot2 facet_wrap
 #' @importFrom rlang sym
@@ -555,7 +560,8 @@ plot_Coldata <- function(sce,
                          color_palette = NULL,
                          contour = TRUE,
                          clustered = TRUE,
-                         plot_cells = FALSE) {
+                         plot_cells = FALSE,
+                         rotate_labels = TRUE) {
   ## Sanity checks
   # Error prefix
   ep = "{cellula::plot_Coldata()} - "
@@ -577,13 +583,13 @@ plot_Coldata <- function(sce,
   } else if((!is(df[,x], "numeric") & !is.null(x)
              & is(df[,y], "numeric"))
             | (is.null(x) & is(df[,y], "numeric"))) {
-    p <- .makeViolin(df, x, y, plot_cells, color_by, color_palette)
+    p <- .makeViolin(df, x, y, plot_cells, color_by, color_palette, rotate_labels)
   } else if(!is.null(x)
             & (is(df[,x], "character") | is(df[,x], "factor"))
             & (is(df[,y], "character") | is(df[,y], "factor"))) {
     df[,x] = factor(df[,x])
     df[,y] = factor(df[,y])
-    p <- .makeHeatmap(df, x, y, clustered, color_palette)
+    p <- .makeHeatmap(df, x, y, clustered, color_palette, rotate_labels)
   }
 
   # Facet
@@ -600,10 +606,12 @@ plot_Coldata <- function(sce,
 
 #' @importFrom ggplot2 .data aes position_dodge ggplot geom_violin geom_boxplot guides
 #' @importFrom ggplot2 theme_minimal theme element_blank labs element_line xlab scale_fill_manual
+#' @importFrom ggplot2 element_text
 #' @importFrom qualpalr qualpal
 #' @importFrom ggbeeswarm geom_quasirandom
 
-.makeViolin <- function(df, x, y, plot_cells = FALSE, color_by = NULL, color_palette = NULL) {
+.makeViolin <- function(df, x, y, plot_cells = FALSE, color_by = NULL, color_palette = NULL,
+                        rotate_labels = TRUE) {
 
   ep = "{cellula::.makeViolin() via plot_Coldata()} - "
 
@@ -663,7 +671,6 @@ plot_Coldata <- function(sce,
         pwscale = length(unique(paste0(df[,x], "_", df[,color_by])))
         pwidth = 1/pwscale
       }
-
     }
 
     p <- p + geom_quasirandom(mapping = aes_bee,
@@ -673,7 +680,6 @@ plot_Coldata <- function(sce,
                               alpha = 0.3,
                               size = 0.6,
                               dodge.width = 1)  
-      
   }
 
   # Boxplot
@@ -709,9 +715,14 @@ plot_Coldata <- function(sce,
     cscale = scale_colour_manual(values = pal)
     fscale = scale_fill_manual(values = pal)
     fguides = guides(boxplot = "none")
-    p <- p + cscale + fscale + fguides
+    p <- p + cscale + fscale + fguides 
   }
-
+  
+  if(rotate_labels) {
+    p <- p + theme(axis.text.x.bottom = element_text(angle = 45, 
+                                                     hjust = 1))
+  }
+  
   return(p)
 }
 
@@ -772,7 +783,8 @@ plot_Coldata <- function(sce,
 #' @importFrom stats dist hclust
 #' @importFrom colorspace sequential_hcl
 
-.makeHeatmap <- function(df, x, y, clustered = TRUE, color_palette = NULL) {
+.makeHeatmap <- function(df, x, y, clustered = TRUE, color_palette = NULL, 
+                         rotate_labels = TRUE) {
 
   # Calculate Jaccard index
   jdf = expand.grid(levels(df[,x]), levels(df[,y]))
@@ -814,6 +826,9 @@ plot_Coldata <- function(sce,
           axis.line = element_blank(),
           text = element_text(family = "sans")
     )
+  
+  if(rotate_labels) p = p + theme(axis.text.x.top = element_text(angle = 45, 
+                                                                 hjust = 0))
 
   # Colors
   if(is.null(color_palette)) {

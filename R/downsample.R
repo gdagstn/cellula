@@ -135,7 +135,7 @@ downsampleCells <- function(sce,
   if(!sample_by %in% colnames(colData(sce))) 
     stop(paste0(ep, sample_by, " is not a column in colData(sce)"))
 
-      sampled = bplapply(unique(colData(sce)[,by]), function(x) {
+      sampled = bplapply(unique(colData(sce)[,sample_by]), function(x) {
     if(verbose) cat("Downsampling cells in ", x)
     curr = sce[, which(colData(sce)[,sample_by]) == x]
     if(ncol(curr) < min) {
