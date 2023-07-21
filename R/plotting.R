@@ -9,8 +9,6 @@
 #'
 #' @return a heatmap of pairwise modularity
 #'
-#' @importFrom pheatmap pheatmap
-#' @importFrom colorspace sequential_hcl
 #' @importFrom igraph graph_from_adjacency_matrix E layout_with_lgl
 #' @importFrom S4Vectors metadata metadata<-
 #'
@@ -21,13 +19,25 @@ plotModularity <- function(sce, name, type = "heatmap") {
   modmat = log2(metadata(sce)[[name]] + 1)
 
   if(type == "heatmap"){
-    pheatmap(mat = modmat,
-             cluster_rows = FALSE,
-             cluster_cols = FALSE,
-             color = sequential_hcl(palette = "Sunset", n = 25),
-             main = "log2(modularity ratio + 1)",
-             border_color = NA
-    )
+    m = as.data.frame(expand.grid(seq_along(rownames(modmat)), 
+                                  seq_along(rownames(modmat))))
+    colnames(m) = c("x", "y")
+    m$value = sapply(seq_len(nrow(m)), 
+                     function(x) modmat[m[x,1], m[x,2]])
+      
+    p = ggplot(m, aes(x = .data[["x"]], y = .data[["y"]])) + 
+        geom_tile(aes(fill = .data[["value"]], color = NA)) +
+        scale_x_discrete(position = "top")
+    
+    p = p + theme_classic() +
+      theme(plot.margin = margin(1, 1, 1, 1, "cm"),
+            panel.grid.major = element_blank(),
+            panel.grid.minor = element_blank(),
+            axis.line = element_blank(),
+            text = element_text(family = "sans"),
+            title = "log2(modularity ratio + 1)"
+      )
+    
   } else if(type == "graph") {
 
     cgr <- graph_from_adjacency_matrix(modmat,
@@ -105,9 +115,6 @@ plotSilhouette <- function(sce, name) {
 #'
 #' @importFrom SingleCellExperiment reducedDimNames reducedDim
 #' @importFrom SummarizedExperiment colData
-#' @importFrom colorspace sequential_hcl
-#' @importFrom scales rescale
-#' @importFrom qualpalr qualpal
 #' @importFrom ggplot2 ggplot aes scale_colour_gradientn guides geom_point
 #' @importFrom ggplot2 guide_legend .data theme_void geom_segment geom_text coord_fixed
 #' @importFrom ggplot2 facet_wrap vars arrow unit geom_label scale_colour_manual theme
@@ -133,7 +140,7 @@ plot_UMAP <- function(sce,
 
   ## Sanity checks
   # Error prefix
-  ep = "{cellula::plot_UMAP()} - "
+  ep = .redm("{cellula::plot_UMAP()} - ")
 
   # Checks
   if(!is(sce, "SingleCellExperiment"))
@@ -174,7 +181,8 @@ plot_UMAP <- function(sce,
 
   colnames(udf) = c("x", "y")
 
-  if(!is.null(color_by) & (color_by %in% rowData(sce)$Symbol | color_by %in% rowData(sce)$ID | color_by %in% rownames(sce))) {
+  if(!is.null(color_by) & (color_by %in% rowData(sce)$Symbol | color_by %in% rowData(sce)$ID | color_by %in% rownames(sce)) & 
+     !color_by %in% colnames(colData(sce))) {
     feature = which(rowData(sce)$Symbol == color_by | rowData(sce)$ID == color_by | rownames(sce) == color_by)
     colData(sce)[,color_by] = as.numeric(assay(sce[feature,], "logcounts"))
   }
@@ -198,7 +206,7 @@ plot_UMAP <- function(sce,
     if(classes[color_by] == "numeric") {
       udf = udf[order(udf[,color_by]),]
       if(is.null(color_palette)) {
-        pal = sequential_hcl(palette = "Sunset", n = 25)
+        pal = .cpal_seq_sunset()
       } else {
         pal = color_palette
       }
@@ -211,8 +219,8 @@ plot_UMAP <- function(sce,
         if(length(levels(udf[,color_by])) == 1) {
           pal = "gray"
         } else {
-          pal = qualpal(n = length(unique(udf[,color_by])))$hex
-        }
+          pal = .cpal_qual(n = length(unique(udf[,color_by])))
+            }
       } else {
         pal = color_palette
         if(!is.null(names(pal)) & all(names(pal) %in% levels(udf[,color_by]))) {
@@ -223,7 +231,7 @@ plot_UMAP <- function(sce,
       cguides = guides(color = guide_legend(override.aes = list(size=2)))
     } else if(classes[color_by] == "factor") {
       if(is.null(color_palette)) {
-        pal = qualpal(n = length(unique(udf[,color_by])))$hex
+        pal = .cpal_qual(n = length(unique(udf[,color_by])))
       } else {
         pal = color_palette
         if(!is.null(names(pal)) & all(names(pal) %in% levels(udf[,color_by]))) {
@@ -331,18 +339,18 @@ plot_UMAP <- function(sce,
   if(!is.null(trajectory)) {
     trj = metadata(sce)[[trajectory]]
     if(rescale) {
-      trj$x0 = rescale(trj$x0, 
+      trj$x0 = .rescalen(trj$x0, 
                         from = range(orig_range$x),
                         to = range(udf$x))
-      trj$x1 = rescale(trj$x1, 
+      trj$x1 = .rescalen(trj$x1, 
                         from = range(orig_range$x),
                         to = range(udf$x))
       
-      trj$y0 = rescale(trj$y0,
+      trj$y0 = .rescalen(trj$y0,
                         from = range(orig_range$y),
                         to = range(udf$y))
       
-      trj$y1 = rescale(trj$y1,
+      trj$y1 = .rescalen(trj$y1,
                        from = range(orig_range$y),
                        to = range(udf$y))
     }
@@ -379,9 +387,7 @@ plot_UMAP <- function(sce,
 #'    expressing cells grouped by a grouping variable such as cluster.
 #'
 #' @importFrom SummarizedExperiment assay colData assayNames
-#' @importFrom colorspace sequential_hcl
 #' @importFrom stats dist hclust
-#' @importFrom seriation seriate
 #' @importFrom ggplot2 ggplot aes scale_colour_gradientn geom_point
 #' @importFrom ggplot2 theme element_text labs element_blank element_line
 #' @importFrom methods is
@@ -401,7 +407,7 @@ plot_dots <- function(sce,
 
   ## Sanity checks
   # Error prefix
-  ep = "{cellula::plot_Dots()} - "
+  ep = .redm("{cellula::plot_Dots()} - ")
 
   # Checks
   if(!is(sce, "SingleCellExperiment"))
@@ -438,25 +444,34 @@ plot_dots <- function(sce,
     return(final_df)
   })
 
-  if(cluster_genes | cluster_groups) {
-    scdf_exp_genes = do.call(cbind, lapply(sce_byclust, function(x) x$mean_expression))
-    cmat = seriate(scdf_exp_genes, method = "BEA_TSP")
-  }
-
-  scdf = do.call(rbind, sce_byclust)
-
   if(cluster_genes) {
-    scdf$gene = factor(scdf$gene, levels = genes[as.numeric(cmat[[1]])])
+    scdf_props_genes = do.call(cbind, lapply(sce_byclust, function(x) x$proportion))
+    scdf_exp_genes = do.call(cbind, lapply(sce_byclust, function(x) x$mean_expression))
+    hc_props_genes = hclust(dist(scdf_props_genes))$order
+    hc_exp_genes = hclust(dist(scdf_exp_genes))$order
+  }
+  
+  if(cluster_groups) {
+    scdf_props_clusters = do.call(rbind, lapply(sce_byclust, function(x) x$proportion))
+    scdf_exp_clusters = do.call(rbind, lapply(sce_byclust, function(x) x$mean_expression))
+    hc_props_clusters = hclust(dist(scdf_props_clusters))$order
+    hc_exp_clusters = hclust(dist(scdf_exp_clusters))$order
+  }
+  
+  scdf = do.call(rbind, sce_byclust)
+  
+  if(cluster_genes) {
+    scdf$gene = factor(scdf$gene, levels = genes[as.numeric(hc_exp_genes)])
   } else scdf$gene = factor(scdf$gene, levels = rev(genes))
   if(cluster_groups) {
-    scdf$cluster = factor(scdf$cluster, levels = unique(colData(sce)[,group_by])[as.numeric(cmat[[2]])])
+    scdf$cluster = factor(scdf$cluster, levels = unique(colData(sce)[,group_by])[as.numeric(hc_exp_clusters)])
   } 
 
   scdf$mean_expression[scdf$mean_expression == 0] <- NA
   scdf$proportion[scdf$proportion == 0] <- NA
 
   if(is.null(color_palette)) {
-    pal = rev(sequential_hcl(n = 40, palette = "YlGnBu"))[10:40]
+    pal = .cpal_seq_ylgnbu()
   } else {
     pal = color_palette
   }
@@ -564,7 +579,7 @@ plot_Coldata <- function(sce,
                          rotate_labels = TRUE) {
   ## Sanity checks
   # Error prefix
-  ep = "{cellula::plot_Coldata()} - "
+  ep = .redm("{cellula::plot_Coldata()} - ")
   
   if(!is(sce, "SingleCellExperiment"))
     stop(paste0(ep, "Must provide a SingleCellExperiment object"))
@@ -597,7 +612,7 @@ plot_Coldata <- function(sce,
     if(!is(df[,group_by], "factor") & !is(df[,group_by], "character")){
       cat(paste0(ep, "group_by must be a categorical variable (factor or character). Returning un-facetted plot.\n"))
     } else {
-          p = p + facet_wrap(vars(!!sym(group_by)))
+          p = p + facet_wrap(group_by)
     }
   }
 
@@ -607,13 +622,12 @@ plot_Coldata <- function(sce,
 #' @importFrom ggplot2 .data aes position_dodge ggplot geom_violin geom_boxplot guides
 #' @importFrom ggplot2 theme_minimal theme element_blank labs element_line xlab scale_fill_manual
 #' @importFrom ggplot2 element_text
-#' @importFrom qualpalr qualpal
 #' @importFrom ggbeeswarm geom_quasirandom
 
 .makeViolin <- function(df, x, y, plot_cells = FALSE, color_by = NULL, color_palette = NULL,
                         rotate_labels = TRUE) {
 
-  ep = "{cellula::.makeViolin() via plot_Coldata()} - "
+  ep = .redm("{cellula::.makeViolin() via plot_Coldata()} - ")
 
   # Define mappings
   aes_cd = aes(y = .data[[y]])
@@ -703,7 +717,7 @@ plot_Coldata <- function(sce,
     if(!is.null(x) & is.null(color_by)) group_var = x else group_var = color_by
         if(is.null(color_palette)) {
           if(length(unique(df[,group_var])) > 1) {
-            pal = qualpal(n = length(unique(df[,group_var])))$hex
+            pal = .cpal_qual(n = length(unique(df[,group_var])))
           } else {
             pal = "gray"
           }
@@ -727,10 +741,8 @@ plot_Coldata <- function(sce,
 }
 
 
-#' @importFrom ggplot2 .data aes ggplot stat_density_2d after_stat
+#' @importFrom ggplot2 .data aes ggplot stat_density_2d after_stat scale_fill_gradientn
 #' @importFrom ggplot2 theme_minimal theme element_blank labs element_line
-#' @importFrom qualpalr qualpal
-#' @importFrom colorspace scale_fill_continuous_sequential
 
 .makeScatter <- function(df, x, y,
                          color_by = NULL,
@@ -753,7 +765,7 @@ plot_Coldata <- function(sce,
                     col = "black",
                     linetype = 4,
                     linewidth = 0.2) +
-      scale_fill_continuous_sequential(palette = "Heat 2")
+      scale_fill_gradientn(colours = .cpal_seq_heat2())
   }
     p <- p + theme_classic() +
              theme(plot.margin = margin(1, 1, 1, 1, "cm"),
@@ -766,7 +778,7 @@ plot_Coldata <- function(sce,
     # Colors
     if(!is.null(color_by)) {
       if(is.null(color_palette)) {
-        pal = qualpal(n = length(unique(df[,color_by])))$hex
+        pal = .cpal_qual(n = length(unique(df[,color_by])))
       } else {
         pal = color_palette
       }
@@ -781,7 +793,6 @@ plot_Coldata <- function(sce,
 #' @importFrom ggplot2 .data aes ggplot geom_tile element_text scale_x_discrete
 #' @importFrom ggplot2 theme_minimal theme element_blank labs element_line scale_fill_gradientn
 #' @importFrom stats dist hclust
-#' @importFrom colorspace sequential_hcl
 
 .makeHeatmap <- function(df, x, y, clustered = TRUE, color_palette = NULL, 
                          rotate_labels = TRUE) {
@@ -832,7 +843,7 @@ plot_Coldata <- function(sce,
 
   # Colors
   if(is.null(color_palette)) {
-    pal = rev(sequential_hcl(n = 40, palette = "YlGnBu"))[10:40]
+    pal = .cpal_seq_ylgnbu()
   } else {
     pal = color_palette
   }
@@ -842,18 +853,5 @@ plot_Coldata <- function(sce,
   p = p + cscale
   return(p)
 
-}
-
-
-.reorderNumericLevels <- function(f, rev = FALSE) {
-  conv = suppressWarnings(as.numeric(levels(f)))
-    if(!any(is.na(conv))) {
-    fl = as.character(sort(as.numeric(levels(f))))
-    if(rev) fl = fl[rev(seq_along(fl))]
-    levels(f) = fl
-    return(f)
-  } else {
-    return(f)
-  }
 }
 

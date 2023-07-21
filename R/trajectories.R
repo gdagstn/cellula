@@ -27,11 +27,15 @@
 #' @param omega logical, should the \code{omega} method for MST calculation be used?
 #'     Default is TRUE. See \code{?slingshot::getLineages} for more information.
 #' @param omega_scale numeric, the value of the \code{omega_scale} parameter. 
-#'     Default is 1.5. See \code{?slingshot::getLineages} for more information.          
+#'     Default is 1.5. See \code{?slingshot::getLineages} for more information.  
+#' @param invert logical. Should the pseuodtime vector be inverted? Only valid
+#'     for monocle3. Default is FALSE.            
 #' @param do_de logical. Should differential expression across trajectories be
 #'     performed? Default is FALSE.
 #' @param batch_de character, the name of the \code{colData} column to be used as a
 #'     blocking factor in the differential expression analysis. Default is NULL.
+#' @param add_metadata logical, should additional data from trajectory inference be
+#'     added to the \code{metadata(sce)}? Default is TRUE.
 #' @param verbose logical, should progress messages be printed? Default is FALSE.    
 #' @param BPPARAM a \code{BiocParallelParam} object. Default is NULL.
 #'
@@ -142,29 +146,36 @@ findTrajectories <- function(sce, dr = "PCA", clusters, method = "slingshot",
   
   if(!is(sce, "SingleCellExperiment"))
     stop(paste0(ep, "Must provide a SingleCellExperiment object"))
-  if(!(method %in% c("slingshot", "monocle"))) 
-    stop(paste0(ep, "method not recognized - must be one of \"slingshot\" or \"monocle\""))
+  if(!(method %in% c("slingshot", "monocle", "PAGADPT"))) 
+    stop(paste0(ep, "method not recognized - must be one of \"slingshot\", \"monocle\", or \"PAGADPT\""))
   if(!(clusters %in% colnames(colData(sce)))) 
     stop(paste0(ep,"clusters column not found in the colData of the object"))
   if(!is(colData(sce)[,clusters], "character") & !is(colData(sce)[,clusters], "factor")) 
     stop(paste0(ep,"clusters column should contain a factor or a character"))
   if(!(dr %in% reducedDimNames(sce)))
     stop(paste0(ep,"dr reduction not found among the reducedDims of the object"))
-  if(dr_embed != "FR" & !(dr_embed %in% reducedDimNames(sce))) 
-    stop(paste0(ep,"dr_embed reduction not found among the reducedDims of the object"))
+  if(!is.null(dr_embed)){ 
+    if(dr_embed != "FR" & !(dr_embed %in% reducedDimNames(sce))) 
+      stop(paste0(ep,"dr_embed reduction not found among the reducedDims of the object"))
+  }
   if(start != "auto" & !(start %in% colData(sce)[,clusters])) 
     stop(paste0(ep,"Could not find the start cluster in clusters"))
+  
+  # Start parameter logging - not fully implemented
+  # TO DO
+  # --------------------------------------------- #
   
   if(start == "auto") {
     if(!any(colnames(colData(sce)) == "entropy"))
       if(verbose) cat("Calculating per-cell entropy\n")
-      sce$entropy = perCellEntropy(sce, BPPARAM)
+      sce$entropy = perCellEntropy(sce, BPPARAM) #drop if possible to remove TSCAN dependency
     ent_means = lapply(split(colData(sce)$entropy, colData(sce)[,clusters]), mean)
     start = unique(colData(sce)[,clusters])[which.max(ent_means)]
   }
   
   if(ndims > ncol(reducedDim(sce, dr))) ndims = ncol(reducedDim(sce, dr))
   
+  # Trajectory inference module
   if(method == "slingshot"){
     
     sce = .getSlingshotTrajectories(sce = sce, dr = dr, ndims = ndims,
@@ -180,6 +191,10 @@ findTrajectories <- function(sce, dr = "PCA", clusters, method = "slingshot",
                                   Monocle_lg_control = Monocle_lg_control,
                                   dr_embed = dr_embed, invert = invert,
                                   add_metadata = add_metadata, verbose = verbose)
+  } else if(method == "PAGADPT") {
+    sce = .getDPTtrajectories(sce = sce, dr = dr, ndims = ndims, 
+                              clusters = clusters, start = start, 
+                              add_metadata = add_metadata, verbose = verbose)
   }
 
   return(sce)
@@ -188,7 +203,6 @@ findTrajectories <- function(sce, dr = "PCA", clusters, method = "slingshot",
 
 #' @importFrom SummarizedExperiment colData rowData
 #' @importFrom SingleCellExperiment reducedDim
-#' @importFrom monocle3 new_cell_data_set learn_graph principal_graph order_cells
 #' @importFrom igraph V as_data_frame
 #' @importFrom BiocNeighbors queryKNN
 #' 
@@ -205,28 +219,34 @@ findTrajectories <- function(sce, dr = "PCA", clusters, method = "slingshot",
                                     add_metadata = TRUE,
                                     verbose = TRUE){
   
+  ep = "{cellula::.getMonocleTrajectories()} - "
+  
+  if(!"monocle3" %in% rownames(installed.packages()))
+    stop(paste0(.redm(ep), "the `monocle3` package must be installed first.\n
+                Run `BiocManager::install(\"cole-trapnell-lab/monocle3\") to use this function."))
+  
   rd = rowData(sce)
   if(!("Symbol" %in% colnames(rd))) rd$Symbol = rownames(rd)
   rd$gene_short_name = rd$Symbol
   
-  if(verbose) message(paste0(blue("[TRAJ/Monocle3] "),"Creating CDS object"))
+  if(verbose) message(paste0(.bluem("[TRAJ/Monocle3] "),"Creating CDS object"))
   
-  cds <- new_cell_data_set(
-    assay(sce, "counts"),
-    cell_metadata = colData(sce),
-    gene_metadata = rd
-  )
-  
+  cds <- monocle3::new_cell_data_set(
+                    assay(sce, "counts"),
+                    cell_metadata = colData(sce),
+                    gene_metadata = rd
+                  )
+                  
   # Shoehorn any type of space into the UMAP slot
   reducedDim(cds, "UMAP") <- reducedDim(sce, dr)[,seq_len(ndims)]
   
-  # only one partition - optional?
+  # only one partition - NEED TO REVISIT
   recreate.partition <- c(rep(1, length(cds@colData@rownames)))
   names(recreate.partition) <- cds@colData@rownames
   recreate.partition <- as.factor(recreate.partition)
   cds@clusters@listData[["UMAP"]][["partitions"]] <- recreate.partition
   
-  if(verbose) message(paste0(blue("[TRAJ/Monocle3] "),"Adding cluster labels"))
+  if(verbose) message(paste0(.bluem("[TRAJ/Monocle3] "),"Adding cluster labels"))
   
   # Add cluster labels
   list_cluster = colData(sce)[, clusters, drop = TRUE]
@@ -236,13 +256,13 @@ findTrajectories <- function(sce, dr = "PCA", clusters, method = "slingshot",
   # Could be a space-holder, but essentially fills out louvain parameters
   cds@clusters@listData[["UMAP"]][["louvain_res"]] <- "NA"
   
-  if(verbose) message(paste0(blue("[TRAJ/Monocle3] "),"Learning graph"))
+  if(verbose) message(paste0(.bluem("[TRAJ/Monocle3] "),"Learning graph"))
   
-  cds <- learn_graph(cds, use_partition = FALSE, 
-                     learn_graph_control = Monocle_lg_control)
+  cds <- monocle3::learn_graph(cds, use_partition = FALSE, 
+                               learn_graph_control = Monocle_lg_control)
   
   # Set root cluster
-  if(verbose) message(paste0(blue("[TRAJ/Monocle3] "),"Finding start node"))
+  if(verbose) message(paste0(.bluem("[TRAJ/Monocle3] "),"Finding start node"))
   
   root_cells <- as.vector(
     rownames(colData(sce))[which(colData(sce)[,clusters] == start)]
@@ -251,12 +271,11 @@ findTrajectories <- function(sce, dr = "PCA", clusters, method = "slingshot",
   # Find starting vertex
   closest_vertex <- cds@principal_graph_aux[["UMAP"]]$pr_graph_cell_proj_closest_vertex
   rn = as.numeric(names(which.max(table(closest_vertex[root_cells,]))))
-  root_pr_nodes <- V(principal_graph(cds)[["UMAP"]])$name[rn]
+  root_pr_nodes <- V(monocle3::principal_graph(cds)[["UMAP"]])$name[rn]
   
-  if(verbose) message(paste0(blue("[TRAJ/Monocle3] "),"Ordering cells"))
+  if(verbose) message(paste0(.bluem("[TRAJ/Monocle3] "),"Ordering cells"))
   
-  cds <- order_cells( 
-    cds, root_pr_nodes=root_pr_nodes)
+  cds <- monocle3::order_cells(cds, root_pr_nodes=root_pr_nodes)
   
   traj.coord <- cds@principal_graph_aux@listData[["UMAP"]][["pseudotime"]]
   
@@ -272,7 +291,7 @@ findTrajectories <- function(sce, dr = "PCA", clusters, method = "slingshot",
   # Monocle3 in an arbitrary space that is not UMAP
   
   if(dr_embed == "FR") {
-    if(verbose) message(paste0(blue("[TRAJ/Monocle3] "),"Embedding in 2D"))
+    if(verbose) message(paste0(.bluem("[TRAJ/Monocle3] "),"Embedding in 2D"))
     
     frembed = .embedFR(cds = cds, sce = sce, dr = dr, ndims = ndims)
     
@@ -283,7 +302,7 @@ findTrajectories <- function(sce, dr = "PCA", clusters, method = "slingshot",
     reducedDim(sce, "UMAP_FR") = frembed$dr_embed
     
   } else if(!is.null(dr_embed) & (dr_embed != "FR")) {
-    if(verbose) message(paste0(blue("[TRAJ/Monocle3] "),"Embedding in 2D"))
+    if(verbose) message(paste0(.bluem("[TRAJ/Monocle3] "),"Embedding in 2D"))
     
     wp_coords = t(cds@principal_graph_aux$UMAP$dp_mst)
     sp_coords = reducedDim(sce, dr)[,seq_len(ndims)]
@@ -314,14 +333,12 @@ findTrajectories <- function(sce, dr = "PCA", clusters, method = "slingshot",
   }
   
   if(add_metadata) {
-    if(verbose) message(paste0(blue("[TRAJ/Monocle3] "), "Adding metadata"))
+    if(verbose) message(paste0(.bluem("[TRAJ/Monocle3] "), "Adding metadata"))
     metadata(sce)[["Monocle_principal_graph"]] = cds@principal_graph$UMAP
     metadata(sce)[["Monocle_principal_graph_aux"]] = cds@principal_graph_aux$UMAP
   }
   
-  
-  
-  if(verbose) message(paste0(blue("[TRAJ/Monocle3] "),"Done."))
+  if(verbose) message(paste0(.bluem("[TRAJ/Monocle3] "),"Done."))
   
   sce
 }
@@ -336,12 +353,16 @@ findTrajectories <- function(sce, dr = "PCA", clusters, method = "slingshot",
 
 .embedFR <- function(cds, sce, dr, ndims) {
   
+  # Vertices of the principal graph in UMAP
   gv = as_data_frame(cds@principal_graph$UMAP)
   cvert = as.data.frame(cds@principal_graph_aux$UMAP$pr_graph_cell_proj_closest_vertex)
   verts = lapply(split(cvert, cvert$V1), rownames)
   names(verts) = names(V(cds@principal_graph$UMAP))
+  
+  # Weight by the number of cells closest to each node - more cells, closer points
   gv$weight = apply(gv[,1:2], 1, function(x) max(length(verts[[x[1]]]), length(verts[[x[2]]])))
   
+  # Fruchterman-Rheingold layout
   l = layout_with_fr(graph_from_data_frame(gv))
   rownames(l) = names(V(graph_from_data_frame(gv)))
   
@@ -350,6 +371,7 @@ findTrajectories <- function(sce, dr = "PCA", clusters, method = "slingshot",
   
   traj.coord <- cds@principal_graph_aux@listData[["UMAP"]][["pseudotime"]]
   
+  # Randomize position of cells on the FR layout but keep order consistent with PT
   for(i in names(verts)) {
     xs = rnorm(n = length(verts[[i]]), mean = l[i,1], sd = 0.15*sqrt(length(verts[[i]])))
     ys = rnorm(n = length(verts[[i]]), mean = l[i,2], sd = 0.15*sqrt(length(verts[[i]])))
@@ -369,6 +391,7 @@ findTrajectories <- function(sce, dr = "PCA", clusters, method = "slingshot",
   rownames(coords) = as.character(coords$order)
   init = as.matrix(coords[colnames(sce),1:2])
   
+  # Reassign points using UMAP
   frum = umap(init, 
               init = init, 
               n_neighbors = floor(sqrt(ncol(sce))), 
@@ -376,6 +399,7 @@ findTrajectories <- function(sce, dr = "PCA", clusters, method = "slingshot",
   
   segs = as_data_frame(cds@principal_graph$UMAP)
   
+  # Segments of the principal graph on UMAP
   nns = queryKNN(init, l, k = 1)
   matched = data.frame(wp = rownames(l), sp = nns$index, row.names = rownames(l))
   
@@ -387,10 +411,8 @@ findTrajectories <- function(sce, dr = "PCA", clusters, method = "slingshot",
   return(list(segs = segs, dr_embed = frum))
 }
 
-#' @importFrom slingshot slingshot slingLineages slingCurves embedCurves
 #' @importFrom SummarizedExperiment colData
 #' @importFrom SingleCellExperiment reducedDim
-#' @importFrom TSCAN testPseudotime
 #' 
 #' @noRd
 
@@ -398,7 +420,7 @@ findTrajectories <- function(sce, dr = "PCA", clusters, method = "slingshot",
                                       ndims = 20, 
                                       clusters, 
                                       dr_embed = NULL,
-                                      start = "auto",
+                                      start,
                                       omega = TRUE,
                                       omega_scale = 1.5,
                                       do_de = FALSE,
@@ -407,22 +429,28 @@ findTrajectories <- function(sce, dr = "PCA", clusters, method = "slingshot",
                                       verbose = FALSE,
                                       BPPARAM = SerialParam()){
   
-  if(verbose) message(paste0(blue("[TRAJ/Slingshot] "),"Finding trajectories"))
+  ep = "{cellula::.getSlingshotTrajectories()} - "
   
-  sce <- slingshot(sce,
-                   reducedDim = dr,
-                   clusterLabels = clusters,
-                   start.clus = start,
-                   omega = omega,
-                   omega_scale = omega_scale)
+  if(!"slingshot" %in% rownames(installed.packages()))
+    stop(paste0(ep, "the `slingshot` package must be installed first.\n
+                Run `BiocManager::install(\"slingshot\") to use this function."))
   
-  metadata(sce)[["Slingshot_lineages"]] = slingLineages(sce)
+  if(verbose) message(paste0(.bluem("[TRAJ/Slingshot] "),"Finding trajectories"))
+  
+  sce <- slingshot::slingshot(sce,
+                             reducedDim = dr,
+                             clusterLabels = clusters,
+                             start.clus = start,
+                             omega = omega,
+                             omega_scale = omega_scale)
+  
+  metadata(sce)[["Slingshot_lineages"]] = slingshot::slingLineages(sce)
   
   if(!is.null(dr_embed)) {
-    if(verbose) message(paste0(blue("[TRAJ/Slingshot] "),"Embedding curves"))
+    if(verbose) message(paste0(.bluem("[TRAJ/Slingshot] "),"Embedding curves"))
         ap = max(ncol(sce), 1000)
-        embedded = lapply(slingCurves(embedCurves(sce, newDimRed = dr_embed, 
-                                                  approx_points = ap)),
+        embedded = lapply(slingshot::slingCurves(
+          slingshot::embedCurves(sce, newDimRed = dr_embed, approx_points = ap)),
                           function(x) x$s)
         
         embedded = lapply(embedded, function(x) {
@@ -438,25 +466,25 @@ findTrajectories <- function(sce, dr = "PCA", clusters, method = "slingshot",
   }
   
   if(do_de) {
-    if(verbose) message(paste0(blue("[TRAJ/Slingshot] "),"Calculating DE along lineages"))
+    if(verbose) message(paste0(.bluem("[TRAJ/Slingshot] "),"Calculating DE along lineages"))
     if(!is.null(batch_de)) batch = factor(colData(sce)[,batch_de]) else batch = NULL
     
-    sling_colnames = paste0("slingPseudotime_", seq_along(slingLineages(sce)))
+    sling_colnames = paste0("slingPseudotime_", seq_along(slingshot::slingLineages(sce)))
     
     sling_tests <- lapply(sling_colnames, function(x)
-      testPseudotime(assay(sce, "logcounts"),
+      TSCAN::testPseudotime(assay(sce, "logcounts"),
                      pseudotime = colData(sce)[,x],
                      block = batch,
                      BPPARAM = BPPARAM)
     )
     
-    names(sling_tests) <- names(slingLineages(sce))
+    names(sling_tests) <- names(slingshot::slingLineages(sce))
     
     metadata(sce)[["pseudotime_DE"]] = sling_tests
   }
   
   if(add_metadata) {
-    if(verbose) message(paste0(blue("[TRAJ/Slingshot] "),"Adding metadata"))
+    if(verbose) message(paste0(.bluem("[TRAJ/Slingshot] "),"Adding metadata"))
     metadata(sce)[["Slingshot_MST"]] = metadata(sce$slingshot)[["mst"]]
     metadata(sce)[["Slingshot_curves"]] = metadata(sce$slingshot)[["curves"]]
     metadata(sce)[["Slingshot_weights"]] = assay(sce$slingshot, "weights")
@@ -468,6 +496,75 @@ findTrajectories <- function(sce, dr = "PCA", clusters, method = "slingshot",
   sce
 }
 
+#' @importFrom igraph graph_from_adjacency_matrix E V mst degree all_shortest_paths
+#' @importFrom SingleCellExperiment reducedDim
+#' @importFrom SummarizedExperiment colData 
+#' @importFrom S4Vectors metadata metadata<-
+#' 
+#' @noRd
+
+.getDPTtrajectories <- function(sce, 
+                                dr = "PCA", 
+                                ndims = 20, 
+                                clusters, 
+                                #dr_embed = NULL, 
+                                start, 
+                                add_metadata = TRUE,
+                                verbose = FALSE){#,
+                                #BPPARAM = SerialParam()) {
+  
+  ep = "{cellula::.getDPTtrajectories()} - "
+  
+  if(!"destiny" %in% rownames(installed.packages()))
+    stop(paste0(.redm(ep), "the `monocle3` package must be installed first.\n
+                Run `BiocManager::install(\"destiny\") to use this function."))
+  
+  if(verbose) message(paste0(.bluem("[TRAJ/PAGA-DPT] "),"Building MST on modularity graph"))
+  
+  modslot = paste0("modularity_", clusters)
+  
+  if(!modslot %in% names(metadata(sce)))
+    stop(paste0(ep, "Modularity matrix not found! Pairwise modularity should have been 
+         calculated in the clustering step and saved to the metadata."))
+  
+  modmat = metadata(sce)[[modslot]]
+  mgr <- graph_from_adjacency_matrix(modmat, mode = "upper", 
+                                     weighted = TRUE, diag = FALSE)
+  msgr = mst(mgr, weights = 1/E(mgr)$weight)
+  outd = degree(msgr, v = V(msgr), mode = "out")
+  outnodes = names(outd)[outd == 1]
+  paths = all_shortest_paths(msgr, from = start, to = outnodes)
+  paths = lapply(paths$res, function(x) as.numeric(x))
+  
+  dptlist = dmlist = list()
+  
+  if(verbose) message(paste0(.bluem("[TRAJ/PAGA-DPT] "),"Calculating diffusion maps and DPT"))
+  
+  for(i in seq_along(paths)) {
+    if(verbose) {
+      path_text = paste(paths[[i]], collapse = "-->")
+    }
+    curr = sce[,colData(sce)[,clusters] %in% paths[[i]]]
+    reducedDim(curr, "pca") = reducedDim(curr, dr)
+    dmlist[[i]] = destiny::DiffusionMap(data = reducedDim(curr, "pca"), verbose = verbose)
+    dptlist[[i]] = destiny::DPT(dmlist[[i]])$dpt
+    names(dptlist[[i]]) = colnames(curr)
+  }
+  
+  for(i in seq_along(paths)) {
+    colData(sce)[[paste0("DPTpseudotime_", i)]] = NA
+    colData(sce)[names(dptlist[[i]]), paste0("DPTpseudotime_", i)] = dptlist[[i]]
+  }
+  
+  if(add_metadata) {
+    if(verbose) message(paste0(.bluem("[TRAJ/PAGA-DPT] "),"Adding metadata"))
+    metadata(sce)[["PAGADPT_MST"]] = msgr
+    metadata(sce)[["PAGADPT_lineages"]] = paths
+    metadata(sce)[["PAGADPT_DiffusionMaps"]] = dmlist
+  }
+  
+  sce
+}
 
 #' Make metacells
 #' 
@@ -492,7 +589,25 @@ findTrajectories <- function(sce, dr = "PCA", clusters, method = "slingshot",
 #' @export
 
 makeMetacells  <- function(sce, w = 10, group = NULL, dr = "PCA", ndims = 20) {
-
+ 
+  
+  ep = "{cellula::makeMetacells()} - "
+  
+  if(!is(sce, "SingleCellExperiment"))
+    stop(paste0(.redm(ep), "Must provide a SingleCellExperiment object"))
+    if(!(group %in% colnames(colData(sce)))) 
+    stop(paste0(.redm(ep),"group column not found in the colData of the object"))
+  if(!is(colData(sce)[,group], "character") & !is(colData(sce)[,group], "factor")) 
+    stop(paste0(.redm(ep),"group column should contain a factor or a character"))
+  if(!(dr %in% reducedDimNames(sce)))
+    stop(paste0(.redm(ep),"dr reduction not found among the reducedDims of the object"))
+  if(ndims > ncol(reducedDim(sce, dr)))
+    stop(paste0(.redm(ep), "ndims is more than the available dimensions for the selected dr slot."))
+  
+  # Start parameter logging - not fully implemented
+  # TO DO
+  # --------------------------------------------- #
+  
   if(!is.null(group)) {
     gv = as.character(unique(colData(sce)[,group]))
     clustl = lapply(gv, function(x) {
@@ -503,7 +618,6 @@ makeMetacells  <- function(sce, w = 10, group = NULL, dr = "PCA", ndims = 20) {
       names(memb) = colnames(s)
       return(memb)
     })
-
     names(clustl) = gv
     memberships = unlist(clustl, use.names = TRUE)
     groups = rep(gv, lengths(clustl))

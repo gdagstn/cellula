@@ -1,4 +1,4 @@
-#'#' SCE Integration pipeline
+#'#' SingleCellExperiment processing pipeline
 #'
 #' Pipeline for automatic processing and integration of SingleCellExperiment objects
 #'
@@ -46,18 +46,13 @@
 #'    (if calculated), uncorrected and corrected PCA and UMAP coordinates according
 #'    to the method of choice.
 #'
-#' @importFrom ids adjective_animal
 #' @importFrom SummarizedExperiment colData rowData assay
-#' @importFrom DropletUtils emptyDrops barcodeRanks
-#' @importFrom crayon blue
 #' @importFrom scuttle isOutlier perCellQCMetrics
 #' @importFrom gridExtra grid.arrange
-#' @importFrom scater plotColData runPCA plotReducedDim
+#' @importFrom scater runPCA 
 #' @importFrom uwot umap
 #' @importFrom ggplot2 scale_y_log10 ggtitle ggsave
-#' @importFrom scDblFinder scDblFinder
 #' @importFrom SingleCellExperiment reducedDim reducedDim<- counts logcounts
-#' @importFrom AUCell AUCell_buildRankings AUCell_calcAUC
 #' @importFrom S4Vectors metadata metadata<-
 #' @importFrom BiocParallel SerialParam
 #'
@@ -85,20 +80,22 @@ cellula <- function(sce,
                      save_temp = FALSE,
                      parallel_param = SerialParam()) {
 
- if(!is.null(batch)) {
+  # Sanity checks (mostly delegated to individual modules)
+    if(!is.null(batch)) {
    if(!batch %in% colnames(colData(sce)))
     stop(paste0("Batch label \"", batch, "\" not found."))
    if(!is.factor(colData(sce)[,batch]))
      colData(sce)[,batch] = as.factor(colData(sce)[,batch])
  }
   
+  # Start parameter logging - not fully implemented
   if(is.null(metadata(sce)$cellula_log)) {
     clog = .initLog()
   } else clog = metadata(sce)$cellula_log
   
   # Make folder
   if(is.null(name)) {
-    name = adjective_animal()
+    name = .randomName()
     cat(paste0("No name selected so the randomly assigned name is: ", name, "\n"))
   }
 
@@ -106,7 +103,8 @@ cellula <- function(sce,
   clog$name = name
   clog$dir = paste0(getwd(), "/name")
   
-  if(verbose) {
+  # Begin
+    if(verbose) {
     cat("Working on object", name, "\n")
     ncells = ncol(sce)
     cat("Input cells: ", ncells, "\n")
@@ -117,8 +115,9 @@ cellula <- function(sce,
       clog$qc$input_by_batch = table(colData(sce)[,batch])
     }
   }
-
-  if(do_qc) {
+ 
+  # QC module
+    if(do_qc) {
     sce <- doQC(sce, name = name,
                 batch = batch, discard = discard,
                 subset_mito = subset_mito,
@@ -153,7 +152,8 @@ cellula <- function(sce,
     }
   }
 
-  if(do_norm) {
+  # Normalization and dimensionality reduction module
+    if(do_norm) {
 
     sce <- doNormAndReduce(sce, batch = batch, name = name,
                            ndims = ndims,
@@ -169,8 +169,9 @@ cellula <- function(sce,
 
   hvgs = metadata(sce)$hvgs
   
-  if(!is.null(batch)) {
-    if(verbose) cat(blue("[INT]"), "Integration. \n")
+  # Integration module
+    if(!is.null(batch)) {
+    if(verbose) cat(.bluem("[INT]"), "Integration. \n")
     sce = integrateSCE(sce,
                        batch = batch,
                        hvgs = hvgs,
@@ -200,6 +201,7 @@ cellula <- function(sce,
 }
 
 #' @noRd
+#' @importFrom utils sessionInfo
 .initLog <- function() {
   
   list("name" = NULL,

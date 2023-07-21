@@ -104,6 +104,8 @@ assignIdentities <- function(sce,
     names(genesets) = name
   }
 
+  # Assignment module
+  
   switch(method,
          "AUC" = {sce = .assignIdentities_AUC(sce,
                                               genesets,
@@ -144,11 +146,10 @@ assignIdentities <- function(sce,
   return(sce)
 }
 
-#' @importFrom AUCell AUCell_buildRankings AUCell_calcAUC
 #' @importFrom SummarizedExperiment colData
 #' @importFrom BiocParallel SerialParam
 #' @importFrom utils tail
-#' @importFrom S4Vectors metadata
+#' @importFrom S4Vectors metadata metadata<-
 
 .assignIdentities_AUC <- function(sce,
                                   genesets,
@@ -157,17 +158,23 @@ assignIdentities <- function(sce,
                                   return_scores = FALSE,
                                   BPPARAM = SerialParam(),
                                   ...){
-
+  
+  ep = "{cellula::.assignIdentities_AUC()} - "
+  
+  if(!"AUCell" %in% rownames(installed.packages()))
+    stop(paste0(ep, "the `AUCell` package must be installed first.\n
+                Run `BiocManager::install(\"AUCell\") to use this function."))
+  
     if(is.null(name)) labelname = "labels_AUC" else labelname = name
-    if(verbose) cat(blue("[ANNO/AUC]"), "Assigning cell labels \n")
+    if(verbose) cat(.bluem("[ANNO/AUC]"), "Assigning cell labels \n")
 
-    rankings <- AUCell_buildRankings(counts(sce),
+    rankings <- AUCell::AUCell_buildRankings(counts(sce),
                                      splitByBlocks = TRUE,
                                      plotStats = FALSE,
                                      verbose = verbose,
                                      BPPARAM = BPPARAM)
     
-    aucs <- AUCell_calcAUC(genesets,
+    aucs <- AUCell::AUCell_calcAUC(genesets,
                            rankings,
                            aucMaxRank = ceiling(0.2 * nrow(rankings)),
                            nCores = BPPARAM$workers, 
@@ -191,13 +198,10 @@ assignIdentities <- function(sce,
     return(sce)
 }
 
-#' @importFrom SeuratObject CreateSeuratObject SetAssayData
-#' @importFrom Seurat AddModuleScore
 #' @importFrom SummarizedExperiment colData
 #' @importFrom SingleCellExperiment logcounts counts
 #' @importFrom utils tail
-#' @importFrom crayon blue
-#' @importFrom S4Vectors metadata
+#' @importFrom S4Vectors metadata metadata<-
 
 .assignIdentities_Seurat <- function(sce,
                                      genesets,
@@ -205,21 +209,28 @@ assignIdentities <- function(sce,
                                      return_scores = FALSE,
                                      name = NULL,
                                      ...){
-
+  
+  ep = "{cellula::.assignIdentities_Seurat()} - "
+  
+  if(!"Seurat" %in% rownames(installed.packages()))
+    stop(paste0(ep, "the `Seurat` package must be installed first.\n
+                Run `BiocManager::install(\"Seurat\") to use this function."))
+  
   if(is.null(name)) labelname = "labels_Seurat" else labelname = name
 
-  if(verbose) cat(blue("[ANNO/Seurat]"), "Adding module scores \n")
+  if(verbose) cat(.bluem("[ANNO/Seurat]"), "Adding module scores \n")
 
   old_colnames = colnames(sce)
   if(any(duplicated(colnames(sce)))) {
     colnames(sce) = paste0("cell_", seq_len(ncol(sce)))
   }
 
-  seu <- CreateSeuratObject(counts = counts(sce), meta.data = as.data.frame(colData(sce)))
+  seu <- SeuratObject::CreateSeuratObject(counts = counts(sce),
+                                          meta.data = as.data.frame(colData(sce)))
   logc = logcounts(sce)
   rownames(logc) = rownames(seu)
-  seu <- SetAssayData(object = seu, slot = "data", new.data = logc)
-  seu <- AddModuleScore(seu, features = genesets, ...)
+  seu <- SeuratObject::SetAssayData(object = seu, slot = "data", new.data = logc)
+  seu <- Seurat::AddModuleScore(seu, features = genesets, ...)
 
   colnames(seu@meta.data)[tail(seq_along(seu@meta.data), length(genesets))] = names(genesets)
 
@@ -241,10 +252,8 @@ assignIdentities <- function(sce,
   return(sce)
 }
 
-#' @importFrom GSVA gsva
-#' @importFrom crayon blue
 #' @importFrom SummarizedExperiment colData assay
-#' @importFrom S4Vectors metadata
+#' @importFrom S4Vectors metadata metadata<-
 
 .assignIdentities_ssGSEA <- function(sce,
                                      genesets,
@@ -254,17 +263,23 @@ assignIdentities <- function(sce,
                                      return_scores = FALSE,
                                      kcdf = "Gaussian",
                                      ...) {
-
+  
+  ep = "{cellula::.assignIdentities_ssGSEA()} - "
+  
+  if(!"GSVA" %in% rownames(installed.packages()))
+    stop(paste0(ep, "the `GSVA` package must be installed first.\n
+                Run `BiocManager::install(\"GSVA\") to use this function."))
+  
   if(is.null(name)) labelname = "labels_ssGSEA" else labelname = name
 
-  if(verbose) cat(blue("[ANNO/ssGSEA]"), "Calculating ssGSEA \n")
-  ss = gsva(sce,
-            gset.idx.list = genesets,
-            annotation = assay,
-            method = "ssgsea",
-            kcdf = kcdf,
-            verbose = verbose,
-            ...)
+  if(verbose) cat(.bluem("[ANNO/ssGSEA]"), "Calculating ssGSEA \n")
+  ss = GSVA::gsva(sce,
+                  gset.idx.list = genesets,
+                  annotation = assay,
+                  method = "ssgsea",
+                  kcdf = kcdf,
+                  verbose = verbose,
+                  ...)
 
   scores = t(as.matrix(assay(ss, "es")))
 
@@ -281,16 +296,14 @@ assignIdentities <- function(sce,
     colData(sce)[,labelname] = as.numeric(scores[, 1, drop = TRUE])
   }
 
-  if(verbose) cat(blue("[ANNO/ssGSEA]"), "Done. \n")
+  if(verbose) cat(.bluem("[ANNO/ssGSEA]"), "Done. \n")
 
   return(sce)
 
 }
 
-#' @importFrom UCell ScoreSignatures_UCell
-#' @importFrom crayon blue
 #' @importFrom SummarizedExperiment colData assay
-#' @importFrom S4Vectors metadata
+#' @importFrom S4Vectors metadata metadata<-
 
 .assignIdentities_UCell <- function(sce,
                                     genesets,
@@ -298,18 +311,24 @@ assignIdentities <- function(sce,
                                     name = NULL,
                                     return_scores = FALSE,
                                     ...) {
-
+  
+  ep = "{cellula::.assignIdentities_UCell()} - "
+  
+  if(!"UCell" %in% rownames(installed.packages()))
+    stop(paste0(ep, "the `UCell` package must be installed first.\n
+                Run `BiocManager::install(\"UCell\") to use this function."))
+  
   if(is.null(name)) labelname = "labels_UCell" else labelname = name
 
-  if(verbose) cat(blue("[ANNO/UCell]"), "Calculating UCell scores \n")
+  if(verbose) cat(.bluem("[ANNO/UCell]"), "Calculating UCell scores \n")
 
   maxrank = 1500
 
-  scores <- ScoreSignatures_UCell(matrix = assay(sce, "counts"),
-                                  features = genesets,
-                                  maxRank = maxrank,
-                                  name = "",
-                                  ...)
+  scores <- UCell::ScoreSignatures_UCell(matrix = assay(sce, "counts"),
+                                         features = genesets,
+                                         maxRank = maxrank,
+                                         name = "",
+                                         ...)
 
   if(length(genesets) > 1) {
 
@@ -324,12 +343,11 @@ assignIdentities <- function(sce,
     colData(sce)[,labelname] = as.numeric(scores[, 1, drop = TRUE])
   }
 
-  if(verbose) cat(blue("[ANNO/UCell]"), "Done. \n")
+  if(verbose) cat(.bluem("[ANNO/UCell]"), "Done. \n")
 
   return(sce)
 }
 
-#' @importFrom crayon blue
 #' @importFrom matrixStats colMaxs
 #' @importFrom Matrix t
 #' @importFrom SummarizedExperiment colData assay
@@ -377,24 +395,24 @@ assignIdentities <- function(sce,
   ref_common[ref_common == 0] = 1e-8
   counts_common = assay(sce, assay)[common,]
   
-  if(verbose) cat(blue("[ANNO/JAITIN]"), "Calculating log-likelihood \n")
+  if(verbose) cat(.bluem("[ANNO/JAITIN]"), "Calculating log-likelihood \n")
 
   loglik = as(t(t(counts_common) %*% log(ref_common)), "matrix")
   
   colnames(loglik) = colnames(sce)
   rownames(loglik) = colnames(ref)
   
-  if(verbose) cat(blue("[ANNO/JAITIN]"), "Calculating posterior probabilities \n")
+  if(verbose) cat(.bluem("[ANNO/JAITIN]"), "Calculating posterior probabilities \n")
   
   posterior = exp(t(loglik)-colMaxs(loglik)-log(rowSums(t(loglik)/colMaxs(loglik))))
 
-  if(verbose) cat(blue("[ANNO/JAITIN]"), "Deciding best labels \n")
+  if(verbose) cat(.bluem("[ANNO/JAITIN]"), "Deciding best labels \n")
   
   toplabel = colnames(posterior)[apply(posterior, 1, which.max)]
   
   if(return_scores) metadata(sce)[[paste0(labelname, "_scores")]] = posterior
   
-  if(verbose) cat(blue("[ANNO/JAITIN]"), "All done \n")
+  if(verbose) cat(.bluem("[ANNO/JAITIN]"), "All done \n")
   
   colData(sce)[,labelname] = toplabel
   

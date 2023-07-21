@@ -22,14 +22,15 @@
 #' @importFrom scran quickCluster computeSumFactors modelGeneVar getTopHVGs
 #' @importFrom scuttle logNormCounts
 #' @importFrom batchelor multiBatchNorm
-#' @importFrom crayon blue
 #' @importFrom uwot umap
 #' @importFrom SingleCellExperiment reducedDim reducedDim<- counts logcounts
 #' @importFrom BiocParallel SerialParam
 #' @importFrom scater runPCA
 #' @importFrom S4Vectors metadata metadata<-
+#' @importFrom methods formalArgs
 #'
 #' @export
+
 doNormAndReduce <- function(sce, batch = NULL, name = NULL,
                             ndims = 20,
                             hvg_ntop = 2000,
@@ -48,17 +49,19 @@ doNormAndReduce <- function(sce, batch = NULL, name = NULL,
   }
   if(hvg_ntop > nrow(sce))
     stop(paste0(ep, "hvg_ntop cannot be higher than the number of features (nrow) in the object"))
-  
+
+  # Start parameter logging - not fully implemented
+
   if(is.null(metadata(sce)$cellula_log)) {
     clog = .initLog()
   } else {
     clog = metadata(sce)$cellula_log
   }
   
-  if(verbose) cat(blue("[NORM]"), "Calculating size factors and normalizing. \n")
+  if(verbose) cat(.bluem("[NORM]"), "Calculating size factors and normalizing. \n")
 
   # Size factors
-  if(verbose) cat(blue("[NORM]"),"   Preclustering. \n")
+  if(verbose) cat(.bluem("[NORM]"),"   Preclustering. \n")
 
   if(!is.null(batch)) {
     sce_cl <- quickCluster(sce,
@@ -74,13 +77,13 @@ doNormAndReduce <- function(sce, batch = NULL, name = NULL,
     clog$norm_reduce$precluster_min_size = floor(sqrt(ncol(sce)))
   }
 
-  if(verbose) cat(blue("[NORM]"),"   Calculating pooled factors. \n")
+  if(verbose) cat(.bluem("[NORM]"),"   Calculating pooled factors. \n")
   sce <- computeSumFactors(sce,
                            clusters = sce_cl,
                            BPPARAM = parallel_param)
 
   # Normalization
-  if(verbose) cat(blue("[NORM]"),"   Log-normalization. \n")
+  if(verbose) cat(.bluem("[NORM]"),"   Log-normalization. \n")
   if(!is.null(batch)) {
     sce <- multiBatchNorm(sce,
                           batch = colData(sce)[,batch])
@@ -96,7 +99,7 @@ doNormAndReduce <- function(sce, batch = NULL, name = NULL,
   }
   # HVGs
 
-  if(verbose) cat(blue("[DR]"), "Selecting HVGs. \n")
+  if(verbose) cat(.bluem("[DR]"), "Selecting HVGs. \n")
 
   if(!is.null(batch)) {
     vargenes <- modelGeneVar(sce,
@@ -111,16 +114,16 @@ doNormAndReduce <- function(sce, batch = NULL, name = NULL,
   clog$norm_reduce$hvg_ntop = hvg_ntop
   
   # PCA
-  if(verbose) cat(blue("[DR]"), "Running PCA. \n")
+  if(verbose) cat(.bluem("[DR]"), "Running PCA. \n")
 
   sce <- runPCA(sce,
                 subset_row = hvgs,
                 exprs_values = "logcounts",
                 ncomponents	= ndims)#,
-  #BPPARAM = parallel_param)
+  #BPPARAM = parallel_param) # the overhead for parallel PCA seems to be big.
 
   # UMAP
-  if(verbose) cat(blue("[DR]"), "Running UMAP on uncorrected PCA \n")
+  if(verbose) cat(.bluem("[DR]"), "Running UMAP on uncorrected PCA \n")
 
   neighbor_n <- floor(sqrt(ncol(sce)))
 
@@ -128,6 +131,7 @@ doNormAndReduce <- function(sce, batch = NULL, name = NULL,
                                   n_neighbors = neighbor_n,
                                   min_dist = 0.7)
   
+  # Parameter logs
   clog$norm_reduce$umap_min_dist = 0.7
   clog$norm_reduce$umap_n_neighbors = neighbor_n
   clog$norm_reduce$umap_other = formals(umap)[!formalArgs(umap) %in% c("n_neighbors", "min_dist", "X")]

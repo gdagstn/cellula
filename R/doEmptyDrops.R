@@ -18,8 +18,6 @@
 #' @return a \code{SingleCellExperiment} object without empty droplets as assigned by \code{emptyDrops}
 #'
 #' @importFrom SummarizedExperiment colData
-#' @importFrom crayon blue
-#' @importFrom DropletUtils emptyDrops barcodeRanks
 #' @importFrom BiocParallel SerialParam bplapply
 #' @importFrom S4Vectors metadata metadata<-
 #'
@@ -32,7 +30,14 @@ doEmptyDrops <- function(sce,
                           verbose = TRUE,
                           parallel_param = SerialParam()) {
 
-  if(verbose) cat(blue("[QC/EMPTY]"),"Running emptyDrops. \n")
+  ep = .redm("{cellula::doEmptyDrops()} - ")
+  
+  if(!"DropletUtils" %in% rownames(installed.packages())){
+    stop(paste0(ep, "The `DropletUtils` package must be installed first. \n
+                  Run `BiocManager::install(\"DropletUtils\") to use this function."))
+  }
+  
+  if(verbose) cat(.bluem("[QC/EMPTY]"),"Running emptyDrops. \n")
 
   if(!is.null(batch)) {
 
@@ -40,7 +45,7 @@ doEmptyDrops <- function(sce,
     scelist <- lapply(batches, function(x) sce[,colData(sce)[,batch] == x])
     names(scelist) <- batches
     if(emptydrops_cutoff == "auto") {
-      emptydrops_cutoff <- lapply(scelist, function(x) metadata(barcodeRanks(x))$inflection)
+      emptydrops_cutoff <- lapply(scelist, function(x) metadata(DropletUtils::barcodeRanks(x))$inflection)
     } else {
       emptydrops_cutoff <- as.list(rep(emptydrops_cutoff, length(scelist)))
     }
@@ -48,7 +53,7 @@ doEmptyDrops <- function(sce,
     names(emptydrops_cutoff) <- batches
 
     empty_list <- bplapply(names(scelist), function(x) {
-                            empty_droplets <- emptyDrops(scelist[[x]],
+                            empty_droplets <- DropletUtils::emptyDrops(scelist[[x]],
                                                          lower = emptydrops_cutoff[[x]])
                             keep_droplets <- empty_droplets$FDR <= emptydrops_alpha
                             scelist[[x]]$empty <- factor(ifelse(empty_droplets$FDR <= emptydrops_alpha, "ok", "empty"))
@@ -64,11 +69,11 @@ doEmptyDrops <- function(sce,
   } else {
 
     if(emptydrops_cutoff == "auto") {
-      barcode_ranks <- barcodeRanks(sce)
+      barcode_ranks <- DropletUtils::barcodeRanks(sce)
       emptydrops_cutoff = metadata(barcode_ranks)$inflection
     }
 
-    empty_droplets <- emptyDrops(sce, lower = emptydrops_cutoff)
+    empty_droplets <- DropletUtils::emptyDrops(sce, lower = emptydrops_cutoff)
     keep_droplets <- empty_droplets$FDR <= emptydrops_alpha
     sce$empty <- factor(ifelse(empty_droplets$FDR <= emptydrops_alpha, "ok", "empty"))
     sce$empty[which(is.na(sce$empty))] = "empty"

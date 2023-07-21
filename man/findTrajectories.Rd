@@ -60,11 +60,17 @@ Default is TRUE. See \code{?slingshot::getLineages} for more information.}
 \item{omega_scale}{numeric, the value of the \code{omega_scale} parameter. 
 Default is 1.5. See \code{?slingshot::getLineages} for more information.}
 
+\item{invert}{logical. Should the pseuodtime vector be inverted? Only valid
+for monocle3. Default is FALSE.}
+
 \item{do_de}{logical. Should differential expression across trajectories be
 performed? Default is FALSE.}
 
 \item{batch_de}{character, the name of the \code{colData} column to be used as a
 blocking factor in the differential expression analysis. Default is NULL.}
+
+\item{add_metadata}{logical, should additional data from trajectory inference be
+added to the \code{metadata(sce)}? Default is TRUE.}
 
 \item{verbose}{logical, should progress messages be printed? Default is FALSE.}
 

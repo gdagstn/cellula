@@ -37,7 +37,6 @@
 #'     slot of the \code{SingleCellExperiment} object, one for every value of \code{k}.
 #'
 #' @importFrom SummarizedExperiment colData colData<- 
-#' @importFrom crayon blue
 #' @importFrom bluster makeSNNGraph pairwiseModularity approxSilhouette
 #' @importFrom igraph cluster_louvain cluster_leiden
 #' @importFrom SingleCellExperiment reducedDim reducedDim<- counts logcounts reducedDimNames
@@ -61,7 +60,7 @@ makeGraphsAndClusters <- function(sce,
   
   #Sanity checks
   #Error prefix
-  ep = "{cellula::makeGraphsAndClusters} - "
+  ep = .redm("{cellula::makeGraphsAndClusters} - ")
   
   if(!is(sce, "SingleCellExperiment")) 
     stop(paste0(ep, "must provide a SingleCellExperiment object"))
@@ -71,8 +70,9 @@ makeGraphsAndClusters <- function(sce,
     stop(paste0(ep, "method not recognized - must be one of \"jaccard\", \"rank\", or \"number\""))
   if(length(reducedDim(sce)) == 0) stop(paste0(ep, "there are no dimensionality reductions in the SingleCellExperiment object."))
   if(!dr %in% reducedDimNames(sce)) stop(paste0(ep, "the dr name supplied was not found in the SingleCellExperiment object"))
-    
-  if(is.null(metadata(sce)$cellula_log)) {
+  
+  # Start parameter logging - not fully implemented
+    if(is.null(metadata(sce)$cellula_log)) {
     clog = .initLog()
   } else {
     clog = metadata(sce)$cellula_log
@@ -94,7 +94,7 @@ makeGraphsAndClusters <- function(sce,
 
   if(sweep_on == "clustering" & !is.null(neighbors)) {
 
-    if(verbose) cat(blue("[CLU]"), "Creating SNN graph.\n")
+    if(verbose) cat(.bluem("[CLU]"), "Creating SNN graph.\n")
     
     space = reducedDim(sce, dr)
     if(ncol(space) > ndims) space = space[,seq_len(ndims)]
@@ -104,7 +104,7 @@ makeGraphsAndClusters <- function(sce,
                      type = weighting_scheme)
     for(i in k){
 
-      if(verbose) cat(blue("[CLU]"), "Clustering at resolution ", i, ".\n")
+      if(verbose) cat(.bluem("[CLU]"), "Clustering at resolution ", i, ".\n")
 
       if(method == "louvain") {
         cl = factor(cluster_louvain(g, resolution = i)$membership)
@@ -117,15 +117,15 @@ makeGraphsAndClusters <- function(sce,
       gname = paste0(prefix, i)
       colData(sce)[,gname] = cl
 
-      if(verbose) cat(blue("[CLU]"), "Found", length(unique(cl)), "clusters.\n")
+      if(verbose) cat(.bluem("[CLU]"), "Found", length(unique(cl)), "clusters.\n")
 
       if(calculate_modularity) {
-        if(verbose) cat(blue("[CLU]"), "Calculating pairwise modularity.\n")
+        if(verbose) cat(.bluem("[CLU]"), "Calculating pairwise modularity.\n")
         metadata(sce)[[paste0("modularity_", gname)]] = pairwiseModularity(g, clusters = cl, as.ratio = TRUE)
       }
 
       if(calculate_silhouette) {
-        if(verbose) cat(blue("[CLU]"), "Calculating approximate silhouette widths.\n")
+        if(verbose) cat(.bluem("[CLU]"), "Calculating approximate silhouette widths.\n")
         silhouette <- as.data.frame(approxSilhouette(space, clusters = cl))
         silhouette$closest <- factor(ifelse(silhouette$width > 0, cl, silhouette$other))
         silhouette$cluster <- cl
@@ -142,7 +142,7 @@ makeGraphsAndClusters <- function(sce,
     k = floor(k)
 
     for(i in k) {
-      if(verbose) cat(blue("[CLU]"), "Creating SNN graph with k =", i, "neighbors.\n")
+      if(verbose) cat(.bluem("[CLU]"), "Creating SNN graph with k =", i, "neighbors.\n")
       g = makeSNNGraph(space,
                        k = i,
                        type = weighting_scheme)
@@ -162,12 +162,12 @@ makeGraphsAndClusters <- function(sce,
       if(verbose) cat("Found", length(unique(cl)), "clusters.\n")
 
       if(calculate_modularity) {
-        if(verbose) cat(blue("[CLU]"), "Calculating pairwise modularity.\n")
+        if(verbose) cat(.bluem("[CLU]"), "Calculating pairwise modularity.\n")
         metadata(sce)[[paste0("modularity_", gname)]] = pairwiseModularity(g, clusters = cl, as.ratio = TRUE)
       }
 
       if(calculate_silhouette) {
-        if(verbose) cat(blue("[CLU]"), "Calculating approximate silhouette widths.\n")
+        if(verbose) cat(.bluem("[CLU]"), "Calculating approximate silhouette widths.\n")
         sil <- as.data.frame(approxSilhouette(space, clusters = cl))
         sil$closest <- factor(ifelse(sil$width > 0, cl, sil$other))
         sil$cluster <- cl
@@ -215,7 +215,7 @@ metaCluster <- function(sce,
 
   #Sanity checks
   #Error prefix
-  ep = "{cellula::metaCluster} - "
+  ep = .redm("{cellula::metaCluster} - ")
   
   if(threshold > 1 | threshold < 0) stop(paste0(ep, "threshold must be between 0 and 1"))
   if(any(!clusters %in% colnames(colData(sce)))) stop(paste0(ep, "some cluster column names were not found in colData"))

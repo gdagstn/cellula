@@ -31,12 +31,16 @@ downsampleCounts <- function(sce,
   
   ## Sanity checks
   # Error prefix
-  ep = "{cellula::downsampleCounts()} - "
+  ep = .redm("{cellula::downsampleCounts()} - ")
   
   if(!is(sce, "SingleCellExperiment")) 
     stop(paste0(ep, "must provide a SingleCellExperiment object"))
   if(!is.null(target) & !is(target, numeric)) 
     stop(paste0(ep, "target must be a numeric or NULL"))
+  
+  # Start parameter logging - not fully implemented
+  # TO DO
+  # --------------------------------------------- #
   
   mat = assay(sce, "counts")
   
@@ -120,7 +124,7 @@ downsampleCells <- function(sce,
   
   ## Sanity checks
   # Error prefix
-  ep = "{cellula::downsampleCells()} - "
+  ep = .redm("{cellula::downsampleCells()} - ")
   
   if(!is(sce, "SingleCellExperiment")) 
     stop(paste0(ep, "must provide a SingleCellExperiment object"))

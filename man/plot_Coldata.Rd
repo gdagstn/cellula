@@ -13,7 +13,8 @@ plot_Coldata(
   color_palette = NULL,
   contour = TRUE,
   clustered = TRUE,
-  plot_cells = FALSE
+  plot_cells = FALSE,
+  rotate_labels = TRUE
 )
 }
 \arguments{
@@ -34,23 +35,30 @@ facetting variable. Default is \code{NULL}.}
 Default is \code{NULL}.}
 
 \item{contour}{logical, should contours be plotted on the scatterplot?
-default is \code{TRUE}.}
+Default is \code{TRUE}.}
 
 \item{clustered}{logical, should rows and columns be clustered in the confusion
 matrix heatmap? Default is \code{TRUE}.}
 
 \item{plot_cells}{logical, should cells be plotted as well? Default is \code{FALSE}
 for speed.}
+
+\item{rotate_labels}{logical, should x axis labels be rotated by 45 degrees 
+to prevent overlapping text? Only applies to heatmaps and violin plots. 
+Default is \code{TRUE}}
 }
 \value{
 a ggplot with different types of visualization depending on the
-    classes of the columns chosen. If y is a numeric and x is NULL, or a
-    categorical (character/facrtor), the function plots a violin + boxplot divided by
-    x and/or by color_by. If y and x are both numeric, the function plots a
-    scatterplot with optional 2D kernel contouring. If y and x are both
-    categorical, the function plots a heatmap of the confusion matrix,
-    showing pairwise Jaccard indices. All plots can be facetted.
+    classes of the columns chosen.
 }
 \description{
 Plot data from the colData of the SCE object
+}
+\details{
+If y is a numeric and x is NULL, or a categorical (character/factor), 
+    the function plots a violin + boxplot divided by x and/or by color_by. 
+    If y and x are both numeric, the function plots a scatterplot with optional 
+    2D kernel contouring. If y and x are both categorical, the function plots 
+    a heatmap of the confusion matrix, showing pairwise Jaccard indices. 
+    All plots can be facetted.
 }

@@ -30,15 +30,11 @@
 #' @return  a \code{SingleCellExperiment} object with QC including doublet assignment
 #'
 #' @importFrom SummarizedExperiment colData rowData assay
-#' @importFrom DropletUtils emptyDrops barcodeRanks
-#' @importFrom crayon blue
-#' @importFrom scuttle isOutlier perCellQCMetrics
 #' @importFrom gridExtra grid.arrange arrangeGrob
 #' @importFrom scater plotColData
+#' @importFrom scuttle isOutlier perCellQCMetrics
 #' @importFrom ggplot2 scale_y_log10 ggtitle ggsave ylab
-#' @importFrom scDblFinder scDblFinder
 #' @importFrom BiocParallel SerialParam
-#' @importFrom alamak alamak
 #'
 #' @export
 
@@ -57,8 +53,18 @@ doQC <- function(sce,
                  save_plots = TRUE,
                  parallel_param = SerialParam()){
 
+  
+  ep = .redm("{cellula::doQC()} - ")
+  
+  if(detect_doublets){
+    if(!"scDblFinder" %in% rownames(installed.packages())){
+      stop(paste0(ep, "[DBL] The `scDblFinder` package must be installed first. \n
+                  Run `BiocManager::install(\"scDblFinder\") to use this function."))
+    }
+  }
+  
   if(run_emptydrops){
-
+  
     sce <- doEmptyDrops(sce, batch = batch,
                         emptydrops_cutoff = emptydrops_cutoff,
                         emptydrops_alpha = emptydrops_alpha,
@@ -66,7 +72,7 @@ doQC <- function(sce,
                         parallel_param = parallel_param)
   }
 
-  if(verbose) cat(blue("[QC]"),"Calculating QC metrics. \n")
+  if(verbose) cat(.bluem("[QC]"),"Calculating QC metrics. \n")
 
   # Generate QC
   if(subset_mito){
@@ -147,7 +153,7 @@ doQC <- function(sce,
     # Save plots  
     if(save_plots){
       
-      if(verbose) cat(blue("[QC]"),"   Saving QC plots. \n")
+      if(verbose) cat(.bluem("[QC]"),"   Saving QC plots. \n")
       
       savepath = paste0(getwd(), "/", name)
       dir.create(paste0(savepath, "/plots"))
@@ -224,11 +230,11 @@ doQC <- function(sce,
 
   # Doublet finding
   if(detect_doublets){
-    if(verbose) cat(blue("[QC/DBL]"), "Finding doublets. \n")
+    if(verbose) cat(.bluem("[QC/DBL]"), "Finding doublets. \n")
     if(!is.null(batch)) samples = colData(sce)[,batch] else samples = NULL
-    sce <- scDblFinder(sce, verbose = verbose,
-                       samples = samples,
-                       BPPARAM = parallel_param)
+    sce <- scDblFinder::scDblFinder(sce, verbose = verbose,
+                                    samples = samples,
+                                    BPPARAM = parallel_param)
   }
   
      if(save_plots) {
