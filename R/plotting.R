@@ -333,7 +333,7 @@ plot_UMAP <- function(sce,
   }
 
   if(!is.null(group_by)) {
-    p = p + facet_wrap(vars(!!sym(group_by)))
+    p = p + facet_wrap(group_by)
   }
   
   if(!is.null(trajectory)) {

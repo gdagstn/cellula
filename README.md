@@ -2,9 +2,15 @@
 
 # cellula
 
-**`cellula`** is a simple R-based pipeline for single cell RNA-seq
-processing with a number of methods for integration and identity
-assignment.
+**`cellula`** is a simple R-based pipeline for single cell RNA-seq processing with a number of methods for integration and identity assignment.
 
 You can read all about it on the companion [website](https://gdagstn.github.io/cellulaweb)!
 
+## Changelog
+
+-   21/7/2023:\
+    Moved many optional dependencies in Suggests in DESCRIPTION, added cell cycle estimation and visualization
+-   15/6/2023:\
+    Added a new fast method for identity assignment based on a reference (Jaitin method)
+-   3/6/2023:\
+    Added interface to monocle3 trajectory inference and a new UMAP embedding
