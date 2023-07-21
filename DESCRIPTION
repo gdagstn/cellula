@@ -30,7 +30,6 @@ Imports:
     methods,
     Matrix,
     matrixStats,
-    TSCAN,
     ggrepel
 Suggests: 
     AUCell,
@@ -45,4 +44,5 @@ Suggests:
     Seurat,
     slingshot,
     tricycle,
+    TSCAN,
     UCell

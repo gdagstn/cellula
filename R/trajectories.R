@@ -37,10 +37,7 @@
 #' @param add_metadata logical, should additional data from trajectory inference be
 #'     added to the \code{metadata(sce)}? Default is TRUE.
 #' @param verbose logical, should progress messages be printed? Default is FALSE.    
-#' @param BPPARAM a \code{BiocParallelParam} object. Default is NULL.
 #'
-
-#' @importFrom TSCAN perCellEntropy
 #' @importFrom SummarizedExperiment colData
 #' @importFrom SingleCellExperiment reducedDim reducedDimNames
 #'
@@ -137,8 +134,7 @@ findTrajectories <- function(sce, dr = "PCA", clusters, method = "slingshot",
                              ndims = 20, dr_embed = NULL, start = "auto", 
                              Monocle_lg_control = NULL, omega = TRUE,
                              omega_scale = 1.5, invert = FALSE, do_de = FALSE, batch_de = NULL,
-                             add_metadata = TRUE, verbose = FALSE, 
-                             BPPARAM = SerialParam()) {
+                             add_metadata = TRUE, verbose = FALSE) {
   
   ## Sanity checks
   # Error prefix
@@ -168,7 +164,7 @@ findTrajectories <- function(sce, dr = "PCA", clusters, method = "slingshot",
   if(start == "auto") {
     if(!any(colnames(colData(sce)) == "entropy"))
       if(verbose) cat("Calculating per-cell entropy\n")
-      sce$entropy = perCellEntropy(sce, BPPARAM) #drop if possible to remove TSCAN dependency
+      sce$entropy = apply(counts(sce), 2, .getEntropy) 
     ent_means = lapply(split(colData(sce)$entropy, colData(sce)[,clusters]), mean)
     start = unique(colData(sce)[,clusters])[which.max(ent_means)]
   }
@@ -191,7 +187,8 @@ findTrajectories <- function(sce, dr = "PCA", clusters, method = "slingshot",
                                   Monocle_lg_control = Monocle_lg_control,
                                   dr_embed = dr_embed, invert = invert,
                                   add_metadata = add_metadata, verbose = verbose)
-  } else if(method == "PAGADPT") {
+    
+  } else if(method == "PAGADPT") { # UNDOCUMENTED (WIP)
     sce = .getDPTtrajectories(sce = sce, dr = dr, ndims = ndims, 
                               clusters = clusters, start = start, 
                               add_metadata = add_metadata, verbose = verbose)
@@ -205,6 +202,7 @@ findTrajectories <- function(sce, dr = "PCA", clusters, method = "slingshot",
 #' @importFrom SingleCellExperiment reducedDim
 #' @importFrom igraph V as_data_frame
 #' @importFrom BiocNeighbors queryKNN
+#' @importFrom S4Vectors metadata metadata<-
 #' 
 #' @noRd
 
@@ -413,7 +411,8 @@ findTrajectories <- function(sce, dr = "PCA", clusters, method = "slingshot",
 
 #' @importFrom SummarizedExperiment colData
 #' @importFrom SingleCellExperiment reducedDim
-#' 
+#' @importFrom S4Vectors metadata metadata<-
+#'
 #' @noRd
 
 .getSlingshotTrajectories <- function(sce, dr = "PCA", 
@@ -516,7 +515,7 @@ findTrajectories <- function(sce, dr = "PCA", clusters, method = "slingshot",
   ep = "{cellula::.getDPTtrajectories()} - "
   
   if(!"destiny" %in% rownames(installed.packages()))
-    stop(paste0(.redm(ep), "the `monocle3` package must be installed first.\n
+    stop(paste0(.redm(ep), "the `destiny` package must be installed first.\n
                 Run `BiocManager::install(\"destiny\") to use this function."))
   
   if(verbose) message(paste0(.bluem("[TRAJ/PAGA-DPT] "),"Building MST on modularity graph"))
@@ -645,3 +644,9 @@ makeMetacells  <- function(sce, w = 10, group = NULL, dr = "PCA", ndims = 20) {
 }
 
 
+#' @noRd
+.getEntropy <- function(x) {
+    x <- x[x > 0]
+    x <- x/sum(x)
+    -sum(x * log(x))
+}
