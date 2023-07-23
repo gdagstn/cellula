@@ -191,10 +191,8 @@ plotCycle <- function(sce,
     ylim(c(-1, 1) * nring/2 * 1.5) + 
     geom_point(alpha = 0.5)
     if(color_by == "tricyclePosition") {
-      p = p + scale_color_gradientn(colors = c("#2E22EA", "#9E3DFB", "#F86BE2", 
-                                               "#FCCE7B", "#C4E416", "#4BBA0F", 
-                                               "#447D87", "#2C24E9")) 
-
+      colorpal = .choosePalette(default = "cycle")
+      p = p + scale_color_gradientn(colors = colorpal) 
     } 
   
     p = p + coord_fixed() + 

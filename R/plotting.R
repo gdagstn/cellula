@@ -103,6 +103,10 @@ plotSilhouette <- function(sce, name) {
 #'     for categorical variables.
 #' @param point_size numeric, the size of the points in the plot. Default is 0.7.
 #' @param label_size numeric, the size of the font for the labels. Default is 2.
+#' @param outline logical, should a black outline be painted around the point cloud?
+#'     Default is TRUE.
+#' @param outline_size numeric, the thickness of the outline, expressed as a fraction
+#'    of the dot size. Default is 1.3, meaning the outline will be point size * 1.3.     
 #' @param color_palette a character string containing colors to be used. Default
 #'     is \code{NULL}, meaning an automatic palette will be generated.
 #' @param trajectory a character string indicating the `metadata` slot containing
@@ -134,6 +138,8 @@ plot_UMAP <- function(sce,
                       label_by = NULL,
                       point_size = 0.7,
                       label_size = 2,
+                      outline = TRUE,
+                      outline_size = 1.3,
                       color_palette = NULL,
                       trajectory = NULL,
                       rescale = TRUE) {
@@ -205,39 +211,29 @@ plot_UMAP <- function(sce,
     aes_umap$colour = aes(colour = .data[[color_by]])$colour
     if(classes[color_by] == "numeric") {
       udf = udf[order(udf[,color_by]),]
-      if(is.null(color_palette)) {
-        pal = .cpal_seq_sunset()
-      } else {
-        pal = color_palette
-      }
+      pal = .choosePalette(cpal = color_palette, default = "Sunset")
       cscale = scale_colour_gradientn(colours = pal)
       cguides = NULL
     } else if(classes[color_by] %in% c("character", "logical")) {
       udf[,color_by] = factor(udf[,color_by])
-
-      if(is.null(color_palette)) {
         if(length(levels(udf[,color_by])) == 1) {
-          pal = "gray"
+          pal = .choosePalette(cpal = NA)
         } else {
-          pal = .cpal_qual(n = length(unique(udf[,color_by])))
-            }
-      } else {
-        pal = color_palette
+          pal = .choosePalette(cpal = color_palette, default = "qualpal", 
+                               n = length(unique(udf[,color_by])))
+        }
         if(!is.null(names(pal)) & all(names(pal) %in% levels(udf[,color_by]))) {
           pal = pal[levels(udf[,color_by])]
         }
-      }
       cscale = scale_colour_manual(values = pal)
       cguides = guides(color = guide_legend(override.aes = list(size=2)))
     } else if(classes[color_by] == "factor") {
-      if(is.null(color_palette)) {
-        pal = .cpal_qual(n = length(unique(udf[,color_by])))
-      } else {
-        pal = color_palette
+        pal = .choosePalette(cpal = color_palette, default = "qualpal", 
+                             n = length(unique(udf[,color_by])))
+     
         if(!is.null(names(pal)) & all(names(pal) %in% levels(udf[,color_by]))) {
           pal = pal[levels(udf[,color_by])]
         }
-      }
       cscale = scale_colour_manual(values = pal)
       cguides = guides(color = guide_legend(override.aes = list(size=2)))
     }
@@ -275,8 +271,14 @@ plot_UMAP <- function(sce,
   text_1 = data.frame(x = -0.03, y = 0.02)
   text_2 = data.frame(x = 0.02, y = -0.03)
 
-  p = ggplot(udf, mapping = aes_umap) +
-    geom_point(size = point_size, shape = 16) +
+  p = ggplot(udf, mapping = aes_umap) 
+  
+    if(outline) {
+      p = p + geom_point(size = point_size*outline_size, 
+                         shape = 16, color = "black")
+    }
+  
+    p = p + geom_point(size = point_size, shape = 16) +
     theme_void() +
     theme(plot.margin = margin(1, 1, 1, 1, "cm")) +
     geom_segment(data = arrow_1,
@@ -287,7 +289,7 @@ plot_UMAP <- function(sce,
                  inherit.aes = FALSE,
                  color = "black",
                  linewidth = 0.3,
-                 arrow = arrow(length=unit(0.1,"cm"),
+                 arrow = arrow(length=unit(0.2,"cm"),
                                type = "closed")) +
     geom_segment(data = arrow_2,
                  mapping = aes(x = .data[["x"]],
@@ -297,7 +299,7 @@ plot_UMAP <- function(sce,
                  color = "black",
                  inherit.aes = FALSE,
                  linewidth = 0.3,
-                 arrow = arrow(length=unit(0.1,"cm"),
+                 arrow = arrow(length=unit(0.2,"cm"),
                                type = "closed")) +
     geom_text(data = text_1,
               aes(x = .data[["x"]],
@@ -854,4 +856,3 @@ plot_Coldata <- function(sce,
   return(p)
 
 }
-

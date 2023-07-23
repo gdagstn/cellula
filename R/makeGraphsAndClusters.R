@@ -249,4 +249,6 @@ metaCluster <- function(sce,
   return(sce)
 }
 
-
+#.rebuildModularity <- function(k, labels) {
+  #placeholder
+#}

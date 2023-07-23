@@ -8,6 +8,12 @@ You can read all about it on the companion [website](https://gdagstn.github.io/c
 
 ## Changelog
 
+-   23/7/2023:\
+    Added several options for color palettes by overhauling color management.
+
+```{=html}
+<!-- -->
+```
 -   21/7/2023:\
     Moved many optional dependencies in Suggests in DESCRIPTION, added cell cycle estimation and visualization
 -   15/6/2023:\

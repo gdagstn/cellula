@@ -53,10 +53,9 @@
 #' For all methods the user is asked to define the dimensionality reduction slot 
 #' via `dr`, and the number of dimensions via \code{ndims}. The user is also asked to
 #' provide a starting cluster; if the choice is left to `auto`, the function will
-#' use the entropy-based method as implemented in \code{TSCAN} to select maximum-
-#' entropy cell clusters as starting points. Finally, both methods have the ability
-#' to embed principal curves into a 2D representation of choice, albeit with 
-#' slightly different results. 
+#' use an entropy-based method to select maximum-entropy cell clusters as starting 
+#' points. Finally, both methods have the ability to embed principal curves into 
+#' a 2D representation of choice, albeit with different results. 
 #' 
 #' The \code{slingshot} implementation allows the user to choose whether or not 
 #' to use the \code{omega} method to separate disjointed trajectories, and to decide 
@@ -589,7 +588,6 @@ findTrajectories <- function(sce, dr = "PCA", clusters, method = "slingshot",
 
 makeMetacells  <- function(sce, w = 10, group = NULL, dr = "PCA", ndims = 20) {
  
-  
   ep = "{cellula::makeMetacells()} - "
   
   if(!is(sce, "SingleCellExperiment"))
