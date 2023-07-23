@@ -547,13 +547,18 @@
         res = "gray"
       } else {
         res = switch(cpal, 
+                     "Sunset" = .cpal_seq_sunset(),
                      "Parula" = .cpal_seq_parula(),
                      "YlGnBu" = .cpal_seq_turbo(),
+                     "Heat2" = .cpal_seq_heat2(),
                      "Turbo" = rev(.cpal_seq_ylgnbu()),
-                     "Pear" = .cpal_qual_pear(18),
-                     "Polychrome" = .cpal_qual_polychrome(24),
-                     "Polylight" = .cpal_qual_polychromelight(24),
-                     "Tableau" = .cpal_qual_tableau(10)
+                     "Qualpal" = .cpal_qual(n),
+                     "Protan" = .cpal_qual_protan(n),
+                     "Tritan" = .cpal_qual_tritan(n),
+                     "Pear" = .cpal_qual_pear(n),
+                     "Polychrome" = .cpal_qual_polychrome(n),
+                     "Polylight" = .cpal_qual_polychromelight(n),
+                     "Tableau" = .cpal_qual_tableau(n)
         )
       }
     } else {

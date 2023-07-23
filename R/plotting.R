@@ -108,7 +108,12 @@ plotSilhouette <- function(sce, name) {
 #' @param outline_size numeric, the thickness of the outline, expressed as a fraction
 #'    of the dot size. Default is 1.3, meaning the outline will be point size * 1.3.     
 #' @param color_palette a character string containing colors to be used. Default
-#'     is \code{NULL}, meaning an automatic palette will be generated.
+#'     is \code{NULL}, meaning an automatic palette will be generated based on 
+#'     the type of datum supplied in \code{color_by}. Some palettes can be named:
+#'     "Sunset", "Parula", "Turbo", "YlGnBU" for quantitative data, and "Qualpal",
+#'     "Tritan", "Protan", "Tableau", "Pear", "Polychrome" and "Polylight" for 
+#'     categorical data. The "Protan" and "Tritan" palettes are adapted for CVD
+#'     (Color Vision Deficiency) caused by protanopia and tritanopia respectively.
 #' @param trajectory a character string indicating the `metadata` slot containing
 #'     segment trajectories to be plotted. Usually either 
 #'     \code{"Slingshot_embedded_curves"} or \code{"Monocle_embedded_curves"}.  
