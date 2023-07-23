@@ -517,18 +517,42 @@
     "#F9FB0E")
 }
 
-#' Cyclic color palette 
+#' Cyclic color palette 1
 #' 
-#' Cyclic color palette from \code{tricycle}
+#' Cyclic color palette from \code{tricycle} by Shijie Zheng
 #' @noRd
-#' 
-.cpal_cycle <- function() {
+
+.cpal_cycle1 <- function() {
   c("#2E22EA", "#9E3DFB", "#F86BE2", 
     "#FCCE7B", "#C4E416", "#4BBA0F", 
     "#447D87", "#2C24E9")
 }
 
+#' Cyclic color palette 2
+#' 
+#' Cyclic color palette from \code{pals}
+#' 
 #' @noRd
+#' @details This palette was generated using the 
+#'      \code{kovesi.cyclic_mrybm_35_75_c68_s25()} function from the \code{pals}
+#'      package by Kevin Wright. 
+
+.cpal_cycle2 <- function() {
+  c("#3E3FF0", "#5C43F8", "#7858F9", "#956AFA", "#B976FC", 
+    "#DE81FE", "#F783F5", "#FB74D7", "#F55CB1", "#EA4389", "#D82D60", 
+    "#C51D38", "#B71C18", "#B73207", "#C14E04", "#CA6705", "#D28004", 
+    "#D59809", "#CFA724", "#B6A54C", "#8E9871", "#5C8B90", "#2E77B0", 
+    "#295BD1", "#3C40EE")
+}
+
+
+#' @noRd
+#' @details 
+#'     This function selects a default palette, or a named palette, or a user-
+#'     defined one. Defaults are selected in the absence of other selections, 
+#'     but the default may vary according to the context/function, which is
+#'     why this function is more convoluted than necessary.
+
 .choosePalette <- function(cpal = NULL, default = "qualpal", n = 2) {
   
   defaultcpalfun = switch(default, 
@@ -536,7 +560,8 @@
                           "YlGnBu" = .cpal_seq_ylgnbu(),
                           "Sunset" = .cpal_seq_sunset(),
                           "Heat" = .cpal_seq_heat2(),
-                          "Cycle" = .cpal_cycle()
+                          "Cycle 1" = .cpal_cycle1(),
+                          "Cycle 2" = .cpal_cycle2()
   )
   
   if(is.null(cpal)) {

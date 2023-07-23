@@ -85,19 +85,25 @@ assignCellCycle <- function(sce, recenter_method = "optim", species = "human",
 #' @param sce a SingleCellExperiment object
 #' @param rings_by character, column in \code{colData(sce)} to divide the embedding by
 #' @param color_by character, column in \code{colData(sce)}. Default is \code{"tricyclePosition"}.
+#' @param cyclic_color character, one of "Cycle 1" or "Cycle 2" for a cyclic palette.
+#'     Default is "Cycle 1"
+#' @param color_palette character, any other color palette. Only used 
 #' 
 #' @returns a plot of cell cycle assignments
 #' 
 #' @importFrom SummarizedExperiment colData 
 #' @importFrom ggplot2 ggplot aes .data geom_label geom_point scale_color_gradientn
-#' @importFrom ggplot2 element_blank theme theme_minimal coord_fixed xlim ylim geom_path
+#' @importFrom ggplot2 scale_colour_manual geom_path
+#' @importFrom ggplot2 element_blank theme theme_minimal coord_fixed xlim ylim 
 #' @importFrom methods is
 #' 
 #' @export
 
 plotCycle <- function(sce, 
                       rings_by = NULL, 
-                      color_by = "tricyclePosition") {
+                      color_by = "tricyclePosition",
+                      cyclic_color = "Cycle 1",
+                      color_palette = NULL) {
   
   ## Sanity checks
   # Error prefix
@@ -117,6 +123,8 @@ plotCycle <- function(sce,
   if(!"tricyclePosition" %in% colnames(colData(sce)))
     stop(paste0(ep, "Tricycle positions not found. Run `assignCellCycle()` first."))
   
+  cycol = match.arg(cyclic_color, c("Cycle 1", "Cycle 2"))
+    
   # Begin
   circlist = list()
   if(!is.null(rings_by)){
@@ -156,7 +164,7 @@ plotCycle <- function(sce,
   dd = as.data.frame(do.call(rbind,circlist))
   if(is.null(color_by)) {
     color_by = "cells"
-    dd[,"cells"] = 1
+    dd[,"cells"] = "all"
   }
   
   # Circles
@@ -191,10 +199,18 @@ plotCycle <- function(sce,
     ylim(c(-1, 1) * nring/2 * 1.5) + 
     geom_point(alpha = 0.5)
     if(color_by == "tricyclePosition") {
-      colorpal = .choosePalette(default = "cycle")
-      p = p + scale_color_gradientn(colors = colorpal) 
-    } 
-  
+      colorpal = .choosePalette(default = cycol)
+      p = p + scale_color_gradientn(colors = colorpal)
+    } else {
+      if(is(dd[,color_by], "factor") | is(dd[,color_by], "character") | is(dd[,color_by], "logical")) {
+        colorpal = .choosePalette(cpal = color_palette, n = length(unique(dd[,color_by])))
+        p = p + scale_colour_manual(values = colorpal)
+      } else {
+        colorpal = .choosePalette(cpal = color_palette, default = "Sunset")
+        p = p + scale_color_gradientn(colors = colorpal)
+      }
+    }
+    
     p = p + coord_fixed() + 
             theme_minimal() +
             theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(), 
@@ -202,8 +218,6 @@ plotCycle <- function(sce,
                   axis.title.x = element_blank(), axis.title.y = element_blank())
     p 
 }
-
-
 
 #' @noRd
 .makeCircles <- function(r = 1, npt = 100){
