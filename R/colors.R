@@ -555,17 +555,15 @@
 
 .choosePalette <- function(cpal = NULL, default = "qualpal", n = 2) {
   
-  defaultcpalfun = switch(default, 
-                          "qualpal" = .cpal_qual(n),
-                          "YlGnBu" = .cpal_seq_ylgnbu(),
-                          "Sunset" = .cpal_seq_sunset(),
-                          "Heat" = .cpal_seq_heat2(),
-                          "Cycle 1" = .cpal_cycle1(),
-                          "Cycle 2" = .cpal_cycle2()
-  )
-  
   if(is.null(cpal)) {
-    res = defaultcpalfun
+    res = switch(default, 
+                 "qualpal" = .cpal_qual(n),
+                 "YlGnBu" = .cpal_seq_ylgnbu(),
+                 "Sunset" = .cpal_seq_sunset(),
+                 "Heat" = .cpal_seq_heat2(),
+                 "Cycle 1" = .cpal_cycle1(),
+                 "Cycle 2" = .cpal_cycle2()
+    )
   } else if(!is.null(cpal)) {
     if(length(cpal) == 1) {
       if(is.na(cpal)) {

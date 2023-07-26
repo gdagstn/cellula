@@ -53,7 +53,7 @@ integrateSCE = function(sce,
     stop(paste0(ep, "hvg_ntop cannot be higher than the number of features (nrow) in the object"))
   
   if(is.null(neighbor_n)) {
-    cat(.bluem("[INT/fastMNN]"), "neighbor_n was not supplied. Defaulting to floor(sqrt(ncells))\n")
+    message(cat(.bluem("[INT]"), "neighbor_n was not supplied. Defaulting to floor(sqrt(ncells))\n"))
     neighbor_n = floor(sqrt(ncol(sce)))
   }
   
