@@ -12,7 +12,7 @@
 #'     Only used when \code{method = "Jaitin"}.  
 #' @param assay the name of the slot in \code{sce} containing expression values 
 #'     to calculate the log-likelihood. Only used when \code{method = "Jaitin"} or
-#'     \code{method = "ssGSEA"}.
+#'     \code{method = "ssGSEA"}. 
 #' @param verbose logical, should messages on progress be printed? Default is TRUE
 #' @param name character, the name of the column in \code{colData(sce)} where final
 #'     labels will be stored
@@ -245,8 +245,8 @@ assignIdentities <- function(sce,
     if(return_scores) metadata(sce)$Seurat_ModuleScores = scores
 
   } else if(length(genesets) == 1) {
-
-    colData(sce)[,labelname] = as.numeric(scores[, 1, drop = TRUE])
+    
+    colData(sce)[,labelname] = as.numeric(scores)
   }
 
   return(sce)
@@ -271,6 +271,8 @@ assignIdentities <- function(sce,
                 Run `BiocManager::install(\"GSVA\") to use this function."))
   
   if(is.null(name)) labelname = "labels_ssGSEA" else labelname = name
+  if(is.null(assay))
+    stop(paste0(ep, "You must specify the assay argument (typically \"logcounts\""))
 
   if(verbose) cat(.bluem("[ANNO/ssGSEA]"), "Calculating ssGSEA \n")
   ss = GSVA::gsva(sce,
