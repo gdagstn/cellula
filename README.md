@@ -10,7 +10,7 @@ You can read all about it on the companion [website](https://gdagstn.github.io/c
 
 -   30/7/2023:
 
-    Fixed minor bugs in identity assignment
+    Added a function to build references for the Jaitin method from a SCE. Fixed minor bugs in identity assignment
 
 -   23/7/2023:\
     Added several options for color palettes by overhauling color management.
