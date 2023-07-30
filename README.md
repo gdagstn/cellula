@@ -8,11 +8,18 @@ You can read all about it on the companion [website](https://gdagstn.github.io/c
 
 ## Changelog
 
+-   30/7/2023:
+
+    Fixed minor bugs in identity assignment
+
 -   23/7/2023:\
     Added several options for color palettes by overhauling color management.
+
 -   21/7/2023:\
     Moved many optional dependencies in Suggests in DESCRIPTION, added cell cycle estimation and visualization
+
 -   15/6/2023:\
     Added a new fast method for identity assignment based on a reference (Jaitin method)
+
 -   3/6/2023:\
     Added interface to monocle3 trajectory inference and a new UMAP embedding
