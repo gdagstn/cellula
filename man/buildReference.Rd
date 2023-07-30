@@ -13,7 +13,7 @@ buildReference(sce, agg_by, agg_assay = "logcounts", agg_fun = "sum")
 aggregation should be done by, e.g. a column with labels or clustering
 results}
 
-\item{agg_assay}{character, the name of the \code(assay(sce)) slot whose values
+\item{agg_assay}{character, the name of the \code{assay(sce)} slot whose values
 will be aggregated. Default is "logcounts"}
 
 \item{agg_fun}{character, the aggregation function, one of "sum" or "mean". 

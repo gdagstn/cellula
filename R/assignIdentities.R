@@ -1,4 +1,4 @@
-#'#' SCE Cell Type annotation pipeline
+#' SCE Cell Type annotation pipeline
 #'
 #' Automatic assignment of cell type identities in SingleCellExperiment objects
 #'
@@ -434,11 +434,10 @@ assignIdentities <- function(sce,
 #' @param agg_by character, the name of the \code{colData(sce)} column that the 
 #'     aggregation should be done by, e.g. a column with labels or clustering
 #'     results
-#' @param agg_assay character, the name of the \code(assay(sce)) slot whose values
+#' @param agg_assay character, the name of the \code{assay(sce)} slot whose values
 #'     will be aggregated. Default is "logcounts"
 #' @param agg_fun character, the aggregation function, one of "sum" or "mean". 
 #'     Default is "sum".
-#'     
 #' @returns a matrix with the same row names as \code{sce} and values aggregated by
 #'     unique values of \code{agg_by}, which will be the column names.
 #'     

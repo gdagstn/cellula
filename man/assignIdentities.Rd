@@ -2,7 +2,7 @@
 % Please edit documentation in R/assignIdentities.R
 \name{assignIdentities}
 \alias{assignIdentities}
-\title{#' SCE Cell Type annotation pipeline}
+\title{SCE Cell Type annotation pipeline}
 \usage{
 assignIdentities(
   sce,
