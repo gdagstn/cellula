@@ -449,7 +449,7 @@
 
 #' Sequential color palette - sunset
 #' 
-#' Preset continuous color palettes from \code{colorspace
+#' Preset continuous color palettes from \code{colorspace}
 #' @noRd
 #' @details
 #'     These palettes were generated using the \code{colorspace} package by 

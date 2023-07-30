@@ -19,8 +19,7 @@ findTrajectories(
   do_de = FALSE,
   batch_de = NULL,
   add_metadata = TRUE,
-  verbose = FALSE,
-  BPPARAM = SerialParam()
+  verbose = FALSE
 )
 }
 \arguments{
@@ -73,8 +72,6 @@ blocking factor in the differential expression analysis. Default is NULL.}
 added to the \code{metadata(sce)}? Default is TRUE.}
 
 \item{verbose}{logical, should progress messages be printed? Default is FALSE.}
-
-\item{BPPARAM}{a \code{BiocParallelParam} object. Default is NULL.}
 }
 \value{
 a SingleCellExperiment object with pseudotime results
@@ -92,10 +89,9 @@ repeating that these are wrappers aimed at simplifying procedures.
 For all methods the user is asked to define the dimensionality reduction slot 
 via `dr`, and the number of dimensions via \code{ndims}. The user is also asked to
 provide a starting cluster; if the choice is left to `auto`, the function will
-use the entropy-based method as implemented in \code{TSCAN} to select maximum-
-entropy cell clusters as starting points. Finally, both methods have the ability
-to embed principal curves into a 2D representation of choice, albeit with 
-slightly different results. 
+use an entropy-based method to select maximum-entropy cell clusters as starting 
+points. Finally, both methods have the ability to embed principal curves into 
+a 2D representation of choice, albeit with different results. 
 
 The \code{slingshot} implementation allows the user to choose whether or not 
 to use the \code{omega} method to separate disjointed trajectories, and to decide 

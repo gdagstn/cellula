@@ -4,7 +4,13 @@
 \alias{plotCycle}
 \title{Plot cell cycle}
 \usage{
-plotCycle(sce, rings_by = NULL, color_by = "tricyclePosition")
+plotCycle(
+  sce,
+  rings_by = NULL,
+  color_by = "tricyclePosition",
+  cyclic_color = "Cycle 1",
+  color_palette = NULL
+)
 }
 \arguments{
 \item{sce}{a SingleCellExperiment object}
@@ -12,6 +18,11 @@ plotCycle(sce, rings_by = NULL, color_by = "tricyclePosition")
 \item{rings_by}{character, column in \code{colData(sce)} to divide the embedding by}
 
 \item{color_by}{character, column in \code{colData(sce)}. Default is \code{"tricyclePosition"}.}
+
+\item{cyclic_color}{character, one of "Cycle 1" or "Cycle 2" for a cyclic palette.
+Default is "Cycle 1"}
+
+\item{color_palette}{character, any other color palette. Only used}
 }
 \value{
 a plot of cell cycle assignments

@@ -97,6 +97,9 @@ This is a wrapper around four methods for assigning to each cell a
    contains log-normalized counts, it is advisable to use \code{assay = "logcounts"}.
    The resulting scores, optionally saved in the \code{metadata}, are the posterior
    probabilities. 
+   
+   It is possible to use \code{buildReference()} to create a reference matrix
+   out of a \code{SingleCellExperiment} object to be used as an input.
 
    Please note that scores are not comparable between themselves - AUC,
    ssGSEA, UCell and Jaitin are strictly positive, whereas the Module Score can also

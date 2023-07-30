@@ -65,6 +65,9 @@
 #'    contains log-normalized counts, it is advisable to use \code{assay = "logcounts"}.
 #'    The resulting scores, optionally saved in the \code{metadata}, are the posterior
 #'    probabilities. 
+#'    
+#'    It is possible to use \code{buildReference()} to create a reference matrix
+#'    out of a \code{SingleCellExperiment} object to be used as an input.
 #'
 #'    Please note that scores are not comparable between themselves - AUC,
 #'    ssGSEA, UCell and Jaitin are strictly positive, whereas the Module Score can also
@@ -421,4 +424,53 @@ assignIdentities <- function(sce,
   rownames(sce) = old.rownames
     
   return(sce)
+}
+
+#' Build a reference
+#' 
+#' Summarizes an assay from a SingleCellExperiment object based on a character column
+#' 
+#' @param sce a SingleCellExperiment object containing the reference data
+#' @param agg_by character, the name of the \code{colData(sce)} column that the 
+#'     aggregation should be done by, e.g. a column with labels or clustering
+#'     results
+#' @param agg_assay character, the name of the \code(assay(sce)) slot whose values
+#'     will be aggregated. Default is "logcounts"
+#' @param agg_fun character, the aggregation function, one of "sum" or "mean". 
+#'     Default is "sum".
+#'     
+#' @returns a matrix with the same row names as \code{sce} and values aggregated by
+#'     unique values of \code{agg_by}, which will be the column names.
+#'     
+#' @importFrom SummarizedExperiment colData assay
+#' @importFrom Matrix rowMeans rowSums
+#' @export
+
+buildReference <- function(sce, agg_by, agg_assay = "logcounts", agg_fun = "sum"){
+  
+  ep = "{cellula::buildReference()} - "
+  
+  if(is.null(agg_by)) 
+    stop(paste0(.redm(ep), "agg_by must be supplied to specify which column to aggregate by"))
+  if(is.null(agg_assay)) 
+    stop(paste0(.redm(ep), "an assay slot must be supplied through the assay argument"))
+  if(!agg_by %in% colnames(colData(sce)))
+    stop(paste0(.redm(ep), "agg_by was not found in the colData slot"))
+  if(!is(colData(sce)[,agg_by], "factor") & !is(colData(sce)[,agg_by], "character"))
+    stop(paste0(.redm(ep), "agg_by must point to either a factor or character in colData"))
+         
+    afn = switch(agg_fun,
+                 "sum" = Matrix::rowSums,
+                 "mean"= Matrix::rowMeans)
+    
+    quants = SummarizedExperiment::assay(sce, agg_assay)
+    labs = unique(colData(sce)[,agg_by])
+    refmat = do.call(cbind, lapply(labs, function(x) 
+           afn(quants[,which(colData(sce)[,agg_by] == x)])
+         ))
+  
+  colnames(refmat) = labs
+  rownames(refmat) = rownames(sce)
+  
+  refmat
 }
