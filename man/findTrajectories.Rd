@@ -80,11 +80,12 @@ a SingleCellExperiment object with pseudotime results
 Finds pseudo-temporal trajectories in a reduced dimensional space
 }
 \details{
-This function wraps calls to two popular trajectory estimation methods, i.e.
-\code{slingshot} and \code{monocle3}. Most parameters are shared, and 
-implementation is simplified for now (few parameters can be tweaked). In the 
-future there will be more freedom to tweak parameters, although it bears
-repeating that these are wrappers aimed at simplifying procedures.
+This function wraps calls to three popular trajectory estimation methods, i.e.
+\code{slingshot}, \code{monocle3}, and diffusion pseudotime. 
+Most parameters are shared, and implementation is simplified for now 
+(few parameters can be tweaked). In the future there will be more freedom to 
+tweak parameters, although it bears repeating that these are wrappers 
+aimed at simplifying procedures.
 
 For all methods the user is asked to define the dimensionality reduction slot 
 via `dr`, and the number of dimensions via \code{ndims}. The user is also asked to
@@ -159,6 +160,35 @@ some additional fields:
  \item{"Monocle_principal_graph_aux"}{ \code{metadata} list element containing 
      all the other objects used by \code{monocle3} for trajectory inference.
      Only added if \code{add_metadata = TRUE}}                
+}
+
+The \code{MODDPT} method uses a hybrid approach that takes inspiration from PAGA
+and \code{slingshot}. This approach uses the pairwise modularity graph for the
+SNN graph and the clusters. A minimum spanning tree is built on the modularity
+graph using the inverse of pairwise modularity as edge weight. Then, all
+shortest paths on the tree are calculated from the starting cluster. Diffusion
+maps are built independently on each path and diffusion pseudotimes are computed,
+and eventually reordered to be consistent with the path ordering. A simple
+path embedding is calculated in 2D by dividing the pseudotime values along
+a path in an equal number of intervals, and then taking the median coordinate
+for all cells in each pseudotime interval. Embedded curves are smoothed using
+Gaussian kernel smoothing.
+
+The final result is a \code{SingleCellExperiment} object with 
+some additional fields:
+
+\itemize{
+ \item{"DPTpseudotime_N"}{ \code{colData} columns where N is any number >= 1. 
+     These contain the pseudotemporal ordering of cells in a lineage, with NA
+     being assigned to cells that do not belong to the lineage.}
+ \item{"MODDPT_MST"}{ \code{metadata} \code{igraph} object with the minimum 
+    spanning tree from the pairwise modularity graph.}
+ \item{"MODDPT_lineages"}{ \code{metadata} list element containing the lineages
+    or paths from the starting cluster to all others in the MST.}
+ \item{"MODDPT_DiffusionMaps"}{ \code{metadata} list element containing 
+     diffusion maps calculated by \code{destiny} in each lineage separately.}
+ \item{"MODDPT_embedded_curves"}{ \code{metadata} data.frame element containing 
+     segments coordinates to plot trajectories on a 2D embedding.}
 }
 }
 \author{
