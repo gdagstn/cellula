@@ -29,27 +29,23 @@ downsampleCounts <- function(sce,
                              BPPARAM = SerialParam(progressbar = verbose),
                              verbose = TRUE) {
   
-  ## Sanity checks
-  # Error prefix
+  # Checks
   ep = .redm("{cellula::downsampleCounts()} - ")
-  
-  if(!is(sce, "SingleCellExperiment")) 
-    stop(paste0(ep, "must provide a SingleCellExperiment object"))
-  if(!is.null(target) & !is(target, numeric)) 
-    stop(paste0(ep, "target must be a numeric or NULL"))
+  if (!is(sce, "SingleCellExperiment")) 
+    stop(ep, "must provide a SingleCellExperiment object")
+  if (!is.null(target) & !is(target, numeric)) 
+    stop(ep, "target must be a numeric or NULL")
   
   # Start parameter logging - not fully implemented
   # TO DO
   # --------------------------------------------- #
   
   mat = assay(sce, "counts")
-  
   all_genes = rownames(mat)
 
-  if(is.null(target)) target = min(colSums(mat))
-
-  if(!is.null(target)) {
-    if(all(colSums(mat) < target)) {
+  if (is.null(target)) target = min(colSums(mat))
+  if (!is.null(target)) {
+    if (all(colSums(mat) < target)) {
       stop("No cells left above target!")
     }
     if(any(colSums(mat) < target)) {
@@ -86,7 +82,6 @@ downsampleCounts <- function(sce,
     dsc
   },
   BPPARAM = BPPARAM)
-
   do.call(cbind, ds)
 }
 
@@ -126,21 +121,21 @@ downsampleCells <- function(sce,
   # Error prefix
   ep = .redm("{cellula::downsampleCells()} - ")
   
-  if(!is(sce, "SingleCellExperiment")) 
-    stop(paste0(ep, "must provide a SingleCellExperiment object"))
+  if (!is(sce, "SingleCellExperiment")) 
+    stop(ep, "must provide a SingleCellExperiment object")
   if(min <= 0) 
-    stop(paste0(ep, "min must be strictly positive"))
+    stop(ep, "min must be strictly positive")
   if(!is(min, "numeric")) 
-    stop(paste0(ep, "min must be a numeric"))
+    stop(ep, "min must be a numeric")
   if(!is(proportion, "numeric")) 
-    stop(paste0(ep, "proportion must be a numeric"))
+    stop(ep, "proportion must be a numeric")
   if(proportion > 1 | proportion < 0) 
-    stop(paste0(ep, "proportion must be between 0 and 1 excluded"))
+    stop(ep, "proportion must be between 0 and 1 excluded")
   if(!sample_by %in% colnames(colData(sce))) 
-    stop(paste0(ep, sample_by, " is not a column in colData(sce)"))
+    stop(ep, sample_by, " is not a column in colData(sce)")
 
   sampled = bplapply(unique(colData(sce)[,sample_by]), function(x) {
-    if(verbose) message(paste0("[DOWNSAMPLE] Downsampling cells in ", x))
+    if(verbose) message(.bluem("[DOWNSAMPLE]"), "Downsampling cells in ", x)
     curr = sce[, colData(sce)[,sample_by] == x]
     if(ncol(curr) < min) {
       warning("Total cell number for ", x, " is less than min. \nWill retain all cells in ", x, ".")

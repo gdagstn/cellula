@@ -56,42 +56,39 @@ doQC <- function(sce,
   
   ep = .redm("{cellula::doQC()} - ")
   
-  if(detect_doublets){
-    if(!"scDblFinder" %in% rownames(installed.packages())){
-      stop(paste0(ep, "[DBL] The `scDblFinder` package must be installed first. \n
-                  Run `BiocManager::install(\"scDblFinder\") to use this function."))
+  if (detect_doublets){
+    if (!"scDblFinder" %in% rownames(installed.packages())){
+      stop(ep, "[DBL] The `scDblFinder` package must be installed first. \n
+               Run `BiocManager::install(\"scDblFinder\") to use this function.")
     }
   }
   
-  if(run_emptydrops){
-  
-    sce <- doEmptyDrops(sce, batch = batch,
+  if (run_emptydrops){
+      sce <- doEmptyDrops(sce, batch = batch,
                         emptydrops_cutoff = emptydrops_cutoff,
                         emptydrops_alpha = emptydrops_alpha,
                         verbose = verbose,
                         parallel_param = parallel_param)
   }
-
-  if(verbose) cat(.bluem("[QC]"),"Calculating QC metrics. \n")
-
+  if (verbose) message(.bluem("[QC]"),"Calculating QC metrics.")
   # Generate QC
-  if(subset_mito){
-    if(sum(grepl("^MT-", rowData(sce)$Symbol, ignore.case = TRUE)) == 0) {
-      cat("   No MT genes found.\n")
+  if (subset_mito){
+    if (sum(grepl("^MT-", rowData(sce)$Symbol, ignore.case = TRUE)) == 0) {
+      warning("   No MT genes found.\n")
       mito = FALSE
     } else mito = rownames(sce)[grepl("^MT-", rowData(sce)$Symbol, ignore.case = TRUE)]
   } else mito = FALSE
 
-  if(subset_malat1){
-    if(sum(grepl("^MALAT1", rowData(sce)$Symbol, ignore.case = TRUE)) == 0) {
-      cat("   No MALAT1 gene found.\n")
+  if (subset_malat1){
+    if (sum(grepl("^MALAT1", rowData(sce)$Symbol, ignore.case = TRUE)) == 0) {
+      warning("   No MALAT1 gene found.")
       Malat1 = FALSE
     } else Malat1 = rownames(sce)[grepl("^MALAT1", rowData(sce)$Symbol, ignore.case = TRUE)]
   } else Malat1 = FALSE
 
-  if(subset_ribo){
-    if(sum(grepl("^MRPL|^MRPS|^RPL|^RPS", rowData(sce)$Symbol, ignore.case = TRUE)) == 0) {
-      cat("   No ribo genes found.\n")
+  if (subset_ribo){
+    if (sum(grepl("^MRPL|^MRPS|^RPL|^RPS", rowData(sce)$Symbol, ignore.case = TRUE)) == 0) {
+      warning("   No ribo genes found.")
       Ribo = FALSE
     } else Ribo = rownames(sce)[grepl("^MRPL|^MRPS|^RPL|^RPS", rowData(sce)$Symbol, ignore.case = TRUE)]
   } else Ribo = FALSE
@@ -99,39 +96,35 @@ doQC <- function(sce,
   subset_list = list(mito = mito, Malat1 = Malat1, Ribo = Ribo)
   subset_list = subset_list[!is.na(subset_list)]
 
-  if(length(subset_list) == 0) subset_list = NULL
+  if (length(subset_list) == 0) subset_list = NULL
 
-  if(!is.null(batch)) qcbatch = colData(sce)[,batch] else qcbatch = NULL
-
+  if (!is.null(batch)) qcbatch = colData(sce)[,batch] else qcbatch = NULL
     sce_fqc <- perCellQCMetrics(sce,
                                 subsets = subset_list,
                                 BPPARAM = parallel_param)
-
     low.lib <- isOutlier(log10(sce_fqc$sum),
                          batch = qcbatch,
                          type = "lower",
                          nmads=3)
-
     low.genes <- isOutlier(log10(sce_fqc$detected),
                            batch = qcbatch,
                            type = "lower",
                            nmads=3)
-
-    if(!all(is.na(mito))) {
+    if (!all(is.na(mito))) {
       high.mt <- isOutlier(sce_fqc$subsets_mito_percent,
                            batch = qcbatch,
                            type = "higher",
                            nmads = 3)
     } else high.mt <- FALSE
 
-    if(!all(is.na(Malat1))) {
+    if (!all(is.na(Malat1))) {
       high.malat1 <- isOutlier(sce_fqc$subsets_Malat1_percent,
                                batch = qcbatch,
                                type = "higher",
                                nmads = 3)
     } else high.malat1 <- FALSE
 
-    if(!all(is.na(Ribo))) {
+    if (!all(is.na(Ribo))) {
       high.ribo <- isOutlier(sce_fqc$subsets_Ribo_percent,
                              batch = qcbatch,
                              type = "higher",
@@ -143,23 +136,17 @@ doQC <- function(sce,
                HighMT = ifelse(all(mito == FALSE), FALSE, sum(high.mt)),
                HighMalat1 = ifelse(all(Malat1 == FALSE), FALSE, sum(high.malat1)),
                HighRibo = ifelse(all(Ribo == FALSE), FALSE, sum(high.ribo)))
-
     sce_fqc$discard <- low.lib | low.genes | high.mt | high.malat1 | high.ribo
-
     colData(sce) <- cbind(colData(sce), sce_fqc)
-
     sce$discard[is.na(sce$discard)] = TRUE
     
     # Save plots  
-    if(save_plots){
-      
-      if(verbose) cat(.bluem("[QC]"),"   Saving QC plots. \n")
-      
+    if (save_plots){
+      if (verbose) message(.bluem("[QC]"),"   Saving QC plots.")
       savepath = paste0(getwd(), "/", name)
       dir.create(paste0(savepath, "/plots"))
       savepath = paste0(savepath, "/plots")
-      
-      if(!is.null(batch)) {
+      if (!is.null(batch)) {
         xlen = length(unique(colData(sce)[,batch])) * 2
         w = 250 * xlen
         h = 600 * sqrt(xlen) 
@@ -167,32 +154,25 @@ doQC <- function(sce,
         w = 1200
         h = 1200
       }
-      
-      if(!all(colData(sce)[,"discard"] == FALSE)) cby = "discard" else cby = NULL
-      
+      if (!all(colData(sce)[,"discard"] == FALSE)) cby = "discard" else cby = NULL
       p1 <- plot_Coldata(sce, y = "sum", x = batch, color_by = cby) + 
         scale_y_log10() + ylab("log10(Total UMI)")
-      
       ggsave(filename = "QC_Plots_total_UMI.pdf", p1, 
              path = savepath, device = "pdf",
              width = w, height = h, units = "px")
-      
       p2 <- plot_Coldata(sce, y = "detected", 
                          x = batch, color_by = cby) +
         ylab("Total detected genes")
       ggsave(filename = "QC_Plots_detected_genes.pdf", p2, 
              path = savepath, device = "pdf",
              width = w, height = h, units = "px")
-      
       p3 <- plot_Coldata(sce, y = "sum", x = "detected", group_by = batch) + 
         scale_y_log10() +
         xlab("Total detected genes") + ylab("log10(Total UMI)")
-      
       ggsave(filename = "QC_Plots_detected_by_total_UMI.pdf", p3, 
              path = savepath, device = "pdf",
              width = h*1.1, height = h*1.1, units = "px")
-      
-      if(!(all(mito == FALSE))) {
+      if (!(all(mito == FALSE))) {
         pmito <- plot_Coldata(sce, y = "subsets_mito_percent", x = batch, 
                               color_by = cby) + 
           ylab("% Mitochondrial transcripts")
@@ -202,8 +182,7 @@ doQC <- function(sce,
       } else {
         pmito <- NA
       }
-      
-      if(!(all(Ribo == FALSE))) {
+      if (!(all(Ribo == FALSE))) {
         pribo <- plot_Coldata(sce, y = "subsets_Ribo_percent", x = batch, 
                               color_by = cby) + 
           ylab("% Ribosomal transcripts")
@@ -214,7 +193,7 @@ doQC <- function(sce,
         pribo <- NA
       }
       
-      if(!(all(Malat1 == FALSE))) {
+      if (!(all(Malat1 == FALSE))) {
         pmalat1 <- plot_Coldata(sce, y = "subsets_Malat1_percent", x = batch, 
                                 color_by = cby)  + 
           ylab("% MALAT1 transcripts")
@@ -229,16 +208,16 @@ doQC <- function(sce,
     if(discard) sce <- sce[, !sce$discard]
 
   # Doublet finding
-  if(detect_doublets){
-    if(verbose) cat(.bluem("[QC/DBL]"), "Finding doublets. \n")
-    if(!is.null(batch)) samples = colData(sce)[,batch] else samples = NULL
+  if (detect_doublets){
+    if (verbose) message(.bluem("[QC/DBL]"), "Finding doublets.")
+    if (!is.null(batch)) samples = colData(sce)[,batch] else samples = NULL
     sce <- scDblFinder::scDblFinder(sce, verbose = verbose,
                                     samples = samples,
                                     BPPARAM = parallel_param)
   }
   
-     if(save_plots) {
-      if(detect_doublets) {
+     if (save_plots) {
+      if (detect_doublets) {
         pdbl <- plot_Coldata(sce, y = "sum", x = batch, color_by = "scDblFinder.class") + 
           scale_y_log10()  + 
           ylab("log10(Total UMI)")
@@ -248,16 +227,13 @@ doQC <- function(sce,
       } else {
         pdbl <- NA
       }
-    
       pl <- list(p1, p2, p3, pmito, pribo, pmalat1, pdbl)
       pl <- pl[!is.na(pl)]
-     
       ncols <- floor(sqrt(length(pl)))
       pfinal = do.call(arrangeGrob, c(pl, ncol = ncols))
       ggsave(filename = "QC_Plot_ALL.pdf", pfinal, 
              path = savepath, device = "pdf", 
              width = 3200, height = 3200, units = "px")
   } 
-    
-  return(sce)
+  sce
 }

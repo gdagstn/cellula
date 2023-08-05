@@ -32,20 +32,20 @@ doEmptyDrops <- function(sce,
 
   ep = .redm("{cellula::doEmptyDrops()} - ")
   
-  if(!"DropletUtils" %in% rownames(installed.packages())){
-    stop(paste0(ep, "The `DropletUtils` package must be installed first. \n
-                  Run `BiocManager::install(\"DropletUtils\") to use this function."))
+  if (!"DropletUtils" %in% rownames(installed.packages())){
+    stop(ep, "The `DropletUtils` package must be installed first. \n
+              Run `BiocManager::install(\"DropletUtils\") to use this function.")
   }
   
-  if(verbose) cat(.bluem("[QC/EMPTY]"),"Running emptyDrops. \n")
+  if (verbose) message(.bluem("[QC/EMPTY]"),"Running emptyDrops.")
 
-  if(!is.null(batch)) {
-
+  if (!is.null(batch)) {
     batches = unique(as.character(colData(sce)[,batch]))
     scelist <- lapply(batches, function(x) sce[,colData(sce)[,batch] == x])
     names(scelist) <- batches
-    if(emptydrops_cutoff == "auto") {
-      emptydrops_cutoff <- lapply(scelist, function(x) metadata(DropletUtils::barcodeRanks(x))$inflection)
+    if (emptydrops_cutoff == "auto") {
+      emptydrops_cutoff <- lapply(scelist, function(x) 
+        metadata(DropletUtils::barcodeRanks(x))$inflection)
     } else {
       emptydrops_cutoff <- as.list(rep(emptydrops_cutoff, length(scelist)))
     }
@@ -58,17 +58,15 @@ doEmptyDrops <- function(sce,
                             keep_droplets <- empty_droplets$FDR <= emptydrops_alpha
                             scelist[[x]]$empty <- factor(ifelse(empty_droplets$FDR <= emptydrops_alpha, "ok", "empty"))
                             scelist[[x]]$empty[which(is.na(scelist[[x]]$empty))] = "empty"
-                            if(verbose) print(table(Sig = keep_droplets, Limited = empty_droplets$Limited))
-                            if(verbose) cat("Empty cells (", x, "): ", sum(scelist[[x]]$empty == "empty"), "\n", sep = "")
+                            if (verbose) print(table(Sig = keep_droplets, Limited = empty_droplets$Limited))
+                            if (verbose) message("Empty cells (", x, "): ", sum(scelist[[x]]$empty == "empty"))
                             return(scelist[[x]]$empty)
                           }, BPPARAM = parallel_param)
 
     names(empty_list) <- names(scelist)
     sce$empty = unlist(empty_list)
-
-  } else {
-
-    if(emptydrops_cutoff == "auto") {
+   } else {
+    if (emptydrops_cutoff == "auto") {
       barcode_ranks <- DropletUtils::barcodeRanks(sce)
       emptydrops_cutoff = metadata(barcode_ranks)$inflection
     }
@@ -78,11 +76,9 @@ doEmptyDrops <- function(sce,
     sce$empty <- factor(ifelse(empty_droplets$FDR <= emptydrops_alpha, "ok", "empty"))
     sce$empty[which(is.na(sce$empty))] = "empty"
 
-    if(verbose) print(table(Sig = keep_droplets, Limited = empty_droplets$Limited))
-    if(verbose) cat("Empty cells: ", sum(sce$empty == "empty"), "\n")
+    if (verbose) print(table(Sig = keep_droplets, Limited = empty_droplets$Limited))
+    if (verbose) message("Empty cells: ", sum(sce$empty == "empty"))
   }
-
   sce = sce[, which(sce$empty == "ok"), drop = FALSE]
-
-  return(sce)
+  sce
 }

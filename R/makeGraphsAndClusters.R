@@ -62,17 +62,17 @@ makeGraphsAndClusters <- function(sce,
   #Error prefix
   ep = .redm("{cellula::makeGraphsAndClusters} - ")
   
-  if(!is(sce, "SingleCellExperiment")) 
-    stop(paste0(ep, "must provide a SingleCellExperiment object"))
-  if(!method %in% c("leiden", "louvain"))
-    stop(paste0(ep, "method not recognized - must be one of \"leiden\" or \"louvain\""))
-  if(!weighting_scheme %in%  c("jaccard", "rank", "number"))
-    stop(paste0(ep, "method not recognized - must be one of \"jaccard\", \"rank\", or \"number\""))
-  if(length(reducedDim(sce)) == 0) stop(paste0(ep, "there are no dimensionality reductions in the SingleCellExperiment object."))
-  if(!dr %in% reducedDimNames(sce)) stop(paste0(ep, "the dr name supplied was not found in the SingleCellExperiment object"))
+  if (!is(sce, "SingleCellExperiment")) 
+    stop(ep, "must provide a SingleCellExperiment object")
+  if (!method %in% c("leiden", "louvain"))
+    stop(ep, "method not recognized - must be one of \"leiden\" or \"louvain\"")
+  if (!weighting_scheme %in%  c("jaccard", "rank", "number"))
+    stop(ep, "method not recognized - must be one of \"jaccard\", \"rank\", or \"number\"")
+  if (length(reducedDim(sce)) == 0) stop(ep, "there are no dimensionality reductions in the SingleCellExperiment object.")
+  if (!dr %in% reducedDimNames(sce)) stop(ep, "the dr name supplied was not found in the SingleCellExperiment object")
   
   # Start parameter logging - not fully implemented
-    if(is.null(metadata(sce)$cellula_log)) {
+    if (is.null(metadata(sce)$cellula_log)) {
     clog = .initLog()
   } else {
     clog = metadata(sce)$cellula_log
@@ -80,9 +80,9 @@ makeGraphsAndClusters <- function(sce,
   clog$clustering$neighbors = neighbors
   clog$clustering$weighting_scheme = weighting_scheme
   clog$clustering$clustering_sweep = sweep_on
-  if(sweep_on == "clustering") {
+  if (sweep_on == "clustering") {
     clog$clustering$resolution_ks = k
-  } else if(sweep_on == "SNN") {
+  } else if (sweep_on == "SNN") {
     clog$clustering$graph_ks = k
   }
   clog$clustering$clustering_method = method
@@ -92,23 +92,23 @@ makeGraphsAndClusters <- function(sce,
   
   # Case 1: parameter sweep on clustering resolution
 
-  if(sweep_on == "clustering" & !is.null(neighbors)) {
+  if (sweep_on == "clustering" & !is.null(neighbors)) {
 
-    if(verbose) cat(.bluem("[CLU]"), "Creating SNN graph.\n")
+    if (verbose) message(.bluem("[CLU]"), "Creating SNN graph.")
     
     space = reducedDim(sce, dr)
-    if(ncol(space) > ndims) space = space[,seq_len(ndims)]
+    if (ncol(space) > ndims) space = space[,seq_len(ndims)]
 
     g = makeSNNGraph(space,
                      k = neighbors,
                      type = weighting_scheme)
     for(i in k){
 
-      if(verbose) cat(.bluem("[CLU]"), "Clustering at resolution ", i, ".\n")
+      if (verbose) message(.bluem("[CLU]"), "Clustering at resolution ", i, ".")
 
-      if(method == "louvain") {
+      if (method == "louvain") {
         cl = factor(cluster_louvain(g, resolution = i)$membership)
-      } else if(method == "leiden") {
+      } else if (method == "leiden") {
         cl = factor(cluster_leiden(g, objective_function = "modularity",
                                    n_iterations = leiden_iterations,
                                    resolution_parameter = i)$membership)
@@ -117,57 +117,54 @@ makeGraphsAndClusters <- function(sce,
       gname = paste0(prefix, i)
       colData(sce)[,gname] = cl
 
-      if(verbose) cat(.bluem("[CLU]"), "Found", length(unique(cl)), "clusters.\n")
+      if (verbose) message(.bluem("[CLU]"), "Found", length(unique(cl)), "clusters.")
 
-      if(calculate_modularity) {
-        if(verbose) cat(.bluem("[CLU]"), "Calculating pairwise modularity.\n")
+      if (calculate_modularity) {
+        if (verbose) message(.bluem("[CLU]"), "Calculating pairwise modularity.")
         metadata(sce)[[paste0("modularity_", gname)]] = pairwiseModularity(g, clusters = cl, as.ratio = TRUE)
       }
 
-      if(calculate_silhouette) {
-        if(verbose) cat(.bluem("[CLU]"), "Calculating approximate silhouette widths.\n")
+      if (calculate_silhouette) {
+        if (verbose) message(.bluem("[CLU]"), "Calculating approximate silhouette widths.")
         silhouette <- as.data.frame(approxSilhouette(space, clusters = cl))
         silhouette$closest <- factor(ifelse(silhouette$width > 0, cl, silhouette$other))
         silhouette$cluster <- cl
         metadata(sce)[[paste0("silhouette_", gname)]] = silhouette
       }
       
-      if(save_graphs) {
+      if (save_graphs) {
         metadata(sce)[[paste0("SNN_", neighbors, "_", weighting_scheme)]] = g
       }
     }
     # Case 2: parameter sweep on SNN neighbor number
-  } else if(sweep_on == "SNN" & !is.null(k)) {
-
+  } else if (sweep_on == "SNN" & !is.null(k)) {
     k = floor(k)
-
     for(i in k) {
-      if(verbose) cat(.bluem("[CLU]"), "Creating SNN graph with k =", i, "neighbors.\n")
+      if (verbose) message(.bluem("[CLU]"), "Creating SNN graph with k =", i, "neighbors.")
       g = makeSNNGraph(space,
                        k = i,
                        type = weighting_scheme)
-      
-      if(save_graphs) {
+      if (save_graphs) {
         metadata(sce)[[paste0("SNN_", i, "_", weighting_scheme)]] = g
       }
       
-      if(method == "louvain") {
+      if (method == "louvain") {
         cl = factor(cluster_louvain(g)$membership)
-      } else if(method == "leiden") {
+      } else if (method == "leiden") {
         cl = factor(cluster_leiden(g, objective_function = "modularity",
                                    n_iterations = leiden_iterations)$membership)
       }
       gname = paste0(prefix, i)
       colData(sce)[,gname] = cl
-      if(verbose) cat("Found", length(unique(cl)), "clusters.\n")
+      if (verbose) message("Found", length(unique(cl)), "clusters.")
 
-      if(calculate_modularity) {
-        if(verbose) cat(.bluem("[CLU]"), "Calculating pairwise modularity.\n")
+      if (calculate_modularity) {
+        if (verbose) message(.bluem("[CLU]"), "Calculating pairwise modularity.")
         metadata(sce)[[paste0("modularity_", gname)]] = pairwiseModularity(g, clusters = cl, as.ratio = TRUE)
       }
 
-      if(calculate_silhouette) {
-        if(verbose) cat(.bluem("[CLU]"), "Calculating approximate silhouette widths.\n")
+      if (calculate_silhouette) {
+        if (verbose) message(.bluem("[CLU]"), "Calculating approximate silhouette widths.")
         sil <- as.data.frame(approxSilhouette(space, clusters = cl))
         sil$closest <- factor(ifelse(sil$width > 0, cl, sil$other))
         sil$cluster <- cl
@@ -217,15 +214,15 @@ metaCluster <- function(sce,
   #Error prefix
   ep = .redm("{cellula::metaCluster} - ")
   
-  if(threshold > 1 | threshold < 0) stop(paste0(ep, "threshold must be between 0 and 1"))
-  if(any(!clusters %in% colnames(colData(sce)))) stop(paste0(ep, "some cluster column names were not found in colData"))
-  if(!is(sce, "SingleCellExperiment")) stop(paste0(ep, "must provide a SingleCellExperiment object"))
-  if((!denominator %in% c("union", "max", "min"))) stop(paste0(ep, "denominator must be one of \"union\", \"max\", \"min\""))
+  if (threshold > 1 | threshold < 0) stop(ep, "threshold must be between 0 and 1")
+  if (any(!clusters %in% colnames(colData(sce)))) stop(ep, "some cluster column names were not found in colData")
+  if (!is(sce, "SingleCellExperiment")) stop(ep, "must provide a SingleCellExperiment object")
+  if ((!denominator %in% c("union", "max", "min"))) stop(ep, "denominator must be one of \"union\", \"max\", \"min\"")
 
   linked <- linkClusters(colData(sce)[,clusters], denominator = denominator)
   meta <- cluster_louvain(linked)
 
-  if(do_plot) {
+  if (do_plot) {
     pal = rainbow(length(groups(meta)), alpha = 0.3)
     plot(linked, vertex.color = pal[as.numeric(as.factor(meta$membership))],
        edge.width = E(linked)$weight * 2, vertex.size = 5, vertex.label.cex = 0.4)

@@ -80,11 +80,11 @@ cellula <- function(sce,
                      save_temp = FALSE,
                      parallel_param = SerialParam()) {
 
-  # Sanity checks (mostly delegated to individual modules)
-    if(!is.null(batch)) {
+  # Checks (mostly delegated to single modules)
+    if (!is.null(batch)) {
    if(!batch %in% colnames(colData(sce)))
-    stop(paste0("Batch label \"", batch, "\" not found."))
-   if(!is.factor(colData(sce)[,batch]))
+    stop("Batch label \"", batch, "\" not found.")
+   if (!is.factor(colData(sce)[,batch]))
      colData(sce)[,batch] = as.factor(colData(sce)[,batch])
  }
   
@@ -105,12 +105,12 @@ cellula <- function(sce,
   
   # Begin
     if(verbose) {
-    cat("Working on object", name, "\n")
+    message("Working on object", name)
     ncells = ncol(sce)
-    cat("Input cells: ", ncells, "\n")
+    message("Input cells: ", ncells)
       clog$qc$input_cells = ncells
     if(!is.null(batch)) {
-      cat("By batch:\n")
+      message("By batch:")
       print(table(colData(sce)[,batch]))
       clog$qc$input_by_batch = table(colData(sce)[,batch])
     }
@@ -154,7 +154,6 @@ cellula <- function(sce,
 
   # Normalization and dimensionality reduction module
     if(do_norm) {
-
     sce <- doNormAndReduce(sce, batch = batch, name = name,
                            ndims = ndims,
                            hvg_ntop = hvg_ntop,
@@ -162,11 +161,10 @@ cellula <- function(sce,
                            parallel_param = parallel_param)
 
     if(save_temp) {
-      if(verbose) cat("Saving temporary file. \n")
+      if(verbose) message("Saving temporary file. \n")
       saveRDS(sce, file = paste0("./", name, "/", name, "_tempSCE.RDS"))
     }
   }
-
   hvgs = metadata(sce)$hvgs
   
   # Integration module
@@ -184,20 +182,16 @@ cellula <- function(sce,
 
   if(verbose) cat("Saving final object.\n")
   saveRDS(sce, file = paste0("./", name, "/", name, "_PS_INT_SCE.RDS"))
-  
-  if(save_temp) {
-    if(verbose) cat("Deleting temporary file. \n")
+  if (save_temp) {
+    if (verbose) cat("Deleting temporary file. \n")
     file.remove(paste0("./", name, "/", name, "_tempSCE.RDS"))
   }
-  
-  if(verbose) cat("All done. Input cells: ", ncells, ", final cell number: ", ncol(sce), ".\n")
+  if (verbose) cat("All done. Input cells: ", ncells, ", final cell number: ", ncol(sce), ".\n")
   metadata(sce)$cellula_log[["output_cells"]] = ncol(sce)
-  
-  if(!is.null(batch)) {
+  if (!is.null(batch)) {
     metadata(sce)$cellula_log[["output_by_batch"]] = table(colData(sce)[,batch])
   }
-  
-  return(sce)
+  sce
 }
 
 #' @noRd

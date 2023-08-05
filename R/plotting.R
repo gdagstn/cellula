@@ -39,12 +39,10 @@ plotModularity <- function(sce, name, type = "heatmap") {
       )
     
   } else if(type == "graph") {
-
     cgr <- graph_from_adjacency_matrix(modmat,
                                        mode="upper",
                                        weighted=TRUE,
                                        diag=FALSE)
-
     set.seed(420)
     plot(cgr,
          edge.width=E(cgr)$weight*5,
@@ -52,7 +50,6 @@ plotModularity <- function(sce, name, type = "heatmap") {
          main = name)
   }
 }
-
 
 #' Plot approximate silhouette widths
 #'
@@ -80,7 +77,6 @@ plotSilhouette <- function(sce, name) {
     geom_quasirandom(method="smiley") +
     theme_classic()
 }
-
 
 #' Plot UMAP
 #'
@@ -216,8 +212,10 @@ plot_UMAP <- function(sce,
     aes_umap$colour = aes(colour = .data[[color_by]])$colour
     if(classes[color_by] == "numeric") {
       udf = udf[order(udf[,color_by]),]
+      udf = rbind(udf[is.na(udf[,color_by]),], 
+                  udf[!is.na(udf[,color_by]),])
       pal = .choosePalette(cpal = color_palette, default = "Sunset")
-      cscale = scale_colour_gradientn(colours = pal)
+      cscale = scale_colour_gradientn(colours = pal, na.value = "lightgray")
       cguides = NULL
     } else if(classes[color_by] %in% c("character", "logical")) {
       udf[,color_by] = factor(udf[,color_by])
@@ -230,7 +228,7 @@ plot_UMAP <- function(sce,
         if(!is.null(names(pal)) & all(names(pal) %in% levels(udf[,color_by]))) {
           pal = pal[levels(udf[,color_by])]
         }
-      cscale = scale_colour_manual(values = pal)
+      cscale = scale_colour_manual(values = pal, na.value = "lightgray")
       cguides = guides(color = guide_legend(override.aes = list(size=2)))
     } else if(classes[color_by] == "factor") {
         pal = .choosePalette(cpal = color_palette, default = "qualpal", 
@@ -239,7 +237,7 @@ plot_UMAP <- function(sce,
         if(!is.null(names(pal)) & all(names(pal) %in% levels(udf[,color_by]))) {
           pal = pal[levels(udf[,color_by])]
         }
-      cscale = scale_colour_manual(values = pal)
+      cscale = scale_colour_manual(values = pal, na.value = "lightgray")
       cguides = guides(color = guide_legend(override.aes = list(size=2)))
     }
   }
@@ -344,7 +342,6 @@ plot_UMAP <- function(sce,
   }
   
   if(!is.null(trajectory)) {
-    trj = metadata(sce)[[trajectory]]
     if(rescale) {
       trj$x0 = .rescalen(trj$x0, 
                         from = range(orig_range$x),
@@ -482,7 +479,7 @@ plot_dots <- function(sce,
   } else {
     pal = color_palette
   }
-  cscale = scale_colour_gradientn(colours = pal)
+  cscale = scale_colour_gradientn(colours = pal, na.value = "lightgray")
 
   if(format == "wide") {
     p = ggplot(scdf, aes(y = .data[["cluster"]],
@@ -733,8 +730,8 @@ plot_Coldata <- function(sce,
       pal = color_palette
     }
 
-    cscale = scale_colour_manual(values = pal)
-    fscale = scale_fill_manual(values = pal)
+    cscale = scale_colour_manual(values = pal, na.value = "lightgray")
+    fscale = scale_fill_manual(values = pal, na.value = "lightgray")
     fguides = guides(boxplot = "none")
     p <- p + cscale + fscale + fguides 
   }
@@ -789,7 +786,7 @@ plot_Coldata <- function(sce,
       } else {
         pal = color_palette
       }
-      cscale = scale_colour_manual(values = pal)
+      cscale = scale_colour_manual(values = pal, na.value = "lightgray")
       p = p + cscale
     }
 

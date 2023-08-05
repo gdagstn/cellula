@@ -83,3 +83,88 @@
   abs((x[1] - x[2])/m) < tol
 }
 
+
+#' Smooth polylines
+#'
+#' Uses Gaussian kernel smoothing to smooth polylines
+#'
+#' @param poly a data frame containing ordered coordinates with polygon vertices
+#' @param smoothness numeric, the extent of kernel smoothing. Higher means
+#'     rounder shapes. Default is 3.
+#' @param min_points numeric, the minimum number of vertices to smooth.
+#'     Default is 8.
+#' @param n_dense numeric, the number of points to add to the polygon for more
+#'     smoothing. Default is 10.
+#'
+#' @return A data frame containing ordered coordinates for polyline vertices.
+#'
+#' @details This is a refactoring of \code{smoothr::smooth_ksmooth()} to isolate 
+#'    the necessary code and avoid heavy GDAL-based dependencies. The code has 
+#'    been simplified as well. Internal use only
+#'
+#'
+#' @author Matthew Strimas-Mackey, modified by Giuseppe D'Agostino
+#'
+#' @importFrom stats ksmooth
+#' 
+#' @noRd
+
+.smoothPolyline <- function(poly, smoothness = 3, min_points = 8, n_dense = 10) {
+  if (nrow(poly) < min_points) {
+    poly_sm <- poly
+  } else {
+    poly_coords <- as.matrix(poly[,1:2])
+    d_poly = sqrt(rowSums(diff(as.matrix(poly_coords))^2))
+    bandwidth = mean(d_poly) * smoothness
+    dense_poly = .addPoints(poly_coords, steps = n_dense)
+    npt = nrow(dense_poly)
+    d_dense = sqrt(rowSums(diff(as.matrix(dense_poly))^2))
+    d_x = c(0, cumsum(d_dense))
+    poly_sm <- NULL
+    for (i in seq_len(ncol(dense_poly))) {
+      ks <- ksmooth(d_x, dense_poly[, i], n.points = length(d_x),
+                    kernel = "normal", bandwidth = bandwidth)
+      poly_sm <- cbind(poly_sm, ks[["y"]])
+    }
+    colnames(poly_sm) <- c("x", "y")
+    poly_sm <- as.data.frame(poly_sm)
+  }
+  return(poly_sm)
+}
+
+#' Add points
+#'
+#' Increases the number of points in a polyline while maintaining the shape
+#'
+#' @param poly a data frame containing ordered coordinates with polyline vertices
+#' @param steps numeric, the number of points that should be added between
+#'    each point. Default is 5
+#'
+#' @return A data frame containing densified coordinates for polyline vertices 
+#'
+#' @details Internal use only.
+#'
+#' @author Giuseppe D'Agostino
+#' 
+#' @noRd
+
+
+.addPoints <- function(poly, steps = 5) {
+  colnames(poly) <- NULL
+  polygon_coords = as.matrix(poly[,1:2])
+  new_coords = poly[1,]
+  for(i in 1:(nrow(poly)-1)){
+    new_xy = cbind(seq(polygon_coords[i,1],
+                       polygon_coords[i+1,1], length.out = steps+1),
+                   seq(polygon_coords[i,2],
+                       polygon_coords[i+1,2], length.out = steps+1))
+    tmp_coords = polygon_coords[i,]
+    new_coords = rbind(new_coords, tmp_coords, new_xy)
+  }
+  new_coords = new_coords[2:nrow(new_coords),]
+  new_coords = new_coords[!duplicated(new_coords),]
+  rownames(new_coords) = NULL
+  colnames(new_coords) <- c("x", "y")
+  new_coords
+}
+

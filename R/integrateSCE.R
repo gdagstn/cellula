@@ -43,17 +43,17 @@ integrateSCE = function(sce,
   # Error prefix
   ep = .redm("{cellula::integrateSCE()} - ")
   
-  if(!is(sce, "SingleCellExperiment"))
-    stop(paste0(ep, "Must provide a SingleCellExperiment object"))
-  if(!(method %in% c("fastMNN", "Harmony", "Seurat", "LIGER", "regression"))) 
-    stop(paste0(ep, "method not recognized - must be one of \"fastMNN\", \"Harmony\", \"Seurat\", \"LIGER\", or \"regression\""))
-  if(!(batch %in% colnames(colData(sce)))) 
-    stop(paste0(ep,"batch column not found in the colData of the object"))
-  if(hvg_ntop > nrow(sce))
-    stop(paste0(ep, "hvg_ntop cannot be higher than the number of features (nrow) in the object"))
+  if (!is(sce, "SingleCellExperiment"))
+    stop(ep, "Must provide a SingleCellExperiment object")
+  if (!(method %in% c("fastMNN", "Harmony", "Seurat", "LIGER", "regression")))
+    stop(ep, "method not recognized - must be one of \"fastMNN\", \"Harmony\", \"Seurat\", \"LIGER\", or \"regression\"")
+  if (!(batch %in% colnames(colData(sce)))) 
+    stop(ep,"batch column not found in the colData of the object")
+  if (hvg_ntop > nrow(sce))
+    stop(ep, "hvg_ntop cannot be higher than the number of features (nrow) in the object")
   
-  if(is.null(neighbor_n)) {
-    message(cat(.bluem("[INT]"), "neighbor_n was not supplied. Defaulting to floor(sqrt(ncells))\n"))
+  if (is.null(neighbor_n)) {
+    message(message(.bluem("[INT]"), "neighbor_n was not supplied. Defaulting to floor(sqrt(ncells))"))
     neighbor_n = floor(sqrt(ncol(sce)))
   }
   
@@ -61,15 +61,14 @@ integrateSCE = function(sce,
   # TO DO
   # --------------------------------------------- #
   
-  if(method == "fastMNN") {
+  if (method == "fastMNN") {
     
     #fastMNN
-    if(verbose) cat(.bluem("[INT/fastMNN]"), "Correcting batch effect using fastMNN\n")
-    
-    if(is.null(hvgs)) {
-      if(!is.null(metadata(sce)$hvgs)) {
+    if (verbose) message(.bluem("[INT/fastMNN]"), "Correcting batch effect using fastMNN")
+    if (is.null(hvgs)) {
+      if (!is.null(metadata(sce)$hvgs)) {
         hvgs = metadata(sce)$hvgs
-        } else stop(paste0(ep, "Highly variable genes not supplied and not previously calculated"))
+        } else stop(ep, "Highly variable genes not supplied and not previously calculated")
       }
     
     sce_corr <- fastMNN(sce,
@@ -82,19 +81,19 @@ integrateSCE = function(sce,
     
     
     # UMAP
-    if(verbose) cat(.bluem("[INT/fastMNN]"), "Running UMAP on MNN-corrected space\n")
+    if (verbose) message(.bluem("[INT/fastMNN]"), "Running UMAP on MNN-corrected space")
     
     reducedDim(sce, "UMAP_MNN") <- umap(reducedDim(sce, "PCA_MNN")[,seq_len(ndims)],
                                         n_neighbors = neighbor_n,
                                         min_dist = 0.7)
-  } else if(method == "Harmony") {
+  } else if (method == "Harmony") {
     
 
-    if(!"harmony" %in% rownames(installed.packages()))
+    if (!"harmony" %in% rownames(installed.packages()))
       stop(paste0(ep, "the `harmony` package must be installed first.\n
                 Run `BiocManager::install(\"harmony\") to use this function."))
     
-    if(verbose) cat(.bluem("[INT/Harmony]"), "Correcting batch effect using Harmony\n")
+    if (verbose) message(.bluem("[INT/Harmony]"), "Correcting batch effect using Harmony")
     
     harmony_corr <- harmony::HarmonyMatrix(reducedDim(sce, "PCA")[,seq_len(ndims)],
                                                 meta_data = colData(sce)[,batch],
@@ -102,20 +101,20 @@ integrateSCE = function(sce,
     
     reducedDim(sce, "PCA_Harmony") <- harmony_corr
     
-    if(verbose) cat(.bluem("[INT/Harmony]"), "Running UMAP on Harmony-corrected space\n")
+    if (verbose) message(.bluem("[INT/Harmony]"), "Running UMAP on Harmony-corrected space")
     
     reducedDim(sce, "UMAP_Harmony") <- umap(reducedDim(sce, "PCA_Harmony")[,seq_len(ndims)],
                                             n_neighbors = neighbor_n,
                                             min_dist = 0.7)
     
     
-  } else if(method == "Seurat"){
+  } else if (method == "Seurat"){
     
-    if(!"Seurat" %in% rownames(installed.packages()))
+    if (!"Seurat" %in% rownames(installed.packages()))
       stop(paste0(ep, "the `Seurat` package must be installed first.\n
                 Run `BiocManager::install(\"Seurat\") to use this function."))
     
-    if(verbose) cat(.bluem("[INT/Seurat]"), "Converting to Seurat object.\n")
+    if (verbose) message(.bluem("[INT/Seurat]"), "Converting to Seurat object.")
     old_colnames = colnames(sce)
     
     colnames(sce) = paste0("cell_", seq_len(ncol(sce)))
@@ -133,7 +132,7 @@ integrateSCE = function(sce,
     seulist = lapply(batches, function(x) seu[,seu[[batch]] == x])
     names(seulist) = batches
     
-    if(verbose) cat(.bluem("[INT/Seurat]"), "Normalization and HVG selection.\n")
+    if (verbose) message(.bluem("[INT/Seurat]"), "Normalization and HVG selection.")
     
     seulist = lapply(seulist, function(x) {
       x <- Seurat::NormalizeData(x, verbose = verbose)
@@ -142,22 +141,22 @@ integrateSCE = function(sce,
                                         verbose = verbose)
     })
     
-    if(verbose) cat(.bluem("[INT/Seurat]"), "Finding anchors.\n")
+    if (verbose) message(.bluem("[INT/Seurat]"), "Finding anchors.")
     
     anchors <- Seurat::FindIntegrationAnchors(object.list = seulist,
                                               dims = seq_len(ndims),
                                               verbose = verbose)
     
-    if(verbose) cat(.bluem("[INT/Seurat]"), "Integration.\n")
+    if (verbose) message(.bluem("[INT/Seurat]"), "Integration.")
     
     kweight = min(100, unlist(lapply(seulist, function(x) floor(0.5*(ncol(x))))))
     
-    if(verbose) cat(.bluem("[INT/Seurat]"), " Using k.weight = ", kweight, ".\n")
+    if (verbose) message(.bluem("[INT/Seurat]"), " Using k.weight = ", kweight, ".")
     
     seu_int <- Seurat::IntegrateData(anchorset = anchors, dims = seq_len(ndims), 
                              k.weight = kweight)
     
-    if(verbose) cat(.bluem("[INT/Seurat]"), "Running PCA on integrated object.\n")
+    if (verbose) message(.bluem("[INT/Seurat]"), "Running PCA on integrated object.")
     seu_int <- Seurat::ScaleData(seu_int,
                          assay = "integrated",
                          verbose = verbose)
@@ -170,35 +169,35 @@ integrateSCE = function(sce,
     
     seu_int = seu_int[,rownames(nf)]
     
-    if(verbose) cat(.bluem("[INT/Seurat]"), "Transferring to SCE object.\n")
+    if (verbose) message(.bluem("[INT/Seurat]"), "Transferring to SCE object.")
     
       
     reducedDim(sce, "PCA_Seurat") = SeuratObject::Embeddings(seu_int, reduction = "spca")[colnames(sce),]
     rm(seu)
     rm(seu_int)
     
-    if(verbose) cat(.bluem("[INT/Seurat]"), "Running UMAP on Seurat-corrected space.\n")
+    if (verbose) message(.bluem("[INT/Seurat]"), "Running UMAP on Seurat-corrected space.")
     
     reducedDim(sce, "UMAP_Seurat") <- umap(reducedDim(sce, "PCA_Seurat")[,seq_len(ndims)],
                                            n_neighbors = neighbor_n,
                                            min_dist = 0.7)
     colnames(sce) = nf[colnames(sce), 1]
     
-  } else if(method == "LIGER") {
+  } else if (method == "LIGER") {
     
-    if(!"rliger" %in% rownames(installed.packages()))
+    if (!"rliger" %in% rownames(installed.packages()))
       stop(paste0(ep, "the `rliger` package must be installed first.\n
                 Run `BiocManager::install(\"rliger\") to use this function."))
     
     old_colnames = colnames(sce)
     
-    if(any(duplicated(colnames(sce)))) {
+    if (any(duplicated(colnames(sce)))) {
       colnames(sce) = paste0("cell_", seq_len(ncol(sce)))
     }
     
     nf = data.frame(old_colnames, row.names = colnames(sce))
     
-    if(verbose) cat(.bluem("[INT/LIGER]"), "Creating LIGER object.\n")
+    if (verbose) message(.bluem("[INT/LIGER]"), "Creating LIGER object.")
     
     batches = unique(colData(sce)[,batch])
     countlist = lapply(batches, function(x) counts(sce[,colData(sce)[,batch] == x]))
@@ -206,32 +205,32 @@ integrateSCE = function(sce,
     l <- rliger::createLiger(countlist)
     rm(countlist)
     
-    if(verbose) cat(.bluem("[INT/LIGER]"), "Preprocessing.\n")
+    if (verbose) message(.bluem("[INT/LIGER]"), "Preprocessing.")
     l <- rliger::normalize(l)
     l <- rliger::selectGenes(l)
     l <- rliger::scaleNotCenter(l)
     
-    if(verbose) cat(.bluem("[INT/LIGER]"), "Factorization.\n")
+    if (verbose) message(.bluem("[INT/LIGER]"), "Factorization.")
     l <- rliger::optimizeALS(l, k = ndims, verbose = verbose)
     
-    if(verbose) cat(.bluem("[INT/LIGER]"), "Quantile normalization\n")
+    if (verbose) message(.bluem("[INT/LIGER]"), "Quantile normalization")
     l <- rliger::quantile_norm(l, verbose = verbose)
     
-    if(verbose) cat(.bluem("[INT/LIGER]"), "Transferring to SCE object.\n")
+    if (verbose) message(.bluem("[INT/LIGER]"), "Transferring to SCE object.")
     reducedDim(sce, type = "LIGER") = do.call(rbind, l@H)[colnames(sce),]
     reducedDim(sce, type = "LIGER_NORM") = l@H.norm[colnames(sce),]
     
-    if(verbose) cat(.bluem("[INT/LIGER]"), "Running UMAP on LIGER factorization.\n")
+    if (verbose) message(.bluem("[INT/LIGER]"), "Running UMAP on LIGER factorization.")
     reducedDim(sce, "UMAP_LIGER") <- umap(reducedDim(sce, "LIGER_NORM")[,seq_len(min(ncol(reducedDim(sce, "LIGER_NORM")), ndims))],
                                           n_neighbors = neighbor_n,
                                           min_dist = 0.7)
     
     colnames(sce) = nf[colnames(sce), 1]
     
-  } else if(method == "regression") {
+  } else if (method == "regression") {
     
     #regression
-    if(verbose) cat(.bluem("[INT/regression]"), "Correcting batch effect using regression\n")
+    if (verbose) message(.bluem("[INT/regression]"), "Correcting batch effect using regression")
     
     sce_corr <- regressBatches(sce,
                                batch = colData(sce)[,batch],
@@ -241,7 +240,7 @@ integrateSCE = function(sce,
     
     reducedDim(sce, "PCA_regression") <- reducedDim(sce_corr, "corrected")
     
-    if(verbose) cat(.bluem("[INT/regression]"), "Running UMAP on regression-corrected space.\n")
+    if (verbose) message(.bluem("[INT/regression]"), "Running UMAP on regression-corrected space.")
     
     reducedDim(sce, "UMAP_regression") <- umap(reducedDim(sce, "LIGER_NORM")[,seq_len(min(ncol(reducedDim(sce, "PCA_regression")), ndims))],
                                           n_neighbors = neighbor_n,

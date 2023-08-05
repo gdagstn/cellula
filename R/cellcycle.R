@@ -1,6 +1,6 @@
 #' Assign cell cycle 
 #' 
-#' Calculate the cell cycle phase for every single cell
+#' Calculate the cell cycle phase for every single cell using tricycle
 #' 
 #' @param sce a SingleCellExperiment object
 #' @param recenter_method character, one of  \code{"optim"} (default),  \code{"chull"}, or  \code{"none"}
@@ -15,9 +15,9 @@
 #' @param exprs_values character, name of the assay in \code{sce} to be used for
 #'    projection. Default is \code{"logcounts"}.  
 #' 
-#' @returns a SingleCellExperiment object with the tricycleEmbedding slot in 
-#'    \code{reducedDim(sce)} and tricyclePosition and tricyclePhase slots 
-#'    in \code{colData(sce)}
+#' @returns a \code{SingleCellExperiment} object with the \code{tricycleEmbedding} 
+#'    slot in \code{reducedDim(sce)} and \code{tricyclePosition} and 
+#'    \code{tricyclePhase} columns in \code{colData(sce)}
 #' 
 #' @details Wrapper to the \code{tricycle} method (Zheng et al. 2022) for cell 
 #'     cycle estimation, which uses a dataset with a continuum, periodic cell 
@@ -31,7 +31,6 @@
 #'     is not part of the original publication but these assignments are detailed
 #'     in the vignette.)
 #'     
-#'     
 #' @importFrom SingleCellExperiment reducedDim 
 #' @importFrom stats optim
 #' @importFrom utils head installed.packages
@@ -40,40 +39,32 @@
 assignCellCycle <- function(sce, recenter_method = "optim", species = "human", 
                             gname.type = "SYMBOL", gname = NULL, 
                             exprs_values = "logcounts") {
-  
-  ## Sanity checks
-  # Error prefix
-  ep = .redm("{cellula::assignCellCycle()} - ")
-  
   # Checks
-  if(!"tricycle" %in% rownames(installed.packages()))
-    stop(paste0(ep, "the `tricycle` package must be installed first.\n
-                Run `BiocManager::install(\"tricycle\") to use this function."))
-  if(!is(sce, "SingleCellExperiment"))
-    stop(paste0(ep, "Must provide a SingleCellExperiment object"))
-  if(!species %in% c("human", "mouse")){
-    stop(paste0(ep, species, " not recognized. Choose between \"human\" and \"mouse\""))
+  ep = .redm("{cellula::assignCellCycle()} - ")
+  if (!"tricycle" %in% rownames(installed.packages()))
+    stop(ep, "the `tricycle` package must be installed first.\n
+                Run `BiocManager::install(\"tricycle\") to use this function.")
+  if (!is(sce, "SingleCellExperiment"))
+    stop(ep, "Must provide a SingleCellExperiment object")
+  if (!species %in% c("human", "mouse")){
+    stop(ep, species, " not recognized. Choose between \"human\" and \"mouse\"")
   }
-  
-  # Begin
+  # Projection
   sce = tricycle::project_cycle_space(sce, gname.type = gname.type, gname = gname,
                                       species = species, exprs_values = exprs_values)
   embedding = reducedDim(sce, "tricycleEmbedding")
+  # Recentering
   nc = switch(recenter_method, 
               "chull" = .findTricycleCenterChull(embedding),
               "optim" = .findTricycleCenterOpt(embedding),
-              "none" = c(0,0)
-  )
+              "none" = c(0,0))
+  # Estimation of position
   sce = tricycle::estimate_cycle_position(sce, center.pc1 = nc[1], center.pc2 = nc[2])
-  
   # Phase assignment according to the tricycle vignette
-  
   phases = c(0, 0.25*pi, pi/2, pi, 1.5*pi, 1.75*pi, 2*pi)
   assigned = cut(sce$tricyclePosition, breaks = phases)
   levels(assigned) = c("G1/G0", "G1-S", "S", "G2-M", "M-G1", "G1/G0")
-  
   sce$tricyclePhase = assigned
-  
   sce
 }
 
@@ -105,27 +96,24 @@ plotCycle <- function(sce,
                       cyclic_color = "Cycle 1",
                       color_palette = NULL) {
   
-  ## Sanity checks
-  # Error prefix
-  ep = .redm("{cellula::plotCycle()} - ")
-  
   # Checks
-  if(!is(sce, "SingleCellExperiment"))
-    stop(paste0(ep, "Must provide a SingleCellExperiment object"))
+  ep = .redm("{cellula::plotCycle()} - ")
+  if (!is(sce, "SingleCellExperiment"))
+    stop(ep, "Must provide a SingleCellExperiment object")
   if(!is.null(color_by)){
-    if(!color_by %in% colnames(colData(sce)))
-      stop(paste0(ep, color_by, " is not a column of the SingleCellExperiment object"))
+    if (!color_by %in% colnames(colData(sce)))
+      stop(ep, color_by, " is not a column of the SingleCellExperiment object")
   }
-  if(!is.null(rings_by)){
-    if(!rings_by %in% colnames(colData(sce)))
-      stop(paste0(ep, rings_by, " is not a column of the SingleCellExperiment object"))
+  if (!is.null(rings_by)){
+    if (!rings_by %in% colnames(colData(sce)))
+      stop(ep, rings_by, " is not a column of the SingleCellExperiment object")
   }
-  if(!"tricyclePosition" %in% colnames(colData(sce)))
-    stop(paste0(ep, "Tricycle positions not found. Run `assignCellCycle()` first."))
+  if (!"tricyclePosition" %in% colnames(colData(sce)))
+    stop(ep, "Tricycle positions not found. Run `assignCellCycle()` first.")
   
+  # Colors
   cycol = match.arg(cyclic_color, c("Cycle 1", "Cycle 2"))
-    
-  # Begin
+  # Create rings
   circlist = list()
   if(!is.null(rings_by)){
     rings = colData(sce)[,rings_by]
@@ -134,9 +122,7 @@ plotCycle <- function(sce,
     rings = 1
     nring = 1
   }
-  
   # Calculate positions on rings
-  
   for(i in seq_along(unique(rings))) {
     cl = unique(rings)[i]
     curr = sce[,rings == cl]
@@ -156,30 +142,25 @@ plotCycle <- function(sce,
   phases = c(pi/2, pi, 1.5*pi, 0.25*pi, 1.75*pi)
   phases_x = cos(phases) * nring/2 * 1.3
   phases_y = sin(phases) * nring/2 * 1.3
-  
   phase_labels = c(0.75*pi, 1.25*pi, 1.65*pi, 0, 0.35*pi)
   phase_labels_x = cos(phase_labels) * nring/2 * 1.4
   phase_labels_y = sin(phase_labels) * nring/2 * 1.4
-  
+  # DF for plotting
   dd = as.data.frame(do.call(rbind,circlist))
   if(is.null(color_by)) {
     color_by = "cells"
     dd[,"cells"] = "all"
   }
-  
   # Circles
   circs = .makeCircles(r = seq(0.5, nring/2, by = 0.5))
-  
   p = ggplot(dd, aes(x = .data[["x"]], y = .data[["y"]], col = .data[[color_by]]))
-  
   for(i in unique(circs$r)){
     p = p + geom_path(data = circs[circs$r == i,], 
                       mapping = aes(x = x, y = y), 
                       inherit.aes = FALSE,
                       lwd = 0.15, 
                       lty = 2)
-  }
-  
+    }
     p = p + geom_segment(data = data.frame(rep(0,5), rep(0,5)), 
                          aes(x = 0, y = 0, xend = phases_x, yend = phases_y),
                          lwd = 0.2,
@@ -210,7 +191,6 @@ plotCycle <- function(sce,
         p = p + scale_color_gradientn(colors = colorpal)
       }
     }
-    
     p = p + coord_fixed() + 
             theme_minimal() +
             theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(), 
@@ -238,7 +218,7 @@ plotCycle <- function(sce,
   nearest.q <- ceiling(nearest.q*length(ncol(e)))
   cf <- function(par){
     # ensure that we are not outside the cloud:
-    if(!all(apply(e-par,1,FUN=function(x){
+    if (!all(apply(e-par,1,FUN=function(x){
       min(sum(x>0),sum(x<=0))/length(x)>minImbalance
     }))) return(Inf)
     # get the sum of eucl dist to nearest cells
@@ -253,4 +233,3 @@ plotCycle <- function(sce,
 .findTricycleCenterChull <- function(e) {
   colMeans(e[chull(e),])
 }
-

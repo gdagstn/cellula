@@ -33,12 +33,12 @@ see \code{?tricycle::project_cycle_space()} for more information.}
 projection. Default is \code{"logcounts"}.}
 }
 \value{
-a SingleCellExperiment object with the tricycleEmbedding slot in 
-   \code{reducedDim(sce)} and tricyclePosition and tricyclePhase slots 
-   in \code{colData(sce)}
+a \code{SingleCellExperiment} object with the \code{tricycleEmbedding} 
+   slot in \code{reducedDim(sce)} and \code{tricyclePosition} and 
+   \code{tricyclePhase} columns in \code{colData(sce)}
 }
 \description{
-Calculate the cell cycle phase for every single cell
+Calculate the cell cycle phase for every single cell using tricycle
 }
 \details{
 Wrapper to the \code{tricycle} method (Zheng et al. 2022) for cell 

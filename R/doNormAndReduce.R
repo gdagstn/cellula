@@ -37,54 +37,44 @@ doNormAndReduce <- function(sce, batch = NULL, name = NULL,
                             verbose = TRUE,
                             parallel_param = SerialParam()) {
   
-  #Sanity checks
-  # Error prefix
-  ep = "{cellula::doNormAndReduce()} - "
-  
-  if(!is(sce, "SingleCellExperiment"))
-    stop(paste0(ep, "must provide a SingleCellExperiment object"))
-  if(!is.null(batch)) {
-    if(!batch %in% colnames(colData(sce)))
-      stop(paste0(ep, "batch column not found in the colData of the object"))
+  # Checks
+  ep = .redm("{cellula::doNormAndReduce()} - ")
+  if (!is(sce, "SingleCellExperiment"))
+    stop(ep, "must provide a SingleCellExperiment object")
+  if (!is.null(batch)) {
+    if (!batch %in% colnames(colData(sce)))
+      stop(ep, "batch column not found in the colData of the object")
   }
-  if(hvg_ntop > nrow(sce))
-    stop(paste0(ep, "hvg_ntop cannot be higher than the number of features (nrow) in the object"))
-
+  if (hvg_ntop > nrow(sce))
+    stop(ep, "hvg_ntop cannot be higher than the number of features (nrow) in the object")
   # Start parameter logging - not fully implemented
-
-  if(is.null(metadata(sce)$cellula_log)) {
+  if (is.null(metadata(sce)$cellula_log)) {
     clog = .initLog()
   } else {
     clog = metadata(sce)$cellula_log
   }
-  
-  if(verbose) cat(.bluem("[NORM]"), "Calculating size factors and normalizing. \n")
-
+    if (verbose) message(.bluem("[NORM]"), "Calculating size factors and normalizing.")
   # Size factors
-  if(verbose) cat(.bluem("[NORM]"),"   Preclustering. \n")
-
-  if(!is.null(batch)) {
+  if (verbose) message(.bluem("[NORM]"),"   Preclustering.")
+  if (!is.null(batch)) {
     sce_cl <- quickCluster(sce,
                          block = colData(sce)[,batch],
                          min.size = floor(sqrt(min(table(colData(sce)[,batch])))),
                          BPPARAM = parallel_param)
     clog$norm_reduce$precluster_min_size = floor(sqrt(min(table(colData(sce)[,batch]))))
-
   } else {
     sce_cl <- quickCluster(sce,
                            min.size = floor(sqrt(ncol(sce))),
                            BPPARAM = parallel_param)
     clog$norm_reduce$precluster_min_size = floor(sqrt(ncol(sce)))
   }
-
-  if(verbose) cat(.bluem("[NORM]"),"   Calculating pooled factors. \n")
+  if (verbose) message(.bluem("[NORM]"),"   Calculating pooled factors.")
   sce <- computeSumFactors(sce,
                            clusters = sce_cl,
                            BPPARAM = parallel_param)
-
   # Normalization
-  if(verbose) cat(.bluem("[NORM]"),"   Log-normalization. \n")
-  if(!is.null(batch)) {
+  if (verbose) message(.bluem("[NORM]"),"   Log-normalization.")
+  if (!is.null(batch)) {
     sce <- multiBatchNorm(sce,
                           batch = colData(sce)[,batch])
     clog$norm_reduce$norm_strategy = "multiBatchNorm"
@@ -93,44 +83,35 @@ doNormAndReduce <- function(sce, batch = NULL, name = NULL,
     clog$norm_reduce$norm_strategy = "logNormCounts"
   }
   
-  if(!is.null(name)) {
-    if(verbose) cat("Saving temporary file. \n")
+  if (!is.null(name)) {
+    if (verbose) message("Saving temporary file.")
     saveRDS(sce, file = paste0("./", name, "/", name, "_tempSCE.RDS"))
-  }
+  }  
   # HVGs
+  if (verbose) message(.bluem("[DR]"), "Selecting HVGs.")
 
-  if(verbose) cat(.bluem("[DR]"), "Selecting HVGs. \n")
-
-  if(!is.null(batch)) {
+  if (!is.null(batch)) {
     vargenes <- modelGeneVar(sce,
                         block = colData(sce)[,batch])
   } else {
     vargenes <- modelGeneVar(sce)
   }
-
   hvgs <- getTopHVGs(vargenes, n = hvg_ntop)
   metadata(sce)$hvgs <- hvgs
-  
   clog$norm_reduce$hvg_ntop = hvg_ntop
-  
   # PCA
-  if(verbose) cat(.bluem("[DR]"), "Running PCA. \n")
-
+  if(verbose) message(.bluem("[DR]"), "Running PCA.")
   sce <- runPCA(sce,
                 subset_row = hvgs,
                 exprs_values = "logcounts",
                 ncomponents	= ndims)#,
   #BPPARAM = parallel_param) # the overhead for parallel PCA seems to be big.
-
   # UMAP
-  if(verbose) cat(.bluem("[DR]"), "Running UMAP on uncorrected PCA \n")
-
+  if (verbose) message(.bluem("[DR]"), "Running UMAP on uncorrected PCA.")
   neighbor_n <- floor(sqrt(ncol(sce)))
-
   reducedDim(sce, "UMAP") <- umap(reducedDim(sce, "PCA")[,seq_len(ndims)],
                                   n_neighbors = neighbor_n,
                                   min_dist = 0.7)
-  
   # Parameter logs
   clog$norm_reduce$umap_min_dist = 0.7
   clog$norm_reduce$umap_n_neighbors = neighbor_n
@@ -139,5 +120,5 @@ doNormAndReduce <- function(sce, batch = NULL, name = NULL,
   
   metadata(sce)$cellula_log = clog
     
-  return(sce)
+  sce
 }
