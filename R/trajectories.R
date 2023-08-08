@@ -7,9 +7,9 @@
 #'     estimation. Default is "PCA".
 #' @param clusters character, the name of the \code{colData} column with cluster label
 #'     indication.
-#' @param method character, the method for estimation. Can be either \code{"slingshot"}
-#'     or \code{"monocle"}. This will result in differences in the resulting object,
-#'     see Details for more information.
+#' @param method character, the method for estimation. Can be one of \code{"slingshot"},
+#'     \code{"monocle"}, or \code{"MODDPT"}. This will result in differences in 
+#'     the resulting object, see Details for more information.
 #' @param ndims numeric, the number of dimensions to use in `dr`. If the number
 #'     of columns in \code{dr} is < \code{ndims}, it will be used instead.
 #' @param dr_embed character, the name of the \code{reducedDim} slot where curves should
@@ -345,7 +345,7 @@ findTrajectories <- function(sce, dr = "PCA", clusters, method = "slingshot",
   #' 
   #' @noRd
   
-  .embedFR <- function(cds, sce, dr, ndims) {
+.embedFR <- function(cds, sce, dr, ndims) {
     
     # Vertices of the principal graph in UMAP
     gv = as_data_frame(cds@principal_graph$UMAP)
@@ -496,7 +496,7 @@ findTrajectories <- function(sce, dr = "PCA", clusters, method = "slingshot",
                                 verbose = FALSE){#,
                                 #BPPARAM = SerialParam()) {
   
-    ep = "{cellula::.getDPTtrajectories()} - "
+    ep = .redm("{cellula::.getDPTtrajectories()} - ")
     
     if(!"destiny" %in% rownames(installed.packages()))
       stop(paste0(.redm(ep), "the `destiny` package must be installed first.\n
@@ -507,8 +507,10 @@ findTrajectories <- function(sce, dr = "PCA", clusters, method = "slingshot",
     modslot = paste0("modularity_", clusters)
     
     if(!modslot %in% names(metadata(sce)))
-      stop(paste0(ep, "Modularity matrix not found! Pairwise modularity should have been 
-           calculated in the clustering step and saved to the metadata."))
+      stop(ep, "Modularity matrix not found! Pairwise modularity should have been 
+           calculated in the clustering step and saved to the metadata. \n
+           You can run rebuildModularity() for an approximate modularity matrix
+           construction.")
     
     modmat = metadata(sce)[[modslot]]
     mgr <- graph_from_adjacency_matrix(modmat, mode = "upper", 

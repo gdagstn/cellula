@@ -73,22 +73,22 @@ makeGraphsAndClusters <- function(sce,
   
   # Start parameter logging - not fully implemented
     if (is.null(metadata(sce)$cellula_log)) {
-    clog = .initLog()
+    clog <- .initLog()
   } else {
-    clog = metadata(sce)$cellula_log
+    clog <- metadata(sce)$cellula_log
   }
-  clog$clustering$neighbors = neighbors
-  clog$clustering$weighting_scheme = weighting_scheme
-  clog$clustering$clustering_sweep = sweep_on
+  clog$clustering$neighbors <- neighbors
+  clog$clustering$weighting_scheme <- weighting_scheme
+  clog$clustering$clustering_sweep <- sweep_on
   if (sweep_on == "clustering") {
-    clog$clustering$resolution_ks = k
+    clog$clustering$resolution_ks <- k
   } else if (sweep_on == "SNN") {
-    clog$clustering$graph_ks = k
+    clog$clustering$graph_ks <- k
   }
-  clog$clustering$clustering_method = method
-  clog$clustering$dr = dr
-  clog$clustering$ndims = ndims
-  clog$clustering$leiden_iterations = leiden_iterations
+  clog$clustering$clustering_method <- method
+  clog$clustering$dr <- dr
+  clog$clustering$ndims <- ndims
+  clog$clustering$leiden_iterations <- leiden_iterations
   
   # Case 1: parameter sweep on clustering resolution
 
@@ -96,10 +96,10 @@ makeGraphsAndClusters <- function(sce,
 
     if (verbose) message(.bluem("[CLU]"), "Creating SNN graph.")
     
-    space = reducedDim(sce, dr)
+    space <- reducedDim(sce, dr)
     if (ncol(space) > ndims) space = space[,seq_len(ndims)]
 
-    g = makeSNNGraph(space,
+    g <- makeSNNGraph(space,
                      k = neighbors,
                      type = weighting_scheme)
     for(i in k){
@@ -107,21 +107,21 @@ makeGraphsAndClusters <- function(sce,
       if (verbose) message(.bluem("[CLU]"), "Clustering at resolution ", i, ".")
 
       if (method == "louvain") {
-        cl = factor(cluster_louvain(g, resolution = i)$membership)
+        cl <- factor(cluster_louvain(g, resolution = i)$membership)
       } else if (method == "leiden") {
-        cl = factor(cluster_leiden(g, objective_function = "modularity",
+        cl <- factor(cluster_leiden(g, objective_function = "modularity",
                                    n_iterations = leiden_iterations,
                                    resolution_parameter = i)$membership)
       }
 
       gname = paste0(prefix, i)
-      colData(sce)[,gname] = cl
+      colData(sce)[,gname] <- cl
 
       if (verbose) message(.bluem("[CLU]"), "Found", length(unique(cl)), "clusters.")
 
       if (calculate_modularity) {
         if (verbose) message(.bluem("[CLU]"), "Calculating pairwise modularity.")
-        metadata(sce)[[paste0("modularity_", gname)]] = pairwiseModularity(g, clusters = cl, as.ratio = TRUE)
+        metadata(sce)[[paste0("modularity_", gname)]] <- pairwiseModularity(g, clusters = cl, as.ratio = TRUE)
       }
 
       if (calculate_silhouette) {
@@ -138,10 +138,10 @@ makeGraphsAndClusters <- function(sce,
     }
     # Case 2: parameter sweep on SNN neighbor number
   } else if (sweep_on == "SNN" & !is.null(k)) {
-    k = floor(k)
+    k <- floor(k)
     for(i in k) {
       if (verbose) message(.bluem("[CLU]"), "Creating SNN graph with k =", i, "neighbors.")
-      g = makeSNNGraph(space,
+      g <- makeSNNGraph(space,
                        k = i,
                        type = weighting_scheme)
       if (save_graphs) {
@@ -149,18 +149,18 @@ makeGraphsAndClusters <- function(sce,
       }
       
       if (method == "louvain") {
-        cl = factor(cluster_louvain(g)$membership)
+        cl <- factor(cluster_louvain(g)$membership)
       } else if (method == "leiden") {
-        cl = factor(cluster_leiden(g, objective_function = "modularity",
+        cl <- factor(cluster_leiden(g, objective_function = "modularity",
                                    n_iterations = leiden_iterations)$membership)
       }
       gname = paste0(prefix, i)
-      colData(sce)[,gname] = cl
+      colData(sce)[,gname] <- cl
       if (verbose) message("Found", length(unique(cl)), "clusters.")
 
       if (calculate_modularity) {
         if (verbose) message(.bluem("[CLU]"), "Calculating pairwise modularity.")
-        metadata(sce)[[paste0("modularity_", gname)]] = pairwiseModularity(g, clusters = cl, as.ratio = TRUE)
+        metadata(sce)[[paste0("modularity_", gname)]] <- pairwiseModularity(g, clusters = cl, as.ratio = TRUE)
       }
 
       if (calculate_silhouette) {
@@ -223,29 +223,84 @@ metaCluster <- function(sce,
   meta <- cluster_louvain(linked)
 
   if (do_plot) {
-    pal = rainbow(length(groups(meta)), alpha = 0.3)
+    pal <- rainbow(length(groups(meta)), alpha = 0.3)
     plot(linked, vertex.color = pal[as.numeric(as.factor(meta$membership))],
        edge.width = E(linked)$weight * 2, vertex.size = 5, vertex.label.cex = 0.4)
     legend("topleft", pt.bg = pal, pch = 21, legend = 1:10, bty = "n", title = "Metaclusters")
   }
 
-  meta_memberships = data.frame(row.names = meta$names, "metacluster" = meta$membership)
+  meta_memberships <- data.frame(row.names = meta$names, "metacluster" = meta$membership)
 
-  clusterlabels = lapply(clusters, function(x) paste0(x, ".", colData(sce)[,x]))
+  clusterlabels <- lapply(clusters, function(x) paste0(x, ".", colData(sce)[,x]))
 
-  metalabels = lapply(clusterlabels, function(x) meta_memberships[x,])
-  metalabeldf = as.data.frame(do.call(cbind, metalabels))
-  colnames(metalabeldf) = clusters
-  metafuzzy = apply(metalabeldf, 1, function(x) max(table(as.numeric(x)))/ncol(metalabeldf))
+  metalabels <- lapply(clusterlabels, function(x) meta_memberships[x,])
+  metalabeldf <- as.data.frame(do.call(cbind, metalabels))
+  colnames(metalabeldf) <- clusters
+  metafuzzy <- apply(metalabeldf, 1, function(x) max(table(as.numeric(x)))/ncol(metalabeldf))
 
-  sce$metacluster_max = factor(apply(metalabeldf, 1, function(x) names(table(x))[which.max(table(x))]))
-  sce$metacluster_score = metafuzzy
-  sce$metacluster_ok = metafuzzy < threshold
+  sce$metacluster_max <- factor(apply(metalabeldf, 1, function(x) names(table(x))[which.max(table(x))]))
+  sce$metacluster_score <- metafuzzy
+  sce$metacluster_ok <- metafuzzy < threshold
   metadata(sce)$metaclusters <- metalabeldf
 
   return(sce)
 }
 
-#.rebuildModularity <- function(k, labels) {
-  #placeholder
-#}
+
+#' Rebuild modularity
+#' 
+#' Rebuilds a pairwise modularity matrix using user-defined labels
+#' 
+#' @param sce a \code{SingleCellExperiment} object
+#' @param dr character, the name of the \code{reducedDim} slot to be used.
+#'     Default is \code{"PCA"}
+#' @param neighbors numeric, the number of neighbors to be used for SNN graph 
+#'     construction. Default is \code{NULL} meaning the square root of the 
+#'     number of cells will be used. 
+#' @param numeric, the number of dimensions to use from \code{dr}. Default is 20.     
+#' @param labels character, the name of the \code{colData} column with cluster
+#'     labels to be used.
+#' @param weighting_scheme character, one of \code{"jaccard"} (default), 
+#'     \code{rank} or \code{"min"}
+#'
+#' @returns a \code{SingleCellExperiment} object with a modularity matrix in the
+#'     \code{metadata} slot, named \code{modularity_$labels} where $labels is the
+#'     user-defined column name.
+#'
+#' @details This function can be used to approximate a pairwise modularity matrix
+#'     in case labels are not generated through the \code{makeGraphsAndClusters()}
+#'     function. It is considered to be _approximate_ because it requires the 
+#'     user to define some parameters (neighbors, dimensions, weighting scheme)
+#'     to rebuild a Shared Nearest Neighbor graph. If the user has defined labels
+#'     without clustering (e.g. by running \code{assignIdentities()}) there is no
+#'     guarantee that these parameters are the ones that result in a clustering
+#'     that easily translate to the same labels. This is a convenience function.
+#'     The output can be used by the \code{"MODDPT"} method in the trajectory
+#'     inference module in case there are no previously available modularity 
+#'     matrices.      
+#'     
+#' @importFrom SummarizedExperiment colData
+#' @importFrom S4Vectors metadata metadata<-
+#' @importFrom SingleCellExperiment reducedDim reducedDimnames
+#' @importFrom bluster makeSNNGraph pairwiseModularity 
+#' 
+#' @export
+
+rebuildModularity <- function(sce, dr = "PCA", neighbors = NULL, ndims = 20,
+                              labels, weighting_scheme = "jaccard") {
+    if (!dr %in% reducedDimNames(sce)) 
+    stop(ep, "the dr name supplied was not found in the SingleCellExperiment object")
+  if (!weighting_scheme %in%  c("jaccard", "rank", "number"))
+    stop(ep, "method not recognized - must be one of \"jaccard\", \"rank\", or \"number\"")
+  
+  space <- reducedDim(sce, dr)[,seq_len(ndims),drop = FALSE]
+  
+  if(is.null(neighbors)) neighbors <- round(sqrt(nrow(space)))
+  
+  g <- makeSNNGraph(space, k = neighbors, type = weighting_scheme)
+  
+  cl <- colData(sce)[,labels]
+  mlab <- paste0("modularity_", labels)
+  metadata(sce)[[mlab]] <- pairwiseModularity(g, clusters = cl, as.ratio = TRUE)
+  sce
+}

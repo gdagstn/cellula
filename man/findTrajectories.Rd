@@ -31,9 +31,9 @@ estimation. Default is "PCA".}
 \item{clusters}{character, the name of the \code{colData} column with cluster label
 indication.}
 
-\item{method}{character, the method for estimation. Can be either \code{"slingshot"}
-or \code{"monocle"}. This will result in differences in the resulting object,
-see Details for more information.}
+\item{method}{character, the method for estimation. Can be one of \code{"slingshot"},
+\code{"monocle"}, or \code{"MODDPT"}. This will result in differences in 
+the resulting object, see Details for more information.}
 
 \item{ndims}{numeric, the number of dimensions to use in `dr`. If the number
 of columns in \code{dr} is < \code{ndims}, it will be used instead.}
