@@ -113,7 +113,7 @@
   if (nrow(poly) < min_points) {
     poly_sm <- poly
   } else {
-    poly_coords <- as.matrix(poly[,1:2])
+    poly_coords <- as.matrix(poly[,c(1,2)])
     d_poly <- sqrt(rowSums(diff(as.matrix(poly_coords))^2))
     bandwidth <- mean(d_poly) * smoothness
     dense_poly <- .addPoints(poly_coords, steps = n_dense)
@@ -151,9 +151,9 @@
 
 .addPoints <- function(poly, steps = 5) {
   colnames(poly) <- NULL
-  polygon_coords <- as.matrix(poly[,1:2])
+  polygon_coords <- as.matrix(poly[,c(1,2)])
   new_coords <- poly[1,]
-  for(i in 1:(nrow(poly)-1)){
+  for(i in seq_len(nrow(poly)-1)){
     new_xy <- cbind(seq(polygon_coords[i,1],
                        polygon_coords[i+1,1], length.out = steps+1),
                    seq(polygon_coords[i,2],

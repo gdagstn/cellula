@@ -22,7 +22,7 @@ plotModularity <- function(sce, name, type = "heatmap") {
     m <- as.data.frame(expand.grid(seq_along(rownames(modmat)), 
                                   seq_along(rownames(modmat))))
     colnames(m) <- c("x", "y")
-    m$value <- sapply(seq_len(nrow(m)), 
+    m$value <- vapply(seq_len(nrow(m)), 
                      function(x) modmat[m[x,1], m[x,2]])
       
     p <- ggplot(m, aes(x = .data[["x"]], y = .data[["y"]])) + 
@@ -43,7 +43,6 @@ plotModularity <- function(sce, name, type = "heatmap") {
                                        mode="upper",
                                        weighted=TRUE,
                                        diag=FALSE)
-    set.seed(420)
     plot(cgr,
          edge.width=E(cgr)$weight*5,
          layout=igraph::layout_with_lgl,
@@ -176,14 +175,14 @@ plot_UMAP <- function(sce,
   }
 
 
-  udf <- as.data.frame(reducedDim(sce, umap_slot)[,1:2])
+  udf <- as.data.frame(reducedDim(sce, umap_slot)[,c(1,2)])
   udf <- udf[complete.cases(udf),]
 
   # Rescaling
   if(rescale) {
     orig_range <- lapply(udf, range)
     names(orig_range) <- c("x", "y")
-    udf[,1:2] <- apply(udf[,1:2], 2, function(x) (x-min(x))/diff(range(x)))
+    udf[,c(1,2)] <- apply(udf[,c(1,2)], 2, function(x) (x-min(x))/diff(range(x)))
   }
 
   colnames(udf) <- c("x", "y")
@@ -801,11 +800,11 @@ plot_Coldata <- function(sce,
   # Calculate Jaccard index
   jdf <- expand.grid(levels(df[,x]), levels(df[,y]))
 
-  jdf$intersection <- apply(jdf[,1:2], 1, function(row) {
+  jdf$intersection <- apply(jdf[,c(1,2)], 1, function(row) {
     length(intersect(which(df[,1] == row[1]), which(df[,2] == row[2])))
   })
 
-  jdf$union <- apply(jdf[,1:2], 1, function(row) {
+  jdf$union <- apply(jdf[,c(1,2)], 1, function(row) {
     length(union(which(df[,1] == row[1]), which(df[,2] == row[2])))
   })
 

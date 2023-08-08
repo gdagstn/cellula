@@ -192,7 +192,7 @@ findTrajectories <- function(sce, dr = "PCA", clusters, method = "slingshot",
     
     if(start == "auto") {
       if(!any(colnames(colData(sce)) == "entropy"))
-        if(verbose) cat("Calculating per-cell entropy\n")
+        if(verbose) message("Calculating per-cell entropy\n")
         sce$entropy <- apply(counts(sce), 2, .getEntropy) 
       ent_means <- lapply(split(colData(sce)$entropy, colData(sce)[,clusters]), mean)
       start <- unique(colData(sce)[,clusters])[which.max(ent_means)]
@@ -314,7 +314,7 @@ findTrajectories <- function(sce, dr = "PCA", clusters, method = "slingshot",
                            "sp" = rownames(sp_coords)[nns],
                            row.names = rownames(wp_coords))
       names(nns) <- matched$sp
-      wpsp_coords <- reducedDim(sce, dr_embed)[nns,1:2]
+      wpsp_coords <- reducedDim(sce, dr_embed)[nns,c(1,2)]
       rownames(wpsp_coords) <- rownames(wp_coords)
       segs <- as_data_frame(cds@principal_graph$UMAP)
       segs$x0 <- wpsp_coords[segs$from,1]
@@ -354,7 +354,7 @@ findTrajectories <- function(sce, dr = "PCA", clusters, method = "slingshot",
     names(verts) <- names(V(cds@principal_graph$UMAP))
     
     # Weight by the number of cells closest to each node - more cells, closer points
-    gv$weight <- apply(gv[,1:2], 1, function(x) max(length(verts[[x[1]]]), length(verts[[x[2]]])))
+    gv$weight <- apply(gv[,c(1,2)], 1, function(x) max(length(verts[[x[1]]]), length(verts[[x[2]]])))
     
     # Fruchterman-Rheingold layout
     l <- layout_with_fr(graph_from_data_frame(gv))
@@ -383,7 +383,7 @@ findTrajectories <- function(sce, dr = "PCA", clusters, method = "slingshot",
     
     coords <- do.call(rbind, coords)
     rownames(coords) <- as.character(coords$order)
-    init <- as.matrix(coords[colnames(sce),1:2])
+    init <- as.matrix(coords[colnames(sce),c(1,2)])
     
     # Reassign points using UMAP
     frum <- umap(init, 
@@ -620,7 +620,7 @@ makeMetacells  <- function(sce, w = 10, group = NULL, dr = "PCA", ndims = 20) {
       names(clustl) <- gv
       memberships <- unlist(clustl, use.names = TRUE)
       groups <- rep(gv, lengths(clustl))
-      names(memberships) <- sapply(names(memberships), function(x) 
+      names(memberships) <- vapply(names(memberships), function(x) 
         unlist(strsplit(x, split = "[.]"))[-1])
       ref <- data.frame(groups = groups, 
                        membership = memberships, 

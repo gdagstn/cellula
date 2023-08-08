@@ -80,69 +80,46 @@
 #' @importFrom BiocParallel SerialParam 
 #' @export
 
-assignIdentities <- function(sce,
-                             genesets = NULL,
-                             method,
-                             ref = NULL,
-                             assay = NULL,
-                             verbose = TRUE,
-                             name = NULL,
-                             return_scores = FALSE,
-                             kcdf = "Gaussian",
-                             BPPARAM = SerialParam(),
-                             ...) {
+assignIdentities <- function(sce, genesets = NULL, method, ref = NULL, 
+                             assay = NULL, verbose = TRUE, name = NULL,
+                             return_scores = FALSE, kcdf = "Gaussian",
+                             BPPARAM = SerialParam(), ...) {
   # Checks
-  ep = .redm("{cellula::assignIdentities()} - ")
-  if (!is(sce, "SingleCellExperiment"))
-    stop(ep, "Must provide a SingleCellExperiment object")
-  if (!method %in% c("AUC", "Seurat", "ssGSEA", "UCell", "Jaitin")) 
-    stop(ep, "method not recognized - must be one of \"AUC\", \"Seurat\", 
-             \"ssGSEA\", \"UCell\", \"Jaitin\"")
-  if (is(genesets, "character")) {
-    if (is.null(name)) name <- "signature"
-    genesets <- list(genesets)
-    names(genesets) <- name
-  }
-
+    ep = .redm("{cellula::assignIdentities()} - ")
+    if (!is(sce, "SingleCellExperiment"))
+        stop(ep, "Must provide a SingleCellExperiment object")
+    if (!method %in% c("AUC", "Seurat", "ssGSEA", "UCell", "Jaitin")) 
+        stop(ep, "method not recognized - must be one of \"AUC\", \"Seurat\", 
+            \"ssGSEA\", \"UCell\", \"Jaitin\"")
+    if (is(genesets, "character")) {
+        if (is.null(name)) name <- "signature"
+        genesets <- list(genesets)
+        names(genesets) <- name
+    }
   # Assignment module
-  switch(method,
-         "AUC" <- {sce = .assignIdentities_AUC(sce,
-                                              genesets,
-                                              verbose,
-                                              name = name,
+    switch(method,
+        "AUC" = {sce = .assignIdentities_AUC(sce, genesets, verbose, 
+                                              name = name, 
                                               return_scores = return_scores,
-                                              BPPARAM = BPPARAM,
-                                              ...)},
-         "Seurat" <- {sce = .assignIdentities_Seurat(sce,
-                                                    genesets,
-                                                    verbose,
-                                                    name = name,
+                                              BPPARAM = BPPARAM, ...)},
+        "Seurat" = {sce = .assignIdentities_Seurat(sce, genesets, verbose,
+                                                    name = name, 
                                                     return_scores = return_scores,
                                                     ...)},
-         "ssGSEA" <- {sce = .assignIdentities_ssGSEA(sce,
-                                                    genesets,
-                                                    verbose,
-                                                    name = name,
-                                                    assay = assay,
+        "ssGSEA" = {sce = .assignIdentities_ssGSEA(sce, genesets, verbose,
+                                                    name = name, assay = assay,
                                                     return_scores = return_scores,
-                                                    kcdf = kcdf,
-                                                    ...)},
-         "UCell" <- {sce = .assignIdentities_UCell(sce,
-                                                  genesets,
-                                                  verbose,
-                                                  name = name,
+                                                    kcdf = kcdf, ...)},
+        "UCell" = {sce = .assignIdentities_UCell(sce, genesets, verbose, 
+                                                  name = name, 
                                                   return_scores = return_scores,
                                                   ...)},
-         "Jaitin" <- {sce = .assignIdentities_Jaitin(sce,
-                                                   ref,
-                                                   assay,
-                                                   verbose,
-                                                   name = name,
+        "Jaitin" = {sce = .assignIdentities_Jaitin(sce, ref, assay, verbose,
+                                                   name = name, 
                                                    return_scores = return_scores,
                                                    ...)}
-         )
-
-  return(sce)
+    )
+    sce
 }
 
 #' @importFrom SummarizedExperiment colData
@@ -164,18 +141,16 @@ assignIdentities <- function(sce,
       stop(ep, "the `AUCell` package must be installed first.\n
                 Run `BiocManager::install(\"AUCell\") to use this function.")
     if (is.null(name)) labelname <- "labels_AUC" else labelname <- name
-    if (verbose) cat(.bluem("[ANNO/AUC]"), "Assigning cell labels \n")
+    if (verbose) message(.bluem("[ANNO/AUC]"), "Assigning cell labels.")
   
    rankings <- AUCell::AUCell_buildRankings(counts(sce),
                                              splitByBlocks = TRUE,
                                              plotStats = FALSE,
                                              verbose = verbose,
                                              BPPARAM = BPPARAM)
-   aucs <- AUCell::AUCell_calcAUC(genesets,
-                                  rankings,
+   aucs <- AUCell::AUCell_calcAUC(genesets, rankings, 
                                   aucMaxRank = ceiling(0.2 * nrow(rankings)),
-                                  nCores = BPPARAM$workers, 
-                                  ...)
+                                  nCores = BPPARAM$workers,                                   ...)
    scores <- as.data.frame(t(assay(aucs)))
   
    if (length(genesets) > 1) {
@@ -208,7 +183,7 @@ assignIdentities <- function(sce,
   
   if (is.null(name)) labelname <- "labels_Seurat" else labelname <- name
 
-  if (verbose) cat(.bluem("[ANNO/Seurat]"), "Adding module scores \n")
+  if (verbose) message(.bluem("[ANNO/Seurat]"), "Adding module scores.")
   old_colnames <- colnames(sce)
   if (any(duplicated(colnames(sce)))) {
     colnames(sce) <- paste0("cell_", seq_len(ncol(sce)))
@@ -257,7 +232,7 @@ assignIdentities <- function(sce,
   if (is.null(assay))
     stop(ep, "You must specify the assay argument (typically \"logcounts\"")
 
-  if (verbose) cat(.bluem("[ANNO/ssGSEA]"), "Calculating ssGSEA \n")
+  if (verbose) message(.bluem("[ANNO/ssGSEA]"), "Calculating ssGSEA.")
   ss <- GSVA::gsva(sce,
                   gset.idx.list = genesets,
                   annotation = assay,
@@ -366,7 +341,7 @@ assignIdentities <- function(sce,
   ref_common[ref_common == 0] <- 1e-8
   counts_common <- assay(sce, assay)[common,]
   
-  if (verbose) cat(.bluem("[ANNO/JAITIN]"), "Calculating log-likelihood \n")
+  if (verbose) message(.bluem("[ANNO/JAITIN]"), "Calculating log-likelihood.")
 
   loglik <- as(t(t(counts_common) %*% log(ref_common)), "matrix")
   

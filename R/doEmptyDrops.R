@@ -58,7 +58,7 @@ doEmptyDrops <- function(sce,
                             keep_droplets <- empty_droplets$FDR <= emptydrops_alpha
                             scelist[[x]]$empty <- factor(ifelse(empty_droplets$FDR <= emptydrops_alpha, "ok", "empty"))
                             scelist[[x]]$empty[which(is.na(scelist[[x]]$empty))] <- "empty"
-                            if (verbose) print(table(Sig = keep_droplets, Limited = empty_droplets$Limited))
+                            if (verbose) message(table(Sig = keep_droplets, Limited = empty_droplets$Limited))
                             if (verbose) message("Empty cells (", x, "): ", sum(scelist[[x]]$empty == "empty"))
                             return(scelist[[x]]$empty)
                           }, BPPARAM = parallel_param)

@@ -96,7 +96,7 @@ cellula <- function(sce,
   # Make folder
   if(is.null(name)) {
     name <- .randomName()
-    cat(paste0("No name selected so the randomly assigned name is: ", name, "\n"))
+    message("No name selected so the randomly assigned name is: ", name)
   }
 
   dir.create(name)
@@ -147,7 +147,7 @@ cellula <- function(sce,
     metadata(sce)$cellula_log <- clog
     
     if(save_temp) {
-      if(verbose) cat("Saving temporary file. \n")
+      if(verbose) message("Saving temporary file.")
       saveRDS(sce, file = paste0("./", name, "/", name, "_tempSCE.RDS"))
     }
   }
@@ -169,7 +169,7 @@ cellula <- function(sce,
   
   # Integration module
     if(!is.null(batch)) {
-    if(verbose) cat(.bluem("[INT]"), "Integration. \n")
+    if(verbose) message(.bluem("[INT]"), "Integration.")
     sce <- integrateSCE(sce,
                        batch = batch,
                        hvgs = hvgs,
@@ -180,13 +180,13 @@ cellula <- function(sce,
                        verbose = verbose)
   }
 
-  if(verbose) cat("Saving final object.\n")
+  if(verbose) message("Saving final object.")
   saveRDS(sce, file = paste0("./", name, "/", name, "_PS_INT_SCE.RDS"))
   if (save_temp) {
-    if (verbose) cat("Deleting temporary file. \n")
+    if (verbose) message("Deleting temporary file.")
     file.remove(paste0("./", name, "/", name, "_tempSCE.RDS"))
   }
-  if (verbose) cat("All done. Input cells: ", ncells, ", final cell number: ", ncol(sce), ".\n")
+  if (verbose) message("All done. Input cells: ", ncells, ", final cell number: ", ncol(sce))
   metadata(sce)$cellula_log[["output_cells"]] <- ncol(sce)
   if (!is.null(batch)) {
     metadata(sce)$cellula_log[["output_by_batch"]] <- table(colData(sce)[,batch])
