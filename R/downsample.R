@@ -30,7 +30,7 @@ downsampleCounts <- function(sce,
                              verbose = TRUE) {
   
   # Checks
-  ep = .redm("{cellula::downsampleCounts()} - ")
+  ep <- .redm("{cellula::downsampleCounts()} - ")
   if (!is(sce, "SingleCellExperiment")) 
     stop(ep, "must provide a SingleCellExperiment object")
   if (!is.null(target) & !is(target, numeric)) 
@@ -40,45 +40,45 @@ downsampleCounts <- function(sce,
   # TO DO
   # --------------------------------------------- #
   
-  mat = assay(sce, "counts")
-  all_genes = rownames(mat)
+  mat <- assay(sce, "counts")
+  all_genes <- rownames(mat)
 
-  if (is.null(target)) target = min(colSums(mat))
+  if (is.null(target)) target <- min(colSums(mat))
   if (!is.null(target)) {
     if (all(colSums(mat) < target)) {
       stop("No cells left above target!")
     }
     if(any(colSums(mat) < target)) {
       if(verbose) message("Removing cells with total count below target")
-      mat = mat[,colSums(mat) > target]
+      mat <- mat[,colSums(mat) > target]
     }
   }
 
-  chunks = split(seq_len(ncol(mat)),
+  chunks <- split(seq_len(ncol(mat)),
                  ceiling(seq_along(seq_len(ncol(mat)))/chunksize))
 
-  ds = bplapply(chunks, function(n) {
-    ch = mat[,n,drop=FALSE]
-    dsch = apply(ch, 2, function(x) {
-      nz_genes = rownames(mat)[which(x > 0)]
-      nz_genes = rep(nz_genes, x[nz_genes])
+  ds <- bplapply(chunks, function(n) {
+    ch <- mat[,n,drop=FALSE]
+    dsch <- apply(ch, 2, function(x) {
+      nz_genes <- rownames(mat)[which(x > 0)]
+      nz_genes <- rep(nz_genes, x[nz_genes])
 
-      sim = sample(nz_genes,
+      sim <- sample(nz_genes,
                    size = min(target, length(nz_genes)),
                    replace = FALSE)
 
-      genes_sampled = table(sim)[nz_genes]
-      genes_sampled = genes_sampled[!is.na(genes_sampled)]
-      x[all_genes] = 0
-      x[names(genes_sampled)] = genes_sampled
-      names(x) = NULL
-      xs = sparseVector(x[x>0],
+      genes_sampled <- table(sim)[nz_genes]
+      genes_sampled <- genes_sampled[!is.na(genes_sampled)]
+      x[all_genes] <- 0
+      x[names(genes_sampled)] <- genes_sampled
+      names(x) <- NULL
+      xs <- sparseVector(x[x>0],
                         length = length(x),
                         i = which(x > 0))
       xs
     })
-    dsc = as(do.call(cbind, lapply(dsch, as.matrix, sparse = TRUE)), "dgCMatrix")
-    dimnames(dsc) = dimnames(mat[,n])
+    dsc <- as(do.call(cbind, lapply(dsch, as.matrix, sparse = TRUE)), "dgCMatrix")
+    dimnames(dsc) <- dimnames(mat[,n])
     dsc
   },
   BPPARAM = BPPARAM)
@@ -119,7 +119,7 @@ downsampleCells <- function(sce,
   
   ## Sanity checks
   # Error prefix
-  ep = .redm("{cellula::downsampleCells()} - ")
+  ep <- .redm("{cellula::downsampleCells()} - ")
   
   if (!is(sce, "SingleCellExperiment")) 
     stop(ep, "must provide a SingleCellExperiment object")
@@ -134,18 +134,18 @@ downsampleCells <- function(sce,
   if(!sample_by %in% colnames(colData(sce))) 
     stop(ep, sample_by, " is not a column in colData(sce)")
 
-  sampled = bplapply(unique(colData(sce)[,sample_by]), function(x) {
+  sampled <- bplapply(unique(colData(sce)[,sample_by]), function(x) {
     if(verbose) message(.bluem("[DOWNSAMPLE]"), "Downsampling cells in ", x)
-    curr = sce[, colData(sce)[,sample_by] == x]
+    curr <- sce[, colData(sce)[,sample_by] == x]
     if(ncol(curr) < min) {
       warning("Total cell number for ", x, " is less than min. \nWill retain all cells in ", x, ".")
-      min = ncol(curr)
+      min <- ncol(curr)
     }
-    subp = max(c(floor(ncol(curr)*proportion), min))
-    keep = colnames(curr)[sample(x = seq_along(colnames(curr)), size = subp)]
+    subp <- max(c(floor(ncol(curr)*proportion), min))
+    keep <- colnames(curr)[sample(x = seq_along(colnames(curr)), size = subp)]
   },
   BPPARAM = BPPARAM)
-  keep = Reduce(c, sampled)
+  keep <- Reduce(c, sampled)
   sce[,keep]
 }
 

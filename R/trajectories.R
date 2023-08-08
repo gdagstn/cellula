@@ -167,7 +167,7 @@ findTrajectories <- function(sce, dr = "PCA", clusters, method = "slingshot",
     
     ## Sanity checks
     # Error prefix
-    ep = "{cellula::findTrajectories()} - "
+    ep <- "{cellula::findTrajectories()} - "
     
     if(!is(sce, "SingleCellExperiment"))
       stop(paste0(ep, "Must provide a SingleCellExperiment object"))
@@ -193,30 +193,30 @@ findTrajectories <- function(sce, dr = "PCA", clusters, method = "slingshot",
     if(start == "auto") {
       if(!any(colnames(colData(sce)) == "entropy"))
         if(verbose) cat("Calculating per-cell entropy\n")
-        sce$entropy = apply(counts(sce), 2, .getEntropy) 
-      ent_means = lapply(split(colData(sce)$entropy, colData(sce)[,clusters]), mean)
-      start = unique(colData(sce)[,clusters])[which.max(ent_means)]
+        sce$entropy <- apply(counts(sce), 2, .getEntropy) 
+      ent_means <- lapply(split(colData(sce)$entropy, colData(sce)[,clusters]), mean)
+      start <- unique(colData(sce)[,clusters])[which.max(ent_means)]
     }
     
-    if(ndims > ncol(reducedDim(sce, dr))) ndims = ncol(reducedDim(sce, dr))
+    if(ndims > ncol(reducedDim(sce, dr))) ndims <- ncol(reducedDim(sce, dr))
     
     # Trajectory inference module
     if(method == "slingshot"){
-      sce = .getSlingshotTrajectories(sce = sce, dr = dr, ndims = ndims,
+      sce <- .getSlingshotTrajectories(sce = sce, dr = dr, ndims = ndims,
                                       clusters = clusters, start = start, 
                                       dr_embed = dr_embed, omega = omega, 
                                       omega_scale = omega_scale, do_de = do_de,
                                       batch_de = batch_de, verbose = verbose)
       
     } else if(method == "monocle") {
-      sce = .getMonocleTrajectories(sce = sce, dr = dr, ndims = ndims,
+      sce <- .getMonocleTrajectories(sce = sce, dr = dr, ndims = ndims,
                                     clusters = clusters, start = start, 
                                     Monocle_lg_control = Monocle_lg_control,
                                     dr_embed = dr_embed, invert = invert,
                                     add_metadata = add_metadata, verbose = verbose)
       
     } else if(method == "MODDPT") { # UNDOCUMENTED (WIP)
-      sce = .getDPTtrajectories(sce = sce, dr = dr, ndims = ndims, 
+      sce <- .getDPTtrajectories(sce = sce, dr = dr, ndims = ndims, 
                                 clusters = clusters, start = start, 
                                 add_metadata = add_metadata, verbose = verbose)
     }
@@ -244,13 +244,13 @@ findTrajectories <- function(sce, dr = "PCA", clusters, method = "slingshot",
                                     add_metadata = TRUE,
                                     verbose = TRUE){
   
-    ep = "{cellula::.getMonocleTrajectories()} - "
+    ep <- "{cellula::.getMonocleTrajectories()} - "
     if(!"monocle3" %in% rownames(installed.packages()))
       stop(paste0(.redm(ep), "the `monocle3` package must be installed first.\n
                   Run `BiocManager::install(\"cole-trapnell-lab/monocle3\") to use this function."))
-    rd = rowData(sce)
-    if(!("Symbol" %in% colnames(rd))) rd$Symbol = rownames(rd)
-    rd$gene_short_name = rd$Symbol
+    rd <- rowData(sce)
+    if(!("Symbol" %in% colnames(rd))) rd$Symbol <- rownames(rd)
+    rd$gene_short_name <- rd$Symbol
     if(verbose) message(paste0(.bluem("[TRAJ/Monocle3] "),"Creating CDS object"))
     cds <- monocle3::new_cell_data_set(
                       assay(sce, "counts"),
@@ -299,37 +299,37 @@ findTrajectories <- function(sce, dr = "PCA", clusters, method = "slingshot",
     
     if (dr_embed == "FR") {
       if (verbose) message(paste0(.bluem("[TRAJ/Monocle3] "),"Embedding in 2D"))
-      frembed = .embedFR(cds = cds, sce = sce, dr = dr, ndims = ndims)
-      metadata(sce)[["Monocle_embedded_curves"]] = frembed$segs
-      #reducedDim(sce, "FR") = frembed$init
-      reducedDim(sce, "UMAP_FR") = frembed$dr_embed
+      frembed <- .embedFR(cds = cds, sce = sce, dr = dr, ndims = ndims)
+      metadata(sce)[["Monocle_embedded_curves"]] <- frembed$segs
+      #reducedDim(sce, "FR") <- frembed$init
+      reducedDim(sce, "UMAP_FR") <- frembed$dr_embed
     } else if (!is.null(dr_embed) & (dr_embed != "FR")) {
       if (verbose) message(paste0(.bluem("[TRAJ/Monocle3] "),"Embedding in 2D"))
-      wp_coords = t(cds@principal_graph_aux$UMAP$dp_mst)
-      sp_coords = reducedDim(sce, dr)[,seq_len(ndims)]
-      nns = queryKNN(query = wp_coords,
+      wp_coords <- t(cds@principal_graph_aux$UMAP$dp_mst)
+      sp_coords <- reducedDim(sce, dr)[,seq_len(ndims)]
+      nns <- queryKNN(query = wp_coords,
                      X =  sp_coords,
                      k = 1)$index[,1]
-      matched = data.frame("wp" = rownames(wp_coords), 
+      matched <- data.frame("wp" = rownames(wp_coords), 
                            "sp" = rownames(sp_coords)[nns],
                            row.names = rownames(wp_coords))
-      names(nns) = matched$sp
-      wpsp_coords = reducedDim(sce, dr_embed)[nns,1:2]
-      rownames(wpsp_coords) = rownames(wp_coords)
-      segs = as_data_frame(cds@principal_graph$UMAP)
-      segs$x0 = wpsp_coords[segs$from,1]
-      segs$y0 = wpsp_coords[segs$from,2]
-      segs$x1 = wpsp_coords[segs$to,1]
-      segs$y1 = wpsp_coords[segs$to,2]
-      segs$from = matched[segs$from, "sp"]
-      segs$to = matched[segs$to, "sp"]
-      metadata(sce)[["Monocle_embedded_curves"]] = segs
+      names(nns) <- matched$sp
+      wpsp_coords <- reducedDim(sce, dr_embed)[nns,1:2]
+      rownames(wpsp_coords) <- rownames(wp_coords)
+      segs <- as_data_frame(cds@principal_graph$UMAP)
+      segs$x0 <- wpsp_coords[segs$from,1]
+      segs$y0 <- wpsp_coords[segs$from,2]
+      segs$x1 <- wpsp_coords[segs$to,1]
+      segs$y1 <- wpsp_coords[segs$to,2]
+      segs$from <- matched[segs$from, "sp"]
+      segs$to <- matched[segs$to, "sp"]
+      metadata(sce)[["Monocle_embedded_curves"]] <- segs
     }
     
     if(add_metadata) {
       if(verbose) message(paste0(.bluem("[TRAJ/Monocle3] "), "Adding metadata"))
-      metadata(sce)[["Monocle_principal_graph"]] = cds@principal_graph$UMAP
-      metadata(sce)[["Monocle_principal_graph_aux"]] = cds@principal_graph_aux$UMAP
+      metadata(sce)[["Monocle_principal_graph"]] <- cds@principal_graph$UMAP
+      metadata(sce)[["Monocle_principal_graph_aux"]] <- cds@principal_graph_aux$UMAP
     }
     
     if(verbose) message(paste0(.bluem("[TRAJ/Monocle3] "),"Done."))
@@ -348,59 +348,59 @@ findTrajectories <- function(sce, dr = "PCA", clusters, method = "slingshot",
 .embedFR <- function(cds, sce, dr, ndims) {
     
     # Vertices of the principal graph in UMAP
-    gv = as_data_frame(cds@principal_graph$UMAP)
-    cvert = as.data.frame(cds@principal_graph_aux$UMAP$pr_graph_cell_proj_closest_vertex)
-    verts = lapply(split(cvert, cvert$V1), rownames)
-    names(verts) = names(V(cds@principal_graph$UMAP))
+    gv <- as_data_frame(cds@principal_graph$UMAP)
+    cvert <- as.data.frame(cds@principal_graph_aux$UMAP$pr_graph_cell_proj_closest_vertex)
+    verts <- lapply(split(cvert, cvert$V1), rownames)
+    names(verts) <- names(V(cds@principal_graph$UMAP))
     
     # Weight by the number of cells closest to each node - more cells, closer points
-    gv$weight = apply(gv[,1:2], 1, function(x) max(length(verts[[x[1]]]), length(verts[[x[2]]])))
+    gv$weight <- apply(gv[,1:2], 1, function(x) max(length(verts[[x[1]]]), length(verts[[x[2]]])))
     
     # Fruchterman-Rheingold layout
-    l = layout_with_fr(graph_from_data_frame(gv))
-    rownames(l) = names(V(graph_from_data_frame(gv)))
+    l <- layout_with_fr(graph_from_data_frame(gv))
+    rownames(l) <- names(V(graph_from_data_frame(gv)))
     
-    coords = list()
-    ptree =  cds@principal_graph_aux$UMAP$pr_graph_cell_proj_tree
+    coords <- list()
+    ptree <- cds@principal_graph_aux$UMAP$pr_graph_cell_proj_tree
     
     traj.coord <- cds@principal_graph_aux@listData[["UMAP"]][["pseudotime"]]
     
     # Randomize position of cells on the FR layout but keep order consistent with PT
     for(i in names(verts)) {
-      xs = rnorm(n = length(verts[[i]]), mean = l[i,1], sd = 0.15*sqrt(length(verts[[i]])))
-      ys = rnorm(n = length(verts[[i]]), mean = l[i,2], sd = 0.15*sqrt(length(verts[[i]])))
-      pts = data.frame(x = xs, y = ys, row.names = verts[[i]]) #random assignment
+      xs <- rnorm(n = length(verts[[i]]), mean = l[i,1], sd = 0.15*sqrt(length(verts[[i]])))
+      ys <- rnorm(n = length(verts[[i]]), mean = l[i,2], sd = 0.15*sqrt(length(verts[[i]])))
+      pts <- data.frame(x = xs, y = ys, row.names = verts[[i]]) #random assignment
       
-      order_pt = names(V(subgraph(ptree, verts[[i]])))
+      order_pt <- names(V(subgraph(ptree, verts[[i]])))
       
-      extreme_pts = traj.coord[c(order_pt[1], order_pt[length(order_pt)])]
-      if(diff(extreme_pts) < 0) order_pt = rev(order_pt)
+      extreme_pts <- traj.coord[c(order_pt[1], order_pt[length(order_pt)])]
+      if(diff(extreme_pts) < 0) order_pt <- rev(order_pt)
         
-      pts = pts[order_pt,]
-      pts$order = order_pt
-      coords[[i]] = pts
+      pts <- pts[order_pt,]
+      pts$order <- order_pt
+      coords[[i]] <- pts
     }
     
-    coords = do.call(rbind, coords)
-    rownames(coords) = as.character(coords$order)
-    init = as.matrix(coords[colnames(sce),1:2])
+    coords <- do.call(rbind, coords)
+    rownames(coords) <- as.character(coords$order)
+    init <- as.matrix(coords[colnames(sce),1:2])
     
     # Reassign points using UMAP
-    frum = umap(init, 
+    frum <- umap(init, 
                 init = init, 
                 n_neighbors = floor(sqrt(ncol(sce))), 
                 min_dist = 1)
     
-    segs = as_data_frame(cds@principal_graph$UMAP)
+    segs <- as_data_frame(cds@principal_graph$UMAP)
     
     # Segments of the principal graph on UMAP
-    nns = queryKNN(init, l, k = 1)
-    matched = data.frame(wp = rownames(l), sp = nns$index, row.names = rownames(l))
+    nns <- queryKNN(init, l, k = 1)
+    matched <- data.frame(wp = rownames(l), sp = nns$index, row.names = rownames(l))
     
-    segs$x0 = frum[matched[segs$from,2],1]
-    segs$y0 = frum[matched[segs$from,2],2]
-    segs$x1 = frum[matched[segs$to,2],1]
-    segs$y1 = frum[matched[segs$to,2],2]
+    segs$x0 <- frum[matched[segs$from,2],1]
+    segs$y0 <- frum[matched[segs$from,2],2]
+    segs$x1 <- frum[matched[segs$to,2],1]
+    segs$y1 <- frum[matched[segs$to,2],2]
     
     return(list(segs = segs, dr_embed = frum))
 }
@@ -424,7 +424,7 @@ findTrajectories <- function(sce, dr = "PCA", clusters, method = "slingshot",
                                       verbose = FALSE,
                                       BPPARAM = SerialParam()){
   
-    ep = "{cellula::.getSlingshotTrajectories()} - "
+    ep <- "{cellula::.getSlingshotTrajectories()} - "
     
     if(!"slingshot" %in% rownames(installed.packages()))
       stop(paste0(ep, "the `slingshot` package must be installed first.\n
@@ -442,24 +442,25 @@ findTrajectories <- function(sce, dr = "PCA", clusters, method = "slingshot",
     metadata(sce)[["Slingshot_lineages"]] = slingshot::slingLineages(sce)
     if (!is.null(dr_embed)) {
       if (verbose) message(.bluem("[TRAJ/Slingshot] "),"Embedding curves")
-          ap = max(ncol(sce), 1000)
-          embedded = lapply(slingshot::slingCurves(
+          ap <- max(ncol(sce), 1000)
+          embedded <- lapply(slingshot::slingCurves(
             slingshot::embedCurves(sce, newDimRed = dr_embed, approx_points = ap)),
                             function(x) x$s)
-            embedded = lapply(embedded, function(x) {
+            embedded <- lapply(embedded, function(x) {
             data.frame(x0 = x[seq_len(ap-1),1], 
                        y0 = x[seq_len(ap-1),2], 
                        x1 = x[2:ap,1], 
                        y1 = x[2:ap,2])
                     })
-          embedded = do.call(rbind, embedded)
-          metadata(sce)[["Slingshot_embedded_curves"]] = embedded
+          embedded <- do.call(rbind, embedded)
+          metadata(sce)[["Slingshot_embedded_curves"]] <- embedded
     }
     
     if (do_de) {
       if (verbose) message(.bluem("[TRAJ/Slingshot] "),"Calculating DE along lineages")
-      if (!is.null(batch_de)) batch = factor(colData(sce)[,batch_de]) else batch = NULL
-      sling_colnames = paste0("slingPseudotime_", seq_along(slingshot::slingLineages(sce)))
+      if (!is.null(batch_de)) 
+        batch <- factor(colData(sce)[,batch_de]) else batch <- NULL
+      sling_colnames <- paste0("slingPseudotime_", seq_along(slingshot::slingLineages(sce)))
       sling_tests <- lapply(sling_colnames, function(x)
         TSCAN::testPseudotime(assay(sce, "logcounts"),
                        pseudotime = colData(sce)[,x],
@@ -496,7 +497,7 @@ findTrajectories <- function(sce, dr = "PCA", clusters, method = "slingshot",
                                 verbose = FALSE){#,
                                 #BPPARAM = SerialParam()) {
   
-    ep = .redm("{cellula::.getDPTtrajectories()} - ")
+    ep <- .redm("{cellula::.getDPTtrajectories()} - ")
     
     if(!"destiny" %in% rownames(installed.packages()))
       stop(paste0(.redm(ep), "the `destiny` package must be installed first.\n
@@ -504,7 +505,7 @@ findTrajectories <- function(sce, dr = "PCA", clusters, method = "slingshot",
     
     if(verbose) message(paste0(.bluem("[TRAJ/MOD-DPT] "),"Building MST on modularity graph"))
     
-    modslot = paste0("modularity_", clusters)
+    modslot <- paste0("modularity_", clusters)
     
     if(!modslot %in% names(metadata(sce)))
       stop(ep, "Modularity matrix not found! Pairwise modularity should have been 
@@ -512,55 +513,55 @@ findTrajectories <- function(sce, dr = "PCA", clusters, method = "slingshot",
            You can run rebuildModularity() for an approximate modularity matrix
            construction.")
     
-    modmat = metadata(sce)[[modslot]]
+    modmat <- metadata(sce)[[modslot]]
     mgr <- graph_from_adjacency_matrix(modmat, mode = "upper", 
                                        weighted = TRUE, diag = FALSE)
-    msgr = mst(mgr, weights = 1/E(mgr)$weight)
-    outd = degree(msgr, v = V(msgr), mode = "out")
-    outnodes = names(outd)[outd == 1]
-    paths = all_shortest_paths(msgr, from = start, to = outnodes)
-    paths = lapply(paths$res, function(x) as.numeric(x))
+    msgr <- mst(mgr, weights = 1/E(mgr)$weight)
+    outd <- degree(msgr, v = V(msgr), mode = "out")
+    outnodes <- names(outd)[outd == 1]
+    paths <- all_shortest_paths(msgr, from = start, to = outnodes)
+    paths <- lapply(paths$res, function(x) as.numeric(x))
     
-    dptlist = dmlist = list()
+    dptlist <- dmlist <- list()
     
     if(verbose) message(paste0(.bluem("[TRAJ/MOD-DPT] "),"Calculating diffusion maps and DPT"))
     
     for(i in seq_along(paths)) {
       if(verbose) {
-        path_text = paste(paths[[i]], collapse = " --> ")
+        path_text <- paste(paths[[i]], collapse = " --> ")
         message(.bluem("[TRAJ/MOD-DPT]"), "    Calculating diffusion for ", path_text)
       }
       curr = sce[,colData(sce)[,clusters] %in% paths[[i]]]
       reducedDim(curr, "pca") = reducedDim(curr, dr)
-      dmlist[[i]] = destiny::DiffusionMap(data = reducedDim(curr, "pca"), verbose = verbose)
-      dptlist[[i]] = destiny::DPT(dmlist[[i]])$dpt
-      names(dptlist[[i]]) = colnames(curr)
+      dmlist[[i]] <- destiny::DiffusionMap(data = reducedDim(curr, "pca"), verbose = verbose)
+      dptlist[[i]] <- destiny::DPT(dmlist[[i]])$dpt
+      names(dptlist[[i]]) <- colnames(curr)
       # Reordering
-      colData(sce)[[paste0("DPTpseudotime_", i)]] = NA
-      colData(sce)[names(dptlist[[i]]), paste0("DPTpseudotime_", i)] = dptlist[[i]]
-      ddf = data.frame(dpt = colData(sce)[[paste0("DPTpseudotime_", i)]],
+      colData(sce)[[paste0("DPTpseudotime_", i)]] <- NA
+      colData(sce)[names(dptlist[[i]]), paste0("DPTpseudotime_", i)] <- dptlist[[i]]
+      ddf <- data.frame(dpt = colData(sce)[[paste0("DPTpseudotime_", i)]],
                        clus = colData(sce)[,clusters])
-      ddf = ddf[!is.na(ddf$dpt),]
-      do = unlist(lapply(split(ddf$dpt, f = ddf$clus, drop = TRUE), mean))
-      do = do[as.character(paths[[i]])]
+      ddf <- ddf[!is.na(ddf$dpt),]
+      do <- unlist(lapply(split(ddf$dpt, f = ddf$clus, drop = TRUE), mean))
+      do <- do[as.character(paths[[i]])]
       if (length(do) > 1){
         if (all(diff(do) < 0)) {
           if(verbose)  message(.bluem("[TRAJ/MOD-DPT]"), "    Reordering ", path_text)
-          colData(sce)[[paste0("DPTpseudotime_", i)]] = max(ddf$dpt) - colData(sce)[[paste0("DPTpseudotime_", i)]]
+          colData(sce)[[paste0("DPTpseudotime_", i)]] <- max(ddf$dpt) - colData(sce)[[paste0("DPTpseudotime_", i)]]
         }
       }
     }
     
     if(!is.null(dr_embed)) {
-      segs = .embedDPT(sce, dimred = dr_embed)
+      segs <- .embedDPT(sce, dimred = dr_embed)
     }
     
     if(add_metadata) {
       if(verbose) message(paste0(.bluem("[TRAJ/MOD-DPT] "),"Adding metadata"))
-      metadata(sce)[["MODDPT_MST"]] = msgr
-      metadata(sce)[["MODDPT_lineages"]] = paths
-      metadata(sce)[["MODDPT_DiffusionMaps"]] = dmlist
-      if(!is.null(dr_embed)) metadata(sce)[["MODDPT_embedded_curves"]] = segs
+      metadata(sce)[["MODDPT_MST"]] <- msgr
+      metadata(sce)[["MODDPT_lineages"]] <- paths
+      metadata(sce)[["MODDPT_DiffusionMaps"]] <- dmlist
+      if(!is.null(dr_embed)) metadata(sce)[["MODDPT_embedded_curves"]] <- segs
     }
     sce
 }
@@ -589,7 +590,7 @@ findTrajectories <- function(sce, dr = "PCA", clusters, method = "slingshot",
 
 makeMetacells  <- function(sce, w = 10, group = NULL, dr = "PCA", ndims = 20) {
  
-    ep = .redm("{cellula::makeMetacells()} - ")
+    ep <- .redm("{cellula::makeMetacells()} - ")
     
     if(!is(sce, "SingleCellExperiment"))
       stop(ep, "Must provide a SingleCellExperiment object")
@@ -607,38 +608,38 @@ makeMetacells  <- function(sce, w = 10, group = NULL, dr = "PCA", ndims = 20) {
     # --------------------------------------------- #
     
     if(!is.null(group)) {
-      gv = as.character(unique(colData(sce)[,group]))
-      clustl = lapply(gv, function(x) {
-        s = sce[,colData(sce)[,group] == x]
-        spc = reducedDim(s, dr)[,seq_len(ndims)]
-        clust = kmeans(spc, centers = floor(ncol(s)/w), iter.max = 50)
-        memb = paste0(x, "_", clust$cluster)
-        names(memb) = colnames(s)
+      gv <- as.character(unique(colData(sce)[,group]))
+      clustl <- lapply(gv, function(x) {
+        s <- sce[,colData(sce)[,group] == x]
+        spc <- reducedDim(s, dr)[,seq_len(ndims)]
+        clust <- kmeans(spc, centers = floor(ncol(s)/w), iter.max = 50)
+        memb <- paste0(x, "_", clust$cluster)
+        names(memb) <- colnames(s)
         return(memb)
       })
-      names(clustl) = gv
-      memberships = unlist(clustl, use.names = TRUE)
-      groups = rep(gv, lengths(clustl))
-      names(memberships) = sapply(names(memberships), function(x) 
+      names(clustl) <- gv
+      memberships <- unlist(clustl, use.names = TRUE)
+      groups <- rep(gv, lengths(clustl))
+      names(memberships) <- sapply(names(memberships), function(x) 
         unlist(strsplit(x, split = "[.]"))[-1])
-      ref = data.frame(groups = groups, 
+      ref <- data.frame(groups = groups, 
                        membership = memberships, 
                        row.names = seq_along(memberships))
-      ref = ref[!duplicated(ref),]
-      rownames(ref) = ref$membership
+      ref <- ref[!duplicated(ref),]
+      rownames(ref) <- ref$membership
     } else {
-      dr = reducedDim(sce, dr)
-      clust = kmeans(dr, centers = floor(ncol(sce)/w), iter.max = 50)
-      memberships = clust$cluster
-      names(memberships) = colnames(sce)
+      dr <- reducedDim(sce, dr)
+      clust <- kmeans(dr, centers = floor(ncol(sce)/w), iter.max = 50)
+      memberships <- clust$cluster
+      names(memberships) <- colnames(sce)
     }
-    agg = summarizeAssayByGroup(sce, 
+    agg <- summarizeAssayByGroup(sce, 
                                 ids = memberships[colnames(sce)], 
                                 statistics = "sum")
     if(!is.null(group)) {
-      colData(agg)[,group] = ref[colData(agg)[,"ids"], "groups"]
+      colData(agg)[,group] <- ref[colData(agg)[,"ids"], "groups"]
     }
-    ret = SingleCellExperiment(assays = list(counts = assay(agg, "sum")),
+    ret <- SingleCellExperiment(assays = list(counts = assay(agg, "sum")),
                                colData = colData(agg),
                                rowData = rowData(agg))
     ret
@@ -666,17 +667,17 @@ makeMetacells  <- function(sce, w = 10, group = NULL, dr = "PCA", ndims = 20) {
 #' @noRd
 
 .embedDPT <- function(sce, dimred, dims = c(1,2), min_breaks = 20, smooth = TRUE) {
-  dimred = reducedDim(sce, dimred)[,dims]
-  ps = colnames(colData(sce))[grep("DPTpseudotime", colnames(colData(sce)))]
-  coordlist = lapply(ps, function(x) {
-      curr = dimred[!is.na(colData(sce)[,x]),]
-      dptcuts = cut(colData(sce)[,x][!is.na(colData(sce)[,x])], 
+  dimred <- reducedDim(sce, dimred)[,dims]
+  ps <- colnames(colData(sce))[grep("DPTpseudotime", colnames(colData(sce)))]
+  coordlist <- lapply(ps, function(x) {
+      curr <- dimred[!is.na(colData(sce)[,x]),]
+      dptcuts <- cut(colData(sce)[,x][!is.na(colData(sce)[,x])], 
                     breaks = max(min_breaks, round(sqrt(nrow(curr)))/3))
-      crds = lapply(unique(levels(dptcuts)), function(l) {
+      crds <- lapply(unique(levels(dptcuts)), function(l) {
         colMedians(curr[which(dptcuts == l),dims,drop=FALSE])})
-      cdf = data.frame(do.call(rbind, crds))
-      if(smooth) cdf = .smoothPolyline(cdf)
-      segs = data.frame(x0 = cdf$x[seq_len(nrow(cdf)-1)], 
+      cdf <- data.frame(do.call(rbind, crds))
+      if(smooth) cdf <- .smoothPolyline(cdf)
+      segs <- data.frame(x0 = cdf$x[seq_len(nrow(cdf)-1)], 
                         y0 = cdf$y[seq_len(nrow(cdf)-1)],
                         x1 = cdf$x[-1],
                         y1 = cdf$y[-1])

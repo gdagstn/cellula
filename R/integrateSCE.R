@@ -30,7 +30,7 @@
 #'
 #' @export
 
-integrateSCE = function(sce,
+integrateSCE <- function(sce,
                         batch,
                         hvgs,
                         hvg_ntop = 2000,
@@ -41,7 +41,7 @@ integrateSCE = function(sce,
                         verbose = FALSE){
   ## Sanity checks
   # Error prefix
-  ep = .redm("{cellula::integrateSCE()} - ")
+  ep <- .redm("{cellula::integrateSCE()} - ")
   
   if (!is(sce, "SingleCellExperiment"))
     stop(ep, "Must provide a SingleCellExperiment object")
@@ -54,7 +54,7 @@ integrateSCE = function(sce,
   
   if (is.null(neighbor_n)) {
     message(message(.bluem("[INT]"), "neighbor_n was not supplied. Defaulting to floor(sqrt(ncells))"))
-    neighbor_n = floor(sqrt(ncol(sce)))
+    neighbor_n <- floor(sqrt(ncol(sce)))
   }
   
   # Start parameter logging - not fully implemented
@@ -67,7 +67,7 @@ integrateSCE = function(sce,
     if (verbose) message(.bluem("[INT/fastMNN]"), "Correcting batch effect using fastMNN")
     if (is.null(hvgs)) {
       if (!is.null(metadata(sce)$hvgs)) {
-        hvgs = metadata(sce)$hvgs
+        hvgs <- metadata(sce)$hvgs
         } else stop(ep, "Highly variable genes not supplied and not previously calculated")
       }
     
@@ -115,26 +115,26 @@ integrateSCE = function(sce,
                 Run `BiocManager::install(\"Seurat\") to use this function."))
     
     if (verbose) message(.bluem("[INT/Seurat]"), "Converting to Seurat object.")
-    old_colnames = colnames(sce)
+    old_colnames <- colnames(sce)
     
-    colnames(sce) = paste0("cell_", seq_len(ncol(sce)))
+    colnames(sce) <- paste0("cell_", seq_len(ncol(sce)))
     
-    nf = data.frame(old_colnames, row.names = colnames(sce))
+    nf <- data.frame(old_colnames, row.names = colnames(sce))
     
     seu <- SeuratObject::CreateSeuratObject(counts = counts(sce), 
                                             meta.data = as.data.frame(colData(sce)))
-    lc = logcounts(sce)
-    rownames(lc) = rownames(seu)
+    lc <- logcounts(sce)
+    rownames(lc) <- rownames(seu)
     seu <- SeuratObject::SetAssayData(object = seu, slot = "data", new.data = lc)
     seu[["pca"]] <-SeuratObject:: CreateDimReducObject(embeddings = reducedDim(sce, "PCA"), key = "PC_")
     
-    batches =  unique(as.character((seu[[batch]][[batch]])))
-    seulist = lapply(batches, function(x) seu[,seu[[batch]] == x])
-    names(seulist) = batches
+    batches <-  unique(as.character((seu[[batch]][[batch]])))
+    seulist <- lapply(batches, function(x) seu[,seu[[batch]] == x])
+    names(seulist) <- batches
     
     if (verbose) message(.bluem("[INT/Seurat]"), "Normalization and HVG selection.")
     
-    seulist = lapply(seulist, function(x) {
+    seulist <- lapply(seulist, function(x) {
       x <- Seurat::NormalizeData(x, verbose = verbose)
       x <- Seurat::FindVariableFeatures(x, selection.method = "vst",
                                         nfeatures = hvg_ntop,
@@ -149,7 +149,7 @@ integrateSCE = function(sce,
     
     if (verbose) message(.bluem("[INT/Seurat]"), "Integration.")
     
-    kweight = min(100, unlist(lapply(seulist, function(x) floor(0.5*(ncol(x))))))
+    kweight <- min(100, unlist(lapply(seulist, function(x) floor(0.5*(ncol(x))))))
     
     if (verbose) message(.bluem("[INT/Seurat]"), " Using k.weight = ", kweight, ".")
     
@@ -167,12 +167,12 @@ integrateSCE = function(sce,
                               verbose = verbose,
                               reduction.name = "spca")
     
-    seu_int = seu_int[,rownames(nf)]
+    seu_int <- seu_int[,rownames(nf)]
     
     if (verbose) message(.bluem("[INT/Seurat]"), "Transferring to SCE object.")
     
       
-    reducedDim(sce, "PCA_Seurat") = SeuratObject::Embeddings(seu_int, reduction = "spca")[colnames(sce),]
+    reducedDim(sce, "PCA_Seurat") <- SeuratObject::Embeddings(seu_int, reduction = "spca")[colnames(sce),]
     rm(seu)
     rm(seu_int)
     
@@ -181,7 +181,7 @@ integrateSCE = function(sce,
     reducedDim(sce, "UMAP_Seurat") <- umap(reducedDim(sce, "PCA_Seurat")[,seq_len(ndims)],
                                            n_neighbors = neighbor_n,
                                            min_dist = 0.7)
-    colnames(sce) = nf[colnames(sce), 1]
+    colnames(sce) <- nf[colnames(sce), 1]
     
   } else if (method == "LIGER") {
     
@@ -189,19 +189,19 @@ integrateSCE = function(sce,
       stop(paste0(ep, "the `rliger` package must be installed first.\n
                 Run `BiocManager::install(\"rliger\") to use this function."))
     
-    old_colnames = colnames(sce)
+    old_colnames <- colnames(sce)
     
     if (any(duplicated(colnames(sce)))) {
-      colnames(sce) = paste0("cell_", seq_len(ncol(sce)))
+      colnames(sce) <- paste0("cell_", seq_len(ncol(sce)))
     }
     
-    nf = data.frame(old_colnames, row.names = colnames(sce))
+    nf <- data.frame(old_colnames, row.names = colnames(sce))
     
     if (verbose) message(.bluem("[INT/LIGER]"), "Creating LIGER object.")
     
-    batches = unique(colData(sce)[,batch])
-    countlist = lapply(batches, function(x) counts(sce[,colData(sce)[,batch] == x]))
-    names(countlist) = batches
+    batches <- unique(colData(sce)[,batch])
+    countlist <- lapply(batches, function(x) counts(sce[,colData(sce)[,batch] == x]))
+    names(countlist) <- batches
     l <- rliger::createLiger(countlist)
     rm(countlist)
     
@@ -225,7 +225,7 @@ integrateSCE = function(sce,
                                           n_neighbors = neighbor_n,
                                           min_dist = 0.7)
     
-    colnames(sce) = nf[colnames(sce), 1]
+    colnames(sce) <- nf[colnames(sce), 1]
     
   } else if (method == "regression") {
     

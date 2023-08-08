@@ -99,27 +99,27 @@ assignIdentities <- function(sce,
     stop(ep, "method not recognized - must be one of \"AUC\", \"Seurat\", 
              \"ssGSEA\", \"UCell\", \"Jaitin\"")
   if (is(genesets, "character")) {
-    if (is.null(name)) name = "signature"
-    genesets = list(genesets)
-    names(genesets) = name
+    if (is.null(name)) name <- "signature"
+    genesets <- list(genesets)
+    names(genesets) <- name
   }
 
   # Assignment module
   switch(method,
-         "AUC" = {sce = .assignIdentities_AUC(sce,
+         "AUC" <- {sce = .assignIdentities_AUC(sce,
                                               genesets,
                                               verbose,
                                               name = name,
                                               return_scores = return_scores,
                                               BPPARAM = BPPARAM,
                                               ...)},
-         "Seurat" = {sce = .assignIdentities_Seurat(sce,
+         "Seurat" <- {sce = .assignIdentities_Seurat(sce,
                                                     genesets,
                                                     verbose,
                                                     name = name,
                                                     return_scores = return_scores,
                                                     ...)},
-         "ssGSEA" = {sce = .assignIdentities_ssGSEA(sce,
+         "ssGSEA" <- {sce = .assignIdentities_ssGSEA(sce,
                                                     genesets,
                                                     verbose,
                                                     name = name,
@@ -127,13 +127,13 @@ assignIdentities <- function(sce,
                                                     return_scores = return_scores,
                                                     kcdf = kcdf,
                                                     ...)},
-         "UCell" = {sce = .assignIdentities_UCell(sce,
+         "UCell" <- {sce = .assignIdentities_UCell(sce,
                                                   genesets,
                                                   verbose,
                                                   name = name,
                                                   return_scores = return_scores,
                                                   ...)},
-         "Jaitin" = {sce = .assignIdentities_Jaitin(sce,
+         "Jaitin" <- {sce = .assignIdentities_Jaitin(sce,
                                                    ref,
                                                    assay,
                                                    verbose,
@@ -158,12 +158,12 @@ assignIdentities <- function(sce,
                                   BPPARAM = SerialParam(),
                                   ...){
     # Checks
-    ep = .redm("{cellula::.assignIdentities_AUC()} - ")
+    ep <- .redm("{cellula::.assignIdentities_AUC()} - ")
     
     if (!"AUCell" %in% rownames(installed.packages()))
       stop(ep, "the `AUCell` package must be installed first.\n
                 Run `BiocManager::install(\"AUCell\") to use this function.")
-    if (is.null(name)) labelname = "labels_AUC" else labelname = name
+    if (is.null(name)) labelname <- "labels_AUC" else labelname <- name
     if (verbose) cat(.bluem("[ANNO/AUC]"), "Assigning cell labels \n")
   
    rankings <- AUCell::AUCell_buildRankings(counts(sce),
@@ -180,11 +180,11 @@ assignIdentities <- function(sce,
   
    if (length(genesets) > 1) {
         # Decide scores
-        labels_AUC = names(genesets)[apply(scores, 1, which.max)]
-        colData(sce)[,labelname] = labels_AUC
-       if (return_scores) metadata(sce)$AUC_Scores = scores
+        labels_AUC <- names(genesets)[apply(scores, 1, which.max)]
+        colData(sce)[,labelname] <- labels_AUC
+       if (return_scores) metadata(sce)$AUC_Scores <- scores
       } else if (length(genesets) == 1) {
-        colData(sce)[,labelname] = as.numeric(scores[, 1, drop = TRUE])
+        colData(sce)[,labelname] <- as.numeric(scores[, 1, drop = TRUE])
       }
       sce
 }
@@ -201,37 +201,37 @@ assignIdentities <- function(sce,
                                      name = NULL,
                                      ...){
   # Checks
-  ep = .redm("{cellula::.assignIdentities_Seurat()} - ")
+  ep <- .redm("{cellula::.assignIdentities_Seurat()} - ")
   if(!"Seurat" %in% rownames(installed.packages()))
     stop(ep, "the `Seurat` package must be installed first.\n
                 Run `BiocManager::install(\"Seurat\") to use this function.")
   
-  if (is.null(name)) labelname = "labels_Seurat" else labelname = name
+  if (is.null(name)) labelname <- "labels_Seurat" else labelname <- name
 
   if (verbose) cat(.bluem("[ANNO/Seurat]"), "Adding module scores \n")
-  old_colnames = colnames(sce)
+  old_colnames <- colnames(sce)
   if (any(duplicated(colnames(sce)))) {
-    colnames(sce) = paste0("cell_", seq_len(ncol(sce)))
+    colnames(sce) <- paste0("cell_", seq_len(ncol(sce)))
   }
 
   # Conversion to Seurat object
   seu <- SeuratObject::CreateSeuratObject(counts = counts(sce),
                                           meta.data = as.data.frame(colData(sce)))
-  logc = logcounts(sce)
-  rownames(logc) = rownames(seu)
+  logc <- logcounts(sce)
+  rownames(logc) <- rownames(seu)
   seu <- SeuratObject::SetAssayData(object = seu, slot = "data", new.data = logc)
   # Module score
   seu <- Seurat::AddModuleScore(seu, features = genesets, ...)
-  colnames(seu@meta.data)[tail(seq_along(seu@meta.data), length(genesets))] = names(genesets)
-  scores = seu@meta.data[,tail(seq_along(seu@meta.data), length(genesets))]
+  colnames(seu@meta.data)[tail(seq_along(seu@meta.data), length(genesets))] <- names(genesets)
+  scores <- seu@meta.data[,tail(seq_along(seu@meta.data), length(genesets))]
 
   if (length(genesets) > 1) {
     # Decide label
-    labels_Seurat = names(genesets)[apply(scores, 1, which.max)]
-    colData(sce)[,labelname] = labels_Seurat
-    if (return_scores) metadata(sce)$Seurat_ModuleScores = scores
+    labels_Seurat <- names(genesets)[apply(scores, 1, which.max)]
+    colData(sce)[,labelname] <- labels_Seurat
+    if (return_scores) metadata(sce)$Seurat_ModuleScores <- scores
   } else if (length(genesets) == 1) {
-    colData(sce)[,labelname] = as.numeric(scores)
+    colData(sce)[,labelname] <- as.numeric(scores)
   }
   sce
 }
@@ -249,16 +249,16 @@ assignIdentities <- function(sce,
                                      ...) {
   
   # Checks
-  ep = .redm("{cellula::.assignIdentities_ssGSEA()} - ")
+  ep <- .redm("{cellula::.assignIdentities_ssGSEA()} - ")
     if (!"GSVA" %in% rownames(installed.packages()))
     stop(ep, "the `GSVA` package must be installed first.\n
                 Run `BiocManager::install(\"GSVA\") to use this function.")
-  if (is.null(name)) labelname = "labels_ssGSEA" else labelname = name
+  if (is.null(name)) labelname <- "labels_ssGSEA" else labelname <- name
   if (is.null(assay))
     stop(ep, "You must specify the assay argument (typically \"logcounts\"")
 
   if (verbose) cat(.bluem("[ANNO/ssGSEA]"), "Calculating ssGSEA \n")
-  ss = GSVA::gsva(sce,
+  ss <- GSVA::gsva(sce,
                   gset.idx.list = genesets,
                   annotation = assay,
                   method = "ssgsea",
@@ -266,15 +266,15 @@ assignIdentities <- function(sce,
                   verbose = verbose,
                   ...)
 
-  scores = t(as.matrix(assay(ss, "es")))
+  scores <- t(as.matrix(assay(ss, "es")))
 
   if (length(genesets) > 1) {
     # Decide labels
-    labels_ssGSEA = names(genesets)[apply(scores, 1, which.max)]
-    colData(sce)[,labelname] = labels_ssGSEA
-    if (return_scores) metadata(sce)$ssGSEA_Scores = scores
+    labels_ssGSEA <- names(genesets)[apply(scores, 1, which.max)]
+    colData(sce)[,labelname] <- labels_ssGSEA
+    if (return_scores) metadata(sce)$ssGSEA_Scores <- scores
   } else if (length(genesets) == 1) {
-    colData(sce)[,labelname] = as.numeric(scores[, 1, drop = TRUE])
+    colData(sce)[,labelname] <- as.numeric(scores[, 1, drop = TRUE])
   }
   if (verbose) message(.bluem("[ANNO/ssGSEA]"), "Done.")
   sce
@@ -290,18 +290,18 @@ assignIdentities <- function(sce,
                                     return_scores = FALSE,
                                     ...) {
   
-  ep = .redm("{cellula::.assignIdentities_UCell()} - ")
+  ep <- .redm("{cellula::.assignIdentities_UCell()} - ")
   
   if (!"UCell" %in% rownames(installed.packages()))
     stop(ep, "the `UCell` package must be installed first.\n
                 Run `BiocManager::install(\"UCell\") to use this function.")
   if (is.null(name)) 
-    labelname = "labels_UCell" else labelname = name
+    labelname <- "labels_UCell" else labelname <- name
     
   if (verbose) 
     message(.bluem("[ANNO/UCell]"), "Calculating UCell scores")
 
-  maxrank = 1500
+  maxrank <- 1500
   scores <- UCell::ScoreSignatures_UCell(matrix = assay(sce, "counts"),
                                          features = genesets,
                                          maxRank = maxrank,
@@ -309,11 +309,11 @@ assignIdentities <- function(sce,
                                          ...)
   if (length(genesets) > 1) {
     # Decide labels
-    labels_UCell = names(genesets)[apply(scores, 1, which.max)]
-    colData(sce)[,labelname] = labels_UCell
-    if(return_scores) metadata(sce)$UCell_Scores = scores
+    labels_UCell <- names(genesets)[apply(scores, 1, which.max)]
+    colData(sce)[,labelname] <- labels_UCell
+    if(return_scores) metadata(sce)$UCell_Scores <- scores
   } else if (length(genesets) == 1) {
-    colData(sce)[,labelname] = as.numeric(scores[, 1, drop = TRUE])
+    colData(sce)[,labelname] <- as.numeric(scores[, 1, drop = TRUE])
   }
   if (verbose) message(.bluem("[ANNO/UCell]"), "Done.")
   sce
@@ -331,62 +331,62 @@ assignIdentities <- function(sce,
                                      name = NULL,
                                      return_scores = FALSE){
   #Checks
-  ep = .redm("{cellula::assignIdentities()} - ")
+  ep <- .redm("{cellula::assignIdentities()} - ")
   if (is.null(ref)) stop(ep, "a reference must be supplied through the ref argument")
   if (is.null(assay)) stop(ep, "an assay slot must be supplied through the assay argument")
-  if(is.null(name)) labelname = "labels_Jaitin" else labelname = name
+  if(is.null(name)) labelname <- "labels_Jaitin" else labelname <- name
   
-  common = intersect(rownames(ref), rownames(sce))
+  common <- intersect(rownames(ref), rownames(sce))
   if (length(common) == 0) {
-    common = intersect(rownames(ref), rowData(sce)$ID)
+    common <- intersect(rownames(ref), rowData(sce)$ID)
     if (length(common) == 0) {
-      common = intersect(rownames(ref), rowData(sce)$Symbol)
+      common <- intersect(rownames(ref), rowData(sce)$Symbol)
       if (length(common) == 0) {
         stop(ep, "no genes in common were found in any slot (rownames, rowData ID and Symbol)")
       } else {
-        old.rownames = rownames(sce)
-        rownames(sce) = rowData(sce)$Symbol
+        old.rownames <- rownames(sce)
+        rownames(sce) <- rowData(sce)$Symbol
       }
     } else {
-      old.rownames = rownames(sce)
-      rownames(sce) = rowData(sce)$ID
+      old.rownames <- rownames(sce)
+      rownames(sce) <- rowData(sce)$ID
     }
   } else {
-    old.rownames = rownames(sce)
+    old.rownames <- rownames(sce)
   }
   
   if (length(common) < floor(0.1 * nrow(sce))) 
     warning(ep, "less than 10% genes in common between object and reference")
   
   # Scaling the reference
-  rl = t(t(ref)/colSums(ref))
+  rl <- t(t(ref)/colSums(ref))
   
   # Keep only common genes between sce and reference, set 0 to very low non-neg
-  ref_common = rl[common,]
-  ref_common[ref_common == 0] = 1e-8
-  counts_common = assay(sce, assay)[common,]
+  ref_common <- rl[common,]
+  ref_common[ref_common == 0] <- 1e-8
+  counts_common <- assay(sce, assay)[common,]
   
   if (verbose) cat(.bluem("[ANNO/JAITIN]"), "Calculating log-likelihood \n")
 
-  loglik = as(t(t(counts_common) %*% log(ref_common)), "matrix")
+  loglik <- as(t(t(counts_common) %*% log(ref_common)), "matrix")
   
-  colnames(loglik) = colnames(sce)
-  rownames(loglik) = colnames(ref)
+  colnames(loglik) <- colnames(sce)
+  rownames(loglik) <- colnames(ref)
   
   if (verbose) message(.bluem("[ANNO/JAITIN]"), "Calculating posterior probabilities")
   
-  posterior = exp(t(loglik)-colMaxs(loglik)-log(rowSums(t(loglik)/colMaxs(loglik))))
+  posterior <- exp(t(loglik)-colMaxs(loglik)-log(rowSums(t(loglik)/colMaxs(loglik))))
 
   if (verbose) message(.bluem("[ANNO/JAITIN]"), "Deciding best labels \n")
   
-  toplabel = colnames(posterior)[apply(posterior, 1, which.max)]
+  toplabel <- colnames(posterior)[apply(posterior, 1, which.max)]
   
-  if (return_scores) metadata(sce)[[paste0(labelname, "_scores")]] = posterior
+  if (return_scores) metadata(sce)[[paste0(labelname, "_scores")]] <- posterior
   
   if (verbose) message(.bluem("[ANNO/JAITIN]"), "All done \n")
   
-  colData(sce)[,labelname] = toplabel
-  rownames(sce) = old.rownames
+  colData(sce)[,labelname] <- toplabel
+  rownames(sce) <- old.rownames
   sce
 }
 
@@ -411,7 +411,7 @@ assignIdentities <- function(sce,
 
 buildReference <- function(sce, agg_by, agg_assay = "logcounts", agg_fun = "sum"){
     # Checks
-    ep = .redm("{cellula::buildReference()} - ")
+    ep <- .redm("{cellula::buildReference()} - ")
     if (is.null(agg_by)) 
       stop(ep, "agg_by must be supplied to specify which column to aggregate by")
     if (is.null(agg_assay)) 
@@ -425,16 +425,16 @@ buildReference <- function(sce, agg_by, agg_assay = "logcounts", agg_fun = "sum"
     }
     # Decide aggregation function
     # calls directly from Matrix to dispatch properly to sparse matrices
-    afn = switch(agg_fun,
-                 "sum" = Matrix::rowSums,
-                 "mean"= Matrix::rowMeans)
+    afn <- switch(agg_fun,
+                 "sum" <- Matrix::rowSums,
+                 "mean"<- Matrix::rowMeans)
     # Loop applying the aggregation function
-    quants = SummarizedExperiment::assay(sce, agg_assay)
-    labs = unique(as.character(colData(sce)[,agg_by]))
-    refmat = do.call(cbind, lapply(labs, function(x) 
+    quants <- SummarizedExperiment::assay(sce, agg_assay)
+    labs <- unique(as.character(colData(sce)[,agg_by]))
+    refmat <- do.call(cbind, lapply(labs, function(x) 
            afn(quants[, which(colData(sce)[,agg_by] == x), drop = FALSE])
          ))
-  colnames(refmat) = labs
-  rownames(refmat) = rownames(sce)
+  colnames(refmat) <- labs
+  rownames(refmat) <- rownames(sce)
   refmat
 }

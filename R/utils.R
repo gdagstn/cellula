@@ -1,14 +1,14 @@
 #' @noRd
 .randomName <- function(){
   
-  adjectives = c("rambunctious", "pertinacious", "holistic", "adamantine", 
+  adjectives <- c("rambunctious", "pertinacious", "holistic", "adamantine", 
                  "palyndromic", "hypertonic", "enantiomeric", "sybilline",
                  "brazen", "affine", "empyrean", "adjoining", "trustworthy",
                  "paralogous", "draconian", "obsequious", "nondescript", 
                  "diophantine", "hypogean", "preterintentional", "tawdry",
                  "auspicious", "emphatic", "sardonic", "continental")
   
-  birds = c("parakeet", "greylag", "eagle", "stork", "hornbill", "pelican", 
+  birds <- c("parakeet", "greylag", "eagle", "stork", "hornbill", "pelican", 
             "kestrel", "flamingo", "magpie", "raven", "kingfisher", "owl", 
             "pigeon", "moorhen", "grebe", "mallard", "hummingbird", "nightingale",
             "gadwall", "goose", "swan", "sparrow", "finch", "vulture", "albatros")
@@ -18,26 +18,26 @@
 
 #' @noRd
 .bluem <- function(txt) {
-  left = "\033[38;5;27m"
-  right = "\033[49m\033[39m"
+  left <- "\033[38;5;27m"
+  right <- "\033[49m\033[39m"
   paste0(left, txt, right)
 }
 
 #' @noRd
 .redm  <- function(txt) {
-  left = "\033[38;5;1m"
-  right = "\033[49m\033[39m"
+  left <- "\033[38;5;1m"
+  right <- "\033[49m\033[39m"
   paste0(left, txt, right)
 }
 
 
 #' @noRd
 .reorderNumericLevels <- function(f, rev = FALSE) {
-  conv = suppressWarnings(as.numeric(levels(f)))
+  conv <- suppressWarnings(as.numeric(levels(f)))
   if(!any(is.na(conv))) {
-    fl = as.character(sort(as.numeric(levels(f))))
-    if(rev) fl = fl[rev(seq_along(fl))]
-    levels(f) = fl
+    fl <- as.character(sort(as.numeric(levels(f))))
+    if(rev) fl <- fl[rev(seq_along(fl))]
+    levels(f) <- fl
     return(f)
   } else {
     return(f)
@@ -114,12 +114,12 @@
     poly_sm <- poly
   } else {
     poly_coords <- as.matrix(poly[,1:2])
-    d_poly = sqrt(rowSums(diff(as.matrix(poly_coords))^2))
-    bandwidth = mean(d_poly) * smoothness
-    dense_poly = .addPoints(poly_coords, steps = n_dense)
-    npt = nrow(dense_poly)
-    d_dense = sqrt(rowSums(diff(as.matrix(dense_poly))^2))
-    d_x = c(0, cumsum(d_dense))
+    d_poly <- sqrt(rowSums(diff(as.matrix(poly_coords))^2))
+    bandwidth <- mean(d_poly) * smoothness
+    dense_poly <- .addPoints(poly_coords, steps = n_dense)
+    npt <- nrow(dense_poly)
+    d_dense <- sqrt(rowSums(diff(as.matrix(dense_poly))^2))
+    d_x <- c(0, cumsum(d_dense))
     poly_sm <- NULL
     for (i in seq_len(ncol(dense_poly))) {
       ks <- ksmooth(d_x, dense_poly[, i], n.points = length(d_x),
@@ -151,19 +151,19 @@
 
 .addPoints <- function(poly, steps = 5) {
   colnames(poly) <- NULL
-  polygon_coords = as.matrix(poly[,1:2])
-  new_coords = poly[1,]
+  polygon_coords <- as.matrix(poly[,1:2])
+  new_coords <- poly[1,]
   for(i in 1:(nrow(poly)-1)){
-    new_xy = cbind(seq(polygon_coords[i,1],
+    new_xy <- cbind(seq(polygon_coords[i,1],
                        polygon_coords[i+1,1], length.out = steps+1),
                    seq(polygon_coords[i,2],
                        polygon_coords[i+1,2], length.out = steps+1))
-    tmp_coords = polygon_coords[i,]
-    new_coords = rbind(new_coords, tmp_coords, new_xy)
+    tmp_coords <- polygon_coords[i,]
+    new_coords <- rbind(new_coords, tmp_coords, new_xy)
   }
-  new_coords = new_coords[2:nrow(new_coords),]
-  new_coords = new_coords[!duplicated(new_coords),]
-  rownames(new_coords) = NULL
+  new_coords <- new_coords[2:nrow(new_coords),]
+  new_coords <- new_coords[!duplicated(new_coords),]
+  rownames(new_coords) <- NULL
   colnames(new_coords) <- c("x", "y")
   new_coords
 }

@@ -85,34 +85,34 @@ cellula <- function(sce,
    if(!batch %in% colnames(colData(sce)))
     stop("Batch label \"", batch, "\" not found.")
    if (!is.factor(colData(sce)[,batch]))
-     colData(sce)[,batch] = as.factor(colData(sce)[,batch])
+     colData(sce)[,batch] <- as.factor(colData(sce)[,batch])
  }
   
   # Start parameter logging - not fully implemented
   if(is.null(metadata(sce)$cellula_log)) {
-    clog = .initLog()
-  } else clog = metadata(sce)$cellula_log
+    clog <- .initLog()
+  } else clog <- metadata(sce)$cellula_log
   
   # Make folder
   if(is.null(name)) {
-    name = .randomName()
+    name <- .randomName()
     cat(paste0("No name selected so the randomly assigned name is: ", name, "\n"))
   }
 
   dir.create(name)
-  clog$name = name
-  clog$dir = paste0(getwd(), "/name")
+  clog$name <- name
+  clog$dir <- paste0(getwd(), "/name")
   
   # Begin
     if(verbose) {
     message("Working on object", name)
-    ncells = ncol(sce)
+    ncells <- ncol(sce)
     message("Input cells: ", ncells)
-      clog$qc$input_cells = ncells
+      clog$qc$input_cells <- ncells
     if(!is.null(batch)) {
       message("By batch:")
       print(table(colData(sce)[,batch]))
-      clog$qc$input_by_batch = table(colData(sce)[,batch])
+      clog$qc$input_by_batch <- table(colData(sce)[,batch])
     }
   }
  
@@ -131,20 +131,20 @@ cellula <- function(sce,
                 save_plots = save_plots,
                 parallel_param = parallel_param)
     
-    clog$qc$do_qc = do_qc
-    clog$qc$discard = discard
-    clog$qc$subset_mito = subset_mito
-    clog$qc$subset_ribo = subset_ribo
-    clog$qc$subset_malat1 = subset_malat1
-    clog$qc$detect_doublets = detect_doublets
-    clog$qc$run_emptydrops = run_emptydrops
-    clog$qc$emptydrops_cutoff = emptydrops_cutoff
-    clog$qc$emptydrops_alpha = emptydrops_alpha
-    clog$qc$parallel_param = parallel_param
-    clog$qc$output_cells = ncol(sce)
-    if(!is.null(batch)) clog$qc$output_by_batch = table(colData(sce)[,batch])
+    clog$qc$do_qc <- do_qc
+    clog$qc$discard <- discard
+    clog$qc$subset_mito <- subset_mito
+    clog$qc$subset_ribo <- subset_ribo
+    clog$qc$subset_malat1 <- subset_malat1
+    clog$qc$detect_doublets <- detect_doublets
+    clog$qc$run_emptydrops <- run_emptydrops
+    clog$qc$emptydrops_cutoff <- emptydrops_cutoff
+    clog$qc$emptydrops_alpha <- emptydrops_alpha
+    clog$qc$parallel_param <- parallel_param
+    clog$qc$output_cells <- ncol(sce)
+    if(!is.null(batch)) clog$qc$output_by_batch <- table(colData(sce)[,batch])
     
-    metadata(sce)$cellula_log = clog
+    metadata(sce)$cellula_log <- clog
     
     if(save_temp) {
       if(verbose) cat("Saving temporary file. \n")
@@ -165,12 +165,12 @@ cellula <- function(sce,
       saveRDS(sce, file = paste0("./", name, "/", name, "_tempSCE.RDS"))
     }
   }
-  hvgs = metadata(sce)$hvgs
+  hvgs <- metadata(sce)$hvgs
   
   # Integration module
     if(!is.null(batch)) {
     if(verbose) cat(.bluem("[INT]"), "Integration. \n")
-    sce = integrateSCE(sce,
+    sce <- integrateSCE(sce,
                        batch = batch,
                        hvgs = hvgs,
                        hvg_ntop = hvg_ntop,
@@ -187,9 +187,9 @@ cellula <- function(sce,
     file.remove(paste0("./", name, "/", name, "_tempSCE.RDS"))
   }
   if (verbose) cat("All done. Input cells: ", ncells, ", final cell number: ", ncol(sce), ".\n")
-  metadata(sce)$cellula_log[["output_cells"]] = ncol(sce)
+  metadata(sce)$cellula_log[["output_cells"]] <- ncol(sce)
   if (!is.null(batch)) {
-    metadata(sce)$cellula_log[["output_by_batch"]] = table(colData(sce)[,batch])
+    metadata(sce)$cellula_log[["output_by_batch"]] <- table(colData(sce)[,batch])
   }
   sce
 }
@@ -202,7 +202,7 @@ cellula <- function(sce,
        "dir" = NULL,
        "batch" = NULL,
        
-       "qc" = list("do_qc" = NULL,
+       "qc" <- list("do_qc" = NULL,
                    "input_cells" = NULL,
                    "input_by_batch" = NULL,
                    "output_cells" = NULL,
@@ -218,7 +218,7 @@ cellula <- function(sce,
                    "save_plots" = NULL),
     
        
-       "norm_reduce" = list("hvg_ntop" = NULL,
+       "norm_reduce" <- list("hvg_ntop" = NULL,
                             "pca" = NULL,
                             "umap_min_dist" = NULL,
                             "umap_n_neighbors" = NULL,
@@ -226,11 +226,11 @@ cellula <- function(sce,
                             "parallel_param" = NULL),
        
       
-       "integration" = list("integration_method" = NULL,
+       "integration" <- list("integration_method" = NULL,
                             "ndims" = NULL,
                             "parallel_param" = NULL),
        
-       "clustering" = list( "neighbors" = NULL,
+       "clustering" <- list( "neighbors" = NULL,
                             "weighting_scheme" = NULL,
                             "clustering_sweep" = NULL,
                             "graph_ks" = NULL,
@@ -247,7 +247,7 @@ cellula <- function(sce,
                             "metacluster_denominator" = NULL,
                             "parallel_param" = NULL),
        
-       "assign_identities" = list("method" = NULL,
+       "assign_identities" <- list("method" = NULL,
                                   "genesets" = NULL,
                                   "ref" = NULL,
                                   "assay" = NULL,
@@ -256,7 +256,7 @@ cellula <- function(sce,
                                   "kcdf" = NULL,
                                   "parallel_param" = NULL),
        
-       "trajectories" = list("method" = NULL,
+       "trajectories" <- list("method" = NULL,
                              "dr" = NULL,
                              "clusters" = NULL,
                              "ndims" = NULL,
@@ -270,6 +270,6 @@ cellula <- function(sce,
                              "batch_de" = NULL,
                              "parallel_param" = NULL),
   
-       "sessionInfo" = sessionInfo()
+       "sessionInfo" <- sessionInfo()
   )
 }

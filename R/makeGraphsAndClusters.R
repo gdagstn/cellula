@@ -301,6 +301,6 @@ rebuildModularity <- function(sce, dr = "PCA", neighbors = NULL, ndims = 20,
   
   cl <- colData(sce)[,labels]
   mlab <- paste0("modularity_", labels)
-  metadata(sce)[[mlab]] <- pairwiseModularity(g, clusters = cl, as.ratio = TRUE)
+  metadata(sce)[[mlab]] <- pairwiseModularity(g, clusters = cl, as.ratio  TRUE)
   sce
 }

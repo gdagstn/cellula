@@ -13,7 +13,7 @@
 #'     but it is important to credit the original author of the code that 
 #'     generated these palettes.
 
-.cpal_qual = function(n){
+.cpal_qual <- function(n){
   
   if(n < 2) stop("You need to retrieve at least two colors")
   if(n > 30) stop("This palette supports at most 30 colors")
@@ -556,7 +556,7 @@
 .choosePalette <- function(cpal = NULL, default = "qualpal", n = 2) {
   
   if(is.null(cpal)) {
-    res = switch(default, 
+    res <- switch(default, 
                  "qualpal" = .cpal_qual(n),
                  "YlGnBu" = .cpal_seq_ylgnbu(),
                  "Sunset" = .cpal_seq_sunset(),
@@ -567,14 +567,14 @@
   } else if(!is.null(cpal)) {
     if(length(cpal) == 1) {
       if(is.na(cpal)) {
-        res = "gray"
+        res <- "gray"
       } else {
-        res = switch(cpal, 
+        res <- switch(cpal, 
                      "Sunset" = .cpal_seq_sunset(),
                      "Parula" = .cpal_seq_parula(),
-                     "YlGnBu" = .cpal_seq_turbo(),
+                     "Turbo" = .cpal_seq_turbo(),
                      "Heat2" = .cpal_seq_heat2(),
-                     "Turbo" = rev(.cpal_seq_ylgnbu()),
+                     "YlGnBu" = rev(.cpal_seq_ylgnbu()),
                      "Qualpal" = .cpal_qual(n),
                      "Protan" = .cpal_qual_protan(n),
                      "Tritan" = .cpal_qual_tritan(n),
@@ -585,7 +585,7 @@
         )
       }
     } else {
-      res = cpal
+      res <- cpal
     }
   }
   res

@@ -38,7 +38,7 @@ doNormAndReduce <- function(sce, batch = NULL, name = NULL,
                             parallel_param = SerialParam()) {
   
   # Checks
-  ep = .redm("{cellula::doNormAndReduce()} - ")
+  ep <- .redm("{cellula::doNormAndReduce()} - ")
   if (!is(sce, "SingleCellExperiment"))
     stop(ep, "must provide a SingleCellExperiment object")
   if (!is.null(batch)) {
@@ -49,9 +49,9 @@ doNormAndReduce <- function(sce, batch = NULL, name = NULL,
     stop(ep, "hvg_ntop cannot be higher than the number of features (nrow) in the object")
   # Start parameter logging - not fully implemented
   if (is.null(metadata(sce)$cellula_log)) {
-    clog = .initLog()
+    clog <- .initLog()
   } else {
-    clog = metadata(sce)$cellula_log
+    clog <- metadata(sce)$cellula_log
   }
     if (verbose) message(.bluem("[NORM]"), "Calculating size factors and normalizing.")
   # Size factors
@@ -113,12 +113,12 @@ doNormAndReduce <- function(sce, batch = NULL, name = NULL,
                                   n_neighbors = neighbor_n,
                                   min_dist = 0.7)
   # Parameter logs
-  clog$norm_reduce$umap_min_dist = 0.7
-  clog$norm_reduce$umap_n_neighbors = neighbor_n
-  clog$norm_reduce$umap_other = formals(umap)[!formalArgs(umap) %in% c("n_neighbors", "min_dist", "X")]
-  clog$norm_reduce$parallel_param = parallel_param
+  clog$norm_reduce$umap_min_dist <- 0.7
+  clog$norm_reduce$umap_n_neighbors <- neighbor_n
+  clog$norm_reduce$umap_other <- formals(umap)[!formalArgs(umap) %in% c("n_neighbors", "min_dist", "X")]
+  clog$norm_reduce$parallel_param <- parallel_param
   
-  metadata(sce)$cellula_log = clog
+  metadata(sce)$cellula_log <- clog
     
   sce
 }

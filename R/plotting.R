@@ -15,21 +15,21 @@
 #' @export
 
 plotModularity <- function(sce, name, type = "heatmap") {
-  name = paste0("modularity_", name)
-  modmat = log2(metadata(sce)[[name]] + 1)
+  name <- paste0("modularity_", name)
+  modmat <- log2(metadata(sce)[[name]] + 1)
 
   if(type == "heatmap"){
-    m = as.data.frame(expand.grid(seq_along(rownames(modmat)), 
+    m <- as.data.frame(expand.grid(seq_along(rownames(modmat)), 
                                   seq_along(rownames(modmat))))
-    colnames(m) = c("x", "y")
-    m$value = sapply(seq_len(nrow(m)), 
+    colnames(m) <- c("x", "y")
+    m$value <- sapply(seq_len(nrow(m)), 
                      function(x) modmat[m[x,1], m[x,2]])
       
-    p = ggplot(m, aes(x = .data[["x"]], y = .data[["y"]])) + 
+    p <- ggplot(m, aes(x = .data[["x"]], y = .data[["y"]])) + 
         geom_tile(aes(fill = .data[["value"]], color = NA)) +
         scale_x_discrete(position = "top")
     
-    p = p + theme_classic() +
+    p <- p + theme_classic() +
       theme(plot.margin = margin(1, 1, 1, 1, "cm"),
             panel.grid.major = element_blank(),
             panel.grid.minor = element_blank(),
@@ -72,7 +72,7 @@ plotModularity <- function(sce, name, type = "heatmap") {
 #' @export
 
 plotSilhouette <- function(sce, name) {
-  name = paste0("silhouette_", name)
+  name <- paste0("silhouette_", name)
   ggplot(metadata(sce)[[name]], aes_string(x="cluster", y="width", colour="closest")) +
     geom_quasirandom(method="smiley") +
     theme_classic()
@@ -147,7 +147,7 @@ plot_UMAP <- function(sce,
 
   ## Sanity checks
   # Error prefix
-  ep = .redm("{cellula::plot_UMAP()} - ")
+  ep <- .redm("{cellula::plot_UMAP()} - ")
 
   # Checks
   if(!is(sce, "SingleCellExperiment"))
@@ -176,69 +176,69 @@ plot_UMAP <- function(sce,
   }
 
 
-  udf = as.data.frame(reducedDim(sce, umap_slot)[,1:2])
-  udf = udf[complete.cases(udf),]
+  udf <- as.data.frame(reducedDim(sce, umap_slot)[,1:2])
+  udf <- udf[complete.cases(udf),]
 
   # Rescaling
   if(rescale) {
-    orig_range = lapply(udf, range)
-    names(orig_range) = c("x", "y")
-    udf[,1:2] = apply(udf[,1:2], 2, function(x) (x-min(x))/diff(range(x)))
+    orig_range <- lapply(udf, range)
+    names(orig_range) <- c("x", "y")
+    udf[,1:2] <- apply(udf[,1:2], 2, function(x) (x-min(x))/diff(range(x)))
   }
 
-  colnames(udf) = c("x", "y")
+  colnames(udf) <- c("x", "y")
 
   if(!is.null(color_by) & (color_by %in% rowData(sce)$Symbol | color_by %in% rowData(sce)$ID | color_by %in% rownames(sce)) & 
      !color_by %in% colnames(colData(sce))) {
-    feature = which(rowData(sce)$Symbol == color_by | rowData(sce)$ID == color_by | rownames(sce) == color_by)
-    colData(sce)[,color_by] = as.numeric(assay(sce[feature,], "logcounts"))
+    feature <- which(rowData(sce)$Symbol == color_by | rowData(sce)$ID == color_by | rownames(sce) == color_by)
+    colData(sce)[,color_by] <- as.numeric(assay(sce[feature,], "logcounts"))
   }
 
   # Check which mappings to include
-  include = list(color_by, shape_by, group_by, label_by)
-  include = unique(unlist(include[!is.null(include)]))
+  include <- list(color_by, shape_by, group_by, label_by)
+  include <- unique(unlist(include[!is.null(include)]))
 
-  for(i in include) udf[[i]] = colData(sce)[rownames(udf),i]
+  for(i in include) udf[[i]] <- colData(sce)[rownames(udf),i]
 
-  colnames(udf)[seq_len(length(include)) + 2] = include
+  colnames(udf)[seq_len(length(include)) + 2] <- include
 
-  classes = unlist(lapply(udf[,include,drop=FALSE], class))
+  classes <- unlist(lapply(udf[,include,drop=FALSE], class))
 
-  names(classes) = include
-  aes_umap = aes(x = .data[["x"]], y = .data[["y"]])
+  names(classes) <- include
+  aes_umap <- aes(x = .data[["x"]], y = .data[["y"]])
 
   # Add color aesthetic if needed and decide what type of scale
   if(!is.null(color_by)) {
-    aes_umap$colour = aes(colour = .data[[color_by]])$colour
+    aes_umap$colour <- aes(colour = .data[[color_by]])$colour
     if(classes[color_by] == "numeric") {
-      udf = udf[order(udf[,color_by]),]
-      udf = rbind(udf[is.na(udf[,color_by]),], 
+      udf <- udf[order(udf[,color_by]),]
+      udf <- rbind(udf[is.na(udf[,color_by]),], 
                   udf[!is.na(udf[,color_by]),])
-      pal = .choosePalette(cpal = color_palette, default = "Sunset")
-      cscale = scale_colour_gradientn(colours = pal, na.value = "lightgray")
-      cguides = NULL
+      pal <- .choosePalette(cpal = color_palette, default = "Sunset")
+      cscale <- scale_colour_gradientn(colours = pal, na.value = "lightgray")
+      cguides <- NULL
     } else if(classes[color_by] %in% c("character", "logical")) {
-      udf[,color_by] = factor(udf[,color_by])
+      udf[,color_by] <- factor(udf[,color_by])
         if(length(levels(udf[,color_by])) == 1) {
-          pal = .choosePalette(cpal = NA)
+          pal <- .choosePalette(cpal = NA)
         } else {
-          pal = .choosePalette(cpal = color_palette, default = "qualpal", 
+          pal <- .choosePalette(cpal = color_palette, default = "qualpal", 
                                n = length(unique(udf[,color_by])))
         }
         if(!is.null(names(pal)) & all(names(pal) %in% levels(udf[,color_by]))) {
-          pal = pal[levels(udf[,color_by])]
+          pal <- pal[levels(udf[,color_by])]
         }
-      cscale = scale_colour_manual(values = pal, na.value = "lightgray")
-      cguides = guides(color = guide_legend(override.aes = list(size=2)))
+      cscale <- scale_colour_manual(values = pal, na.value = "lightgray")
+      cguides <- guides(color = guide_legend(override.aes = list(size=2)))
     } else if(classes[color_by] == "factor") {
-        pal = .choosePalette(cpal = color_palette, default = "qualpal", 
+        pal <- .choosePalette(cpal = color_palette, default = "qualpal", 
                              n = length(unique(udf[,color_by])))
      
         if(!is.null(names(pal)) & all(names(pal) %in% levels(udf[,color_by]))) {
-          pal = pal[levels(udf[,color_by])]
+          pal <- pal[levels(udf[,color_by])]
         }
-      cscale = scale_colour_manual(values = pal, na.value = "lightgray")
-      cguides = guides(color = guide_legend(override.aes = list(size=2)))
+      cscale <- scale_colour_manual(values = pal, na.value = "lightgray")
+      cguides <- guides(color = guide_legend(override.aes = list(size=2)))
     }
   }
 
@@ -247,41 +247,41 @@ plot_UMAP <- function(sce,
     if(classes[shape_by] == "numeric") {
       stop("Cannot map `shape` aesthetic to a numeric value")
     } else if(classes[shape_by] == "character"){
-      udf[,shape_by] = factor(udf[,shape_by])
+      udf[,shape_by] <- factor(udf[,shape_by])
     }
-    aes_umap$shape = aes(shape = .data[[shape_by]])$shape
+    aes_umap$shape <- aes(shape = .data[[shape_by]])$shape
   }
 
   if(!is.null(label_by)) {
-    labels = unique(udf[,label_by])
-    medoids = lapply(labels, function(x) {
+    labels <- unique(udf[,label_by])
+    medoids <- lapply(labels, function(x) {
       t(apply(udf[udf[,label_by] == x, c("x", "y")], 2, median))
     })
-    label_df = as.data.frame(do.call(rbind, medoids))
-    label_df[,label_by] = labels
-    colnames(label_df) = c("x", "y", "label")
+    label_df <- as.data.frame(do.call(rbind, medoids))
+    label_df[,label_by] <- labels
+    colnames(label_df) <- c("x", "y", "label")
 
   }
 
   if(!is.null(group_by)) {
     if(is(udf[,group_by], "character"))
-      udf[,group_by] = factor(udf[,group_by])
+      udf[,group_by] <- factor(udf[,group_by])
   }
 
   # Plot construction
-  arrow_1 = data.frame(x = 0, xend = 0.15, y = 0, yend = 0)
-  arrow_2 = data.frame(x = 0, xend = 0, y = 0, yend = 0.15)
-  text_1 = data.frame(x = -0.03, y = 0.02)
-  text_2 = data.frame(x = 0.02, y = -0.03)
+  arrow_1 <- data.frame(x = 0, xend = 0.15, y = 0, yend = 0)
+  arrow_2 <- data.frame(x = 0, xend = 0, y = 0, yend = 0.15)
+  text_1 <- data.frame(x = -0.03, y = 0.02)
+  text_2 <- data.frame(x = 0.02, y = -0.03)
 
-  p = ggplot(udf, mapping = aes_umap) 
+  p <- ggplot(udf, mapping = aes_umap) 
   
     if(outline) {
-      p = p + geom_point(size = point_size*outline_size, 
+      p <- p + geom_point(size = point_size*outline_size, 
                          shape = 16, color = "black")
     }
   
-    p = p + geom_point(size = point_size, shape = 16) +
+    p <- p + geom_point(size = point_size, shape = 16) +
     theme_void() +
     theme(plot.margin = margin(1, 1, 1, 1, "cm")) +
     geom_segment(data = arrow_1,
@@ -326,11 +326,11 @@ plot_UMAP <- function(sce,
     coord_fixed()
 
   if(!is.null(color_by)) {
-    p = p + cscale + cguides
+    p <- p + cscale + cguides
   }
 
   if(!is.null(label_by)) {
-    p = p + geom_label_repel(data = label_df,
+    p <- p + geom_label_repel(data = label_df,
                              mapping = aes(x = .data[["x"]],
                                            y = .data[["y"]],
                                            label = .data[["label"]]),
@@ -338,27 +338,27 @@ plot_UMAP <- function(sce,
   }
 
   if(!is.null(group_by)) {
-    p = p + facet_wrap(group_by)
+    p <- p + facet_wrap(group_by)
   }
   
   if(!is.null(trajectory)) {
     if(rescale) {
-      trj$x0 = .rescalen(trj$x0, 
+      trj$x0 <- .rescalen(trj$x0, 
                         from = range(orig_range$x),
                         to = range(udf$x))
-      trj$x1 = .rescalen(trj$x1, 
+      trj$x1 <- .rescalen(trj$x1, 
                         from = range(orig_range$x),
                         to = range(udf$x))
       
-      trj$y0 = .rescalen(trj$y0,
+      trj$y0 <- .rescalen(trj$y0,
                         from = range(orig_range$y),
                         to = range(udf$y))
       
-      trj$y1 = .rescalen(trj$y1,
+      trj$y1 <- .rescalen(trj$y1,
                        from = range(orig_range$y),
                        to = range(udf$y))
     }
-    p = p + geom_segment(data = trj, 
+    p <- p + geom_segment(data = trj, 
                          mapping = aes(x = .data[["x0"]],
                                        xend = .data[["x1"]],
                                        y = .data[["y0"]],
@@ -366,7 +366,7 @@ plot_UMAP <- function(sce,
                          inherit.aes = FALSE
     )
   }
-  return(p)
+  p
 }
 
 #' Plot a dot plot
@@ -411,7 +411,7 @@ plot_dots <- function(sce,
 
   ## Sanity checks
   # Error prefix
-  ep = .redm("{cellula::plot_Dots()} - ")
+  ep <- .redm("{cellula::plot_Dots()} - ")
 
   # Checks
   if(!is(sce, "SingleCellExperiment"))
@@ -428,20 +428,20 @@ plot_dots <- function(sce,
   if(!is(colData(sce)[,group_by], "character") & !is(colData(sce)[,group_by], "factor"))
       stop(paste0(ep, "Cannot group by a numeric value, convert it to factor first."))
   if(any(!genes %in% rownames(sce))){
-    found = intersect(genes, rownames(sce))
+    found <- intersect(genes, rownames(sce))
     if(length(found) == 0) {
       stop(paste0(ep, "None of the genes were found in the SingleCellExperiment object"))
     } else {
       message(paste0(ep, "Warning: some genes (", (length(genes) -length(found)), ") were not found in the dataset."))
-      genes = found
+      genes <- found
     }
   }
 
-  sce_byclust = lapply(unique(colData(sce)[,group_by]), function(x) {
-    cur = assay(sce, exprs_use)[genes, which(colData(sce)[,group_by] == x)]
-    props = apply(cur, 1, function(x) sum(x > threshold))/ncol(cur)
-    aves = apply(cur, 1, function(x) mean(x))
-    final_df = data.frame("proportion" = props,
+  sce_byclust <- lapply(unique(colData(sce)[,group_by]), function(x) {
+    cur <- assay(sce, exprs_use)[genes, which(colData(sce)[,group_by] == x)]
+    props <- apply(cur, 1, function(x) sum(x > threshold))/ncol(cur)
+    aves <- apply(cur, 1, function(x) mean(x))
+    final_df <- data.frame("proportion" = props,
                           "mean_expression" = aves,
                           "cluster" = x,
                           "gene" = genes)
@@ -449,40 +449,40 @@ plot_dots <- function(sce,
   })
 
   if(cluster_genes) {
-    scdf_props_genes = do.call(cbind, lapply(sce_byclust, function(x) x$proportion))
-    scdf_exp_genes = do.call(cbind, lapply(sce_byclust, function(x) x$mean_expression))
-    hc_props_genes = hclust(dist(scdf_props_genes))$order
-    hc_exp_genes = hclust(dist(scdf_exp_genes))$order
+    scdf_props_genes <- do.call(cbind, lapply(sce_byclust, function(x) x$proportion))
+    scdf_exp_genes <- do.call(cbind, lapply(sce_byclust, function(x) x$mean_expression))
+    hc_props_genes <- hclust(dist(scdf_props_genes))$order
+    hc_exp_genes <- hclust(dist(scdf_exp_genes))$order
   }
   
   if(cluster_groups) {
-    scdf_props_clusters = do.call(rbind, lapply(sce_byclust, function(x) x$proportion))
-    scdf_exp_clusters = do.call(rbind, lapply(sce_byclust, function(x) x$mean_expression))
-    hc_props_clusters = hclust(dist(scdf_props_clusters))$order
-    hc_exp_clusters = hclust(dist(scdf_exp_clusters))$order
+    scdf_props_clusters <- do.call(rbind, lapply(sce_byclust, function(x) x$proportion))
+    scdf_exp_clusters <- do.call(rbind, lapply(sce_byclust, function(x) x$mean_expression))
+    hc_props_clusters <- hclust(dist(scdf_props_clusters))$order
+    hc_exp_clusters <- hclust(dist(scdf_exp_clusters))$order
   }
   
-  scdf = do.call(rbind, sce_byclust)
+  scdf <- do.call(rbind, sce_byclust)
   
   if(cluster_genes) {
-    scdf$gene = factor(scdf$gene, levels = genes[as.numeric(hc_exp_genes)])
-  } else scdf$gene = factor(scdf$gene, levels = rev(genes))
+    scdf$gene <- factor(scdf$gene, levels = genes[as.numeric(hc_exp_genes)])
+  } else scdf$gene <- factor(scdf$gene, levels = rev(genes))
   if(cluster_groups) {
-    scdf$cluster = factor(scdf$cluster, levels = unique(colData(sce)[,group_by])[as.numeric(hc_exp_clusters)])
+    scdf$cluster <- factor(scdf$cluster, levels = unique(colData(sce)[,group_by])[as.numeric(hc_exp_clusters)])
   } 
 
   scdf$mean_expression[scdf$mean_expression == 0] <- NA
   scdf$proportion[scdf$proportion == 0] <- NA
 
   if(is.null(color_palette)) {
-    pal = .cpal_seq_ylgnbu()
+    pal <- .cpal_seq_ylgnbu()
   } else {
-    pal = color_palette
+    pal <- color_palette
   }
-  cscale = scale_colour_gradientn(colours = pal, na.value = "lightgray")
+  cscale <- scale_colour_gradientn(colours = pal, na.value = "lightgray")
 
   if(format == "wide") {
-    p = ggplot(scdf, aes(y = .data[["cluster"]],
+    p <- ggplot(scdf, aes(y = .data[["cluster"]],
                          x = .data[["gene"]],
                          size = .data[["proportion"]],
                          colour = .data[["mean_expression"]])
@@ -498,7 +498,7 @@ plot_dots <- function(sce,
             ) +
       labs(colour = "Mean expression", size = "Proportion")
   } else if(format == "tall") {
-    p = ggplot(scdf, aes(y = .data[["gene"]],
+    p <- ggplot(scdf, aes(y = .data[["gene"]],
                          x = .data[["cluster"]],
                          size = .data[["proportion"]],
                          colour = .data[["mean_expression"]])
@@ -515,17 +515,16 @@ plot_dots <- function(sce,
             ) +
       labs(colour = "Mean expression", size = "Proportion")
   }
-
-  return(p)
+  p
 }
 
 #' @importFrom scater retrieveCellInfo
 
 .makeColdataDF <- function(sce, columns) {
   do.call(cbind, lapply(columns, function(x) {
-    ret = retrieveCellInfo(sce, by = x)
-    col = data.frame(ret$value, row.names = colnames(sce))
-    colnames(col) = ret$name
+    ret <- retrieveCellInfo(sce, by = x)
+    col <- data.frame(ret$value, row.names = colnames(sce))
+    colnames(col) <- ret$name
     return(col)
   })
   )
@@ -583,14 +582,14 @@ plot_Coldata <- function(sce,
                          rotate_labels = TRUE) {
   ## Sanity checks
   # Error prefix
-  ep = .redm("{cellula::plot_Coldata()} - ")
+  ep <- .redm("{cellula::plot_Coldata()} - ")
   
   if(!is(sce, "SingleCellExperiment"))
     stop(paste0(ep, "Must provide a SingleCellExperiment object"))
 
   # Prepare data
-  include = c(x, y, color_by, group_by)
-  include = unique(include[!is.null(include)])
+  include <- c(x, y, color_by, group_by)
+  include <- unique(include[!is.null(include)])
 
   if(any(!include %in% colnames(colData(sce))))
     stop(paste0(ep, "Some columns were not found in the colData"))
@@ -606,8 +605,8 @@ plot_Coldata <- function(sce,
   } else if(!is.null(x)
             & (is(df[,x], "character") | is(df[,x], "factor"))
             & (is(df[,y], "character") | is(df[,y], "factor"))) {
-    df[,x] = factor(df[,x])
-    df[,y] = factor(df[,y])
+    df[,x] <- factor(df[,x])
+    df[,y] <- factor(df[,y])
     p <- .makeHeatmap(df, x, y, clustered, color_palette, rotate_labels)
   }
 
@@ -616,11 +615,10 @@ plot_Coldata <- function(sce,
     if(!is(df[,group_by], "factor") & !is(df[,group_by], "character")){
       cat(paste0(ep, "group_by must be a categorical variable (factor or character). Returning un-facetted plot.\n"))
     } else {
-          p = p + facet_wrap(group_by)
+          p <- p + facet_wrap(group_by)
     }
   }
-
-  return(p)
+  p
 }
 
 #' @importFrom ggplot2 .data aes position_dodge ggplot geom_violin geom_boxplot guides
@@ -631,34 +629,34 @@ plot_Coldata <- function(sce,
 .makeViolin <- function(df, x, y, plot_cells = FALSE, color_by = NULL, color_palette = NULL,
                         rotate_labels = TRUE) {
 
-  ep = .redm("{cellula::.makeViolin() via plot_Coldata()} - ")
+  ep <- .redm("{cellula::.makeViolin() via plot_Coldata()} - ")
 
   # Define mappings
-  aes_cd = aes(y = .data[[y]])
+  aes_cd <- aes(y = .data[[y]])
 
   if(!is.null(x)) {
     if(!is(df[,x], "factor") & !is(df[,x], "character") & !is(df[,x], "logical"))
       stop(paste0(ep, "x must be a categorical variable (coercible to factor)"))
-    df[,x] = factor(df[,x])
-    aes_cd$x = aes(x = .data[[x]])$x
+    df[,x] <- factor(df[,x])
+    aes_cd$x <- aes(x = .data[[x]])$x
     if(is.null(color_by)) {
-      aes_cd$colour = aes(colour = .data[[x]])$colour
-      aes_cd$fill = aes(fill = .data[[x]])$fill
+      aes_cd$colour <- aes(colour = .data[[x]])$colour
+      aes_cd$fill <- aes(fill = .data[[x]])$fill
     }
     if(!is.null(color_by)) {
       if(!is(df[,color_by], "factor") & !is(df[,color_by], "character") & !is(df[,color_by], "logical"))
         stop(paste0(ep, "color_by must be a categorical variable (coercible to factor)"))
-      aes_cd$colour = aes(colour = .data[[color_by]])$colour
-      aes_cd$fill = aes(fill = .data[[color_by]])$fill
+      aes_cd$colour <- aes(colour = .data[[color_by]])$colour
+      aes_cd$fill <- aes(fill = .data[[color_by]])$fill
     }
   } else {
-    df$group = y
-    aes_cd$x = aes(x = .data[["group"]])$x
+    df$group <- y
+    aes_cd$x <- aes(x = .data[["group"]])$x
     if(!is.null(color_by)) {
-      df[,color_by] = factor(df[,color_by])
-      aes_cd$x = aes(x = .data[[color_by]])$x
-      aes_cd$colour = aes(colour = .data[[color_by]])$colour
-      aes_cd$fill = aes(fill = .data[[color_by]])$fill
+      df[,color_by] <- factor(df[,color_by])
+      aes_cd$x <- aes(x = .data[[color_by]])$x
+      aes_cd$colour <- aes(colour = .data[[color_by]])$colour
+      aes_cd$fill <- aes(fill = .data[[color_by]])$fill
     }
   }
 
@@ -674,20 +672,20 @@ plot_Coldata <- function(sce,
   # Beeswarm
   if(plot_cells) {
     if(is.null(x) & !is.null(color_by)) {
-      aes_bee = aes_cd
-      aes_bee$x = aes(x = .data[[color_by]])$x
-      aes_bee$colour = aes(colour = .data[[color_by]])$colour
-      pwidth = 1/length(levels(df[,color_by]))
+      aes_bee <- aes_cd
+      aes_bee$x <- aes(x = .data[[color_by]])$x
+      aes_bee$colour <- aes(colour = .data[[color_by]])$colour
+      pwidth <- 1/length(levels(df[,color_by]))
     } else if(!is.null(x) & is.null(color_by)){
-      pwidth = 1/length(levels(df[,x]))
-      aes_bee = aes_cd
-      aes_bee$x = aes(x = .data[[x]])$x
-      aes_bee$colour = aes(colour = .data[[x]])$colour
+      pwidth <- 1/length(levels(df[,x]))
+      aes_bee <- aes_cd
+      aes_bee$x <- aes(x = .data[[x]])$x
+      aes_bee$colour <- aes(colour = .data[[x]])$colour
     } else if(!is.null(x) & !is.null(color_by)){
       if(x != color_by) {
-        aes_bee = aes(y = .data[[y]], x = .data[[x]])
-        pwscale = length(unique(paste0(df[,x], "_", df[,color_by])))
-        pwidth = 1/pwscale
+        aes_bee <- aes(y = .data[[y]], x = .data[[x]])
+        pwscale <- length(unique(paste0(df[,x], "_", df[,color_by])))
+        pwidth <- 1/pwscale
       }
     }
 
@@ -721,18 +719,18 @@ plot_Coldata <- function(sce,
     if(!is.null(x) & is.null(color_by)) group_var = x else group_var = color_by
         if(is.null(color_palette)) {
           if(length(unique(df[,group_var])) > 1) {
-            pal = .cpal_qual(n = length(unique(df[,group_var])))
+            pal <- .cpal_qual(n = length(unique(df[,group_var])))
           } else {
-            pal = "gray"
+            pal <- "gray"
           }
 
     } else {
-      pal = color_palette
+      pal <- color_palette
     }
 
-    cscale = scale_colour_manual(values = pal, na.value = "lightgray")
-    fscale = scale_fill_manual(values = pal, na.value = "lightgray")
-    fguides = guides(boxplot = "none")
+    cscale <- scale_colour_manual(values = pal, na.value = "lightgray")
+    fscale <- scale_fill_manual(values = pal, na.value = "lightgray")
+    fguides <- guides(boxplot = "none")
     p <- p + cscale + fscale + fguides 
   }
   
@@ -740,8 +738,7 @@ plot_Coldata <- function(sce,
     p <- p + theme(axis.text.x.bottom = element_text(angle = 45, 
                                                      hjust = 1))
   }
-  
-  return(p)
+  p
 }
 
 
@@ -753,10 +750,10 @@ plot_Coldata <- function(sce,
                          color_palette = NULL,
                          contour = TRUE) {
   # Define mappings
-  aes_cd = aes(x = .data[[x]], y = .data[[y]])
+  aes_cd <- aes(x = .data[[x]], y = .data[[y]])
 
    if(!is.null(color_by)) {
-      aes_cd$colour = aes(colour = .data[[color_by]])$colour
+      aes_cd$colour <- aes(colour = .data[[color_by]])$colour
     }
   p <- ggplot(df, mapping = aes_cd) +
     geom_point(alpha = 1,
@@ -782,12 +779,12 @@ plot_Coldata <- function(sce,
     # Colors
     if(!is.null(color_by)) {
       if(is.null(color_palette)) {
-        pal = .cpal_qual(n = length(unique(df[,color_by])))
+        pal <- .cpal_qual(n = length(unique(df[,color_by])))
       } else {
-        pal = color_palette
+        pal <- color_palette
       }
-      cscale = scale_colour_manual(values = pal, na.value = "lightgray")
-      p = p + cscale
+      cscale <- scale_colour_manual(values = pal, na.value = "lightgray")
+      p <- p + cscale
     }
 
   return(p)
@@ -802,59 +799,55 @@ plot_Coldata <- function(sce,
                          rotate_labels = TRUE) {
 
   # Calculate Jaccard index
-  jdf = expand.grid(levels(df[,x]), levels(df[,y]))
+  jdf <- expand.grid(levels(df[,x]), levels(df[,y]))
 
-  jdf$intersection = apply(jdf[,1:2], 1, function(row) {
+  jdf$intersection <- apply(jdf[,1:2], 1, function(row) {
     length(intersect(which(df[,1] == row[1]), which(df[,2] == row[2])))
   })
 
-  jdf$union = apply(jdf[,1:2], 1, function(row) {
+  jdf$union <- apply(jdf[,1:2], 1, function(row) {
     length(union(which(df[,1] == row[1]), which(df[,2] == row[2])))
   })
 
   jdf$`Jaccard index`= jdf$intersection/jdf$union
 
-  colnames(jdf)[c(1,2)] = c(x, y)
+  colnames(jdf)[c(1,2)] <- c(x, y)
 
   # Reorder (protect against 1, 10, 2, ...)
-  jdf[,x] = .reorderNumericLevels(jdf[,x])
-  jdf[,y] = .reorderNumericLevels(jdf[,y], rev = TRUE)
+  jdf[,x] <- .reorderNumericLevels(jdf[,x])
+  jdf[,y] <- .reorderNumericLevels(jdf[,y], rev = TRUE)
 
   # Clustering
   if(clustered) {
-    mat = matrix(jdf$`Jaccard index`, nrow = length(unique(jdf[,x])))
-    col_ord = hclust(dist(mat))$order
-    row_ord = rev(hclust(dist(t(mat)))$order)
-    jdf[,x] = factor(jdf[,x], levels = unique(jdf[,x])[col_ord])
-    jdf[,y] = factor(jdf[,y], levels = unique(jdf[,y])[row_ord])
+    mat <- matrix(jdf$`Jaccard index`, nrow = length(unique(jdf[,x])))
+    col_ord <- hclust(dist(mat))$order
+    row_ord <- rev(hclust(dist(t(mat)))$order)
+    jdf[,x] <- factor(jdf[,x], levels = unique(jdf[,x])[col_ord])
+    jdf[,y] <- factor(jdf[,y], levels = unique(jdf[,y])[row_ord])
   }
 
   # Plot
-  p = ggplot(jdf, aes(x = .data[[x]], y = .data[[y]])) +
+  p <- ggplot(jdf, aes(x = .data[[x]], y = .data[[y]])) +
            geom_tile(aes(fill = .data[["Jaccard index"]])) +
            scale_x_discrete(position = "top")
 
-  p = p + theme_classic() +
+  p <- p + theme_classic() +
     theme(plot.margin = margin(1, 1, 1, 1, "cm"),
           panel.grid.major = element_blank(),
           panel.grid.minor = element_blank(),
           axis.line = element_blank(),
           text = element_text(family = "sans")
     )
-  
-  if(rotate_labels) p = p + theme(axis.text.x.top = element_text(angle = 45, 
-                                                                 hjust = 0))
 
+  if(rotate_labels) p <- p + theme(axis.text.x.top = element_text(angle = 45, 
+                                                                 hjust = 0))
   # Colors
   if(is.null(color_palette)) {
-    pal = .cpal_seq_ylgnbu()
+    pal <- .cpal_seq_ylgnbu()
   } else {
-    pal = color_palette
+    pal <- color_palette
   }
-
-  cscale = scale_fill_gradientn(colours = pal)
-
+  cscale <- scale_fill_gradientn(colours = pal)
   p = p + cscale
-  return(p)
-
+  p
 }

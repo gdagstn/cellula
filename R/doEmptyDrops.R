@@ -30,7 +30,7 @@ doEmptyDrops <- function(sce,
                           verbose = TRUE,
                           parallel_param = SerialParam()) {
 
-  ep = .redm("{cellula::doEmptyDrops()} - ")
+  ep <- .redm("{cellula::doEmptyDrops()} - ")
   
   if (!"DropletUtils" %in% rownames(installed.packages())){
     stop(ep, "The `DropletUtils` package must be installed first. \n
@@ -40,7 +40,7 @@ doEmptyDrops <- function(sce,
   if (verbose) message(.bluem("[QC/EMPTY]"),"Running emptyDrops.")
 
   if (!is.null(batch)) {
-    batches = unique(as.character(colData(sce)[,batch]))
+    batches <- unique(as.character(colData(sce)[,batch]))
     scelist <- lapply(batches, function(x) sce[,colData(sce)[,batch] == x])
     names(scelist) <- batches
     if (emptydrops_cutoff == "auto") {
@@ -57,28 +57,28 @@ doEmptyDrops <- function(sce,
                                                          lower = emptydrops_cutoff[[x]])
                             keep_droplets <- empty_droplets$FDR <= emptydrops_alpha
                             scelist[[x]]$empty <- factor(ifelse(empty_droplets$FDR <= emptydrops_alpha, "ok", "empty"))
-                            scelist[[x]]$empty[which(is.na(scelist[[x]]$empty))] = "empty"
+                            scelist[[x]]$empty[which(is.na(scelist[[x]]$empty))] <- "empty"
                             if (verbose) print(table(Sig = keep_droplets, Limited = empty_droplets$Limited))
                             if (verbose) message("Empty cells (", x, "): ", sum(scelist[[x]]$empty == "empty"))
                             return(scelist[[x]]$empty)
                           }, BPPARAM = parallel_param)
 
     names(empty_list) <- names(scelist)
-    sce$empty = unlist(empty_list)
+    sce$empty <- unlist(empty_list)
    } else {
     if (emptydrops_cutoff == "auto") {
       barcode_ranks <- DropletUtils::barcodeRanks(sce)
-      emptydrops_cutoff = metadata(barcode_ranks)$inflection
+      emptydrops_cutoff <- metadata(barcode_ranks)$inflection
     }
 
     empty_droplets <- DropletUtils::emptyDrops(sce, lower = emptydrops_cutoff)
     keep_droplets <- empty_droplets$FDR <= emptydrops_alpha
     sce$empty <- factor(ifelse(empty_droplets$FDR <= emptydrops_alpha, "ok", "empty"))
-    sce$empty[which(is.na(sce$empty))] = "empty"
+    sce$empty[which(is.na(sce$empty))] <- "empty"
 
     if (verbose) print(table(Sig = keep_droplets, Limited = empty_droplets$Limited))
     if (verbose) message("Empty cells: ", sum(sce$empty == "empty"))
   }
-  sce = sce[, which(sce$empty == "ok"), drop = FALSE]
+  sce <- sce[, which(sce$empty == "ok"), drop = FALSE]
   sce
 }
