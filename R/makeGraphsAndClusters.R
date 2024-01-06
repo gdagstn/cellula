@@ -115,7 +115,7 @@ makeGraphsAndClusters <- function(sce,
       }
 
       gname = paste0(prefix, i)
-      colData(sce)[,gname] <- cl
+      colData(sce)[,gname] <- as.character(cl)
 
       if (verbose) message(.bluem("[CLU]"), "Found", length(unique(cl)), "clusters.")
 
@@ -155,7 +155,7 @@ makeGraphsAndClusters <- function(sce,
                                    n_iterations = leiden_iterations)$membership)
       }
       gname = paste0(prefix, i)
-      colData(sce)[,gname] <- cl
+      colData(sce)[,gname] <- as.character(cl)
       if (verbose) message("Found", length(unique(cl)), "clusters.")
 
       if (calculate_modularity) {

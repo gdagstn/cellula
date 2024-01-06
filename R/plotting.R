@@ -341,6 +341,8 @@ plot_UMAP <- function(sce,
   }
   
   if(!is.null(trajectory)) {
+    trj <- metadata(sce)[[trajectory]]
+    
     if(rescale) {
       trj$x0 <- .rescalen(trj$x0, 
                         from = range(orig_range$x),
@@ -357,12 +359,13 @@ plot_UMAP <- function(sce,
                        from = range(orig_range$y),
                        to = range(udf$y))
     }
+    trj <- as.data.frame(trj)
     p <- p + geom_segment(data = trj, 
-                         mapping = aes(x = .data[["x0"]],
+                          mapping = aes(x = .data[["x0"]],
                                        xend = .data[["x1"]],
                                        y = .data[["y0"]],
                                        yend = .data[["y1"]]),
-                         inherit.aes = FALSE
+                          inherit.aes = FALSE
     )
   }
   p
@@ -797,6 +800,9 @@ plot_Coldata <- function(sce,
 .makeHeatmap <- function(df, x, y, clustered = TRUE, color_palette = NULL, 
                          rotate_labels = TRUE) {
 
+  if(!is(df[,x], "factor")) df[,x] = factor(df[,x])
+  if(!is(df[,y], "factor")) df[,y] = factor(df[,y])
+  
   # Calculate Jaccard index
   jdf <- expand.grid(levels(df[,x]), levels(df[,y]))
 
@@ -813,8 +819,8 @@ plot_Coldata <- function(sce,
   colnames(jdf)[c(1,2)] <- c(x, y)
 
   # Reorder (protect against 1, 10, 2, ...)
-  jdf[,x] <- .reorderNumericLevels(jdf[,x])
-  jdf[,y] <- .reorderNumericLevels(jdf[,y], rev = TRUE)
+  #jdf[,x] <- .reorderNumericLevels(jdf[,x])
+  #jdf[,y] <- .reorderNumericLevels(jdf[,y], rev = TRUE)
 
   # Clustering
   if(clustered) {

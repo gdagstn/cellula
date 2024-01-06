@@ -143,14 +143,15 @@ assignIdentities <- function(sce, genesets = NULL, method, ref = NULL,
     if (is.null(name)) labelname <- "labels_AUC" else labelname <- name
     if (verbose) message(.bluem("[ANNO/AUC]"), "Assigning cell labels.")
   
-   rankings <- AUCell::AUCell_buildRankings(counts(sce),
-                                             splitByBlocks = TRUE,
-                                             plotStats = FALSE,
-                                             verbose = verbose,
-                                             BPPARAM = BPPARAM)
-   aucs <- AUCell::AUCell_calcAUC(genesets, rankings, 
+   rankings <- AUCell::AUCell_buildRankings(sce,
+                                            splitByBlocks = TRUE,
+                                            plotStats = FALSE,
+                                            verbose = verbose,
+                                            assayName = "counts",
+                                            BPPARAM = BPPARAM)
+   aucs <- AUCell::AUCell_calcAUC(genesets, rankings,
                                   aucMaxRank = ceiling(0.2 * nrow(rankings)),
-                                  nCores = BPPARAM$workers,                                   ...)
+                                  nCores = BPPARAM$workers, ...)
    scores <- as.data.frame(t(assay(aucs)))
   
    if (length(genesets) > 1) {
@@ -401,8 +402,8 @@ buildReference <- function(sce, agg_by, agg_assay = "logcounts", agg_fun = "sum"
     # Decide aggregation function
     # calls directly from Matrix to dispatch properly to sparse matrices
     afn <- switch(agg_fun,
-                 "sum" <- Matrix::rowSums,
-                 "mean"<- Matrix::rowMeans)
+                 "sum" = Matrix::rowSums,
+                 "mean" = Matrix::rowMeans)
     # Loop applying the aggregation function
     quants <- SummarizedExperiment::assay(sce, agg_assay)
     labs <- unique(as.character(colData(sce)[,agg_by]))

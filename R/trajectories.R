@@ -163,7 +163,7 @@ findTrajectories <- function(sce, dr = "PCA", clusters, method = "slingshot",
                              ndims = 20, dr_embed = NULL, start = "auto", 
                              Monocle_lg_control = NULL, omega = TRUE,
                              omega_scale = 1.5, invert = FALSE, do_de = FALSE, batch_de = NULL,
-                             add_metadata = TRUE, verbose = FALSE) {
+                             add_metadata = TRUE, return_sds = FALSE, verbose = FALSE) {
     
     ## Sanity checks
     # Error prefix
@@ -206,7 +206,8 @@ findTrajectories <- function(sce, dr = "PCA", clusters, method = "slingshot",
                                       clusters = clusters, start = start, 
                                       dr_embed = dr_embed, omega = omega, 
                                       omega_scale = omega_scale, do_de = do_de,
-                                      batch_de = batch_de, verbose = verbose)
+                                      batch_de = batch_de, return_sds = return_sds,
+                                      add_metadata = add_metadata, verbose = verbose)
       
     } else if(method == "monocle") {
       sce <- .getMonocleTrajectories(sce = sce, dr = dr, ndims = ndims,
@@ -217,8 +218,9 @@ findTrajectories <- function(sce, dr = "PCA", clusters, method = "slingshot",
       
     } else if(method == "MODDPT") { # UNDOCUMENTED (WIP)
       sce <- .getDPTtrajectories(sce = sce, dr = dr, ndims = ndims, 
-                                clusters = clusters, start = start, 
-                                add_metadata = add_metadata, verbose = verbose)
+                                dr_embed = dr_embed, clusters = clusters, 
+                                start = start, add_metadata = add_metadata, 
+                                verbose = verbose)
     }
   
     return(sce)
@@ -421,6 +423,7 @@ findTrajectories <- function(sce, dr = "PCA", clusters, method = "slingshot",
                                       do_de = FALSE,
                                       batch_de = NULL,
                                       add_metadata = TRUE,
+                                      return_sds = FALSE,
                                       verbose = FALSE,
                                       BPPARAM = SerialParam()){
   
@@ -475,6 +478,9 @@ findTrajectories <- function(sce, dr = "PCA", clusters, method = "slingshot",
       metadata(sce)[["Slingshot_curves"]] = metadata(sce$slingshot)[["curves"]]
       metadata(sce)[["Slingshot_weights"]] = assay(sce$slingshot, "weights")
       metadata(sce)[["Slingshot_params"]] = metadata(sce$slingshot)[["slingParams"]]
+      if(return_sds) {
+        metadata(sce)[["Slingshot_dataset"]] = sce$slingshot
+      }
     }
     sce$slingshot <- NULL
     sce
@@ -620,7 +626,7 @@ makeMetacells  <- function(sce, w = 10, group = NULL, dr = "PCA", ndims = 20) {
       names(clustl) <- gv
       memberships <- unlist(clustl, use.names = TRUE)
       groups <- rep(gv, lengths(clustl))
-      names(memberships) <- vapply(names(memberships), function(x) 
+      names(memberships) <- sapply(names(memberships), function(x) 
         unlist(strsplit(x, split = "[.]"))[-1])
       ref <- data.frame(groups = groups, 
                        membership = memberships, 

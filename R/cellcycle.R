@@ -150,9 +150,14 @@ plotCycle <- function(sce,
   if(is.null(color_by)) {
     color_by <- "cells"
     dd[,"cells"] <- "all"
+  } else {
+    if(is(dd[,color_by], "numeric")) dd = dd[order(dd[,color_by], decreasing = FALSE),] 
   }
   # Circles
   circs <- .makeCircles(r = seq(0.5, nring/2, by = 0.5))
+  
+ 
+  
   p <- ggplot(dd, aes(x = .data[["x"]], y = .data[["y"]], col = .data[[color_by]]))
   for(i in unique(circs$r)){
     p <- p + geom_path(data = circs[circs$r == i,], 
