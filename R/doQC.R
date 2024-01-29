@@ -73,24 +73,24 @@ doQC <- function(sce,
   if (verbose) message(.bluem("[QC]"),"Calculating QC metrics.")
   # Generate QC
   if (subset_mito){
-    if (sum(grepl("^MT-", rowData(sce)$Symbol, ignore.case = TRUE)) == 0) {
+    if (sum(grepl("^MT-|^Mt-", rowData(sce)$Symbol, ignore.case = TRUE)) == 0) {
       warning("   No MT genes found.\n")
       mito <- FALSE
-    } else mito = rownames(sce)[grepl("^MT-", rowData(sce)$Symbol, ignore.case = TRUE)]
+    } else mito = rownames(sce)[grepl("^MT-|^Mt-", rowData(sce)$Symbol, ignore.case = TRUE)]
   } else mito <- FALSE
 
   if (subset_malat1){
-    if (sum(grepl("^MALAT1", rowData(sce)$Symbol, ignore.case = TRUE)) == 0) {
+    if (sum(grepl("^MALAT1|^Malat1", rowData(sce)$Symbol, ignore.case = TRUE)) == 0) {
       warning("   No MALAT1 gene found.")
       Malat1 <- FALSE
-    } else Malat1 = rownames(sce)[grepl("^MALAT1", rowData(sce)$Symbol, ignore.case = TRUE)]
+    } else Malat1 = rownames(sce)[grepl("^MALAT1|^Malat1", rowData(sce)$Symbol, ignore.case = TRUE)]
   } else Malat1 <- FALSE
 
   if (subset_ribo){
-    if (sum(grepl("^MRPL|^MRPS|^RPL|^RPS", rowData(sce)$Symbol, ignore.case = TRUE)) == 0) {
+    if (sum(grepl("^MRPL|^MRPS|^RPL|^RPS|^Mrpl|^Mrps|^Rpl|^Rps", rowData(sce)$Symbol, ignore.case = TRUE)) == 0) {
       warning("   No ribo genes found.")
       Ribo <- FALSE
-    } else Ribo <- rownames(sce)[grepl("^MRPL|^MRPS|^RPL|^RPS", rowData(sce)$Symbol, ignore.case = TRUE)]
+    } else Ribo <- rownames(sce)[grepl("^MRPL|^MRPS|^RPL|^RPS|^Mrpl|^Mrps|^Rpl|^Rps", rowData(sce)$Symbol, ignore.case = TRUE)]
   } else Ribo <- FALSE
 
   subset_list <- list(mito = mito, Malat1 = Malat1, Ribo = Ribo)

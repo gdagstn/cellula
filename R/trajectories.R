@@ -355,7 +355,7 @@ findTrajectories <- function(sce, dr = "PCA", clusters, method = "slingshot",
     verts <- lapply(split(cvert, cvert$V1), rownames)
     names(verts) <- names(V(cds@principal_graph$UMAP))
     
-    # Weight by the number of cells closest to each node - more cells, closer points
+    # Weigh by the number of cells closest to each node - more cells, closer points
     gv$weight <- apply(gv[,c(1,2)], 1, function(x) max(length(verts[[x[1]]]), length(verts[[x[2]]])))
     
     # Fruchterman-Rheingold layout
