@@ -23,13 +23,13 @@ Default is \code{"PCA"}}
 construction. Default is \code{NULL} meaning the square root of the 
 number of cells will be used.}
 
+\item{ndims, }{numeric, the number of dimensions to use from \code{dr}. Default is 20.}
+
 \item{labels}{character, the name of the \code{colData} column with cluster
 labels to be used.}
 
 \item{weighting_scheme}{character, one of \code{"jaccard"} (default), 
 \code{rank} or \code{"min"}}
-
-\item{numeric, }{the number of dimensions to use from \code{dr}. Default is 20.}
 }
 \value{
 a \code{SingleCellExperiment} object with a modularity matrix in the

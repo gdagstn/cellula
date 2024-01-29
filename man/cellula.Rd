@@ -2,7 +2,7 @@
 % Please edit documentation in R/cellula.r
 \name{cellula}
 \alias{cellula}
-\title{#' SingleCellExperiment processing pipeline}
+\title{SingleCellExperiment processing pipeline}
 \usage{
 cellula(
   sce,

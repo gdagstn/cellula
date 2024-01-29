@@ -46,11 +46,53 @@ if \code{TRUE}, they will be saved in the \code{metadata} of the object
 as a list named \code{"LIGER_NMF_matrices"}. Default is FALSE.}
 
 \item{verbose}{logical, display messages on progress? Default is FALSE.}
+
+\item{...}{extra arguments passed to the main integration functions used by each method.}
 }
 \value{
 a `SingleCellExperiment` object with integrated dimensionality reduction.
-    In the case of LIGER integration, only the `H.norm` slot will be returned.
+    In the case of LIGER integration, only the "H" and "H.norm" slots will be returned, 
+    unless the option \code{ret_nmf} is set to \code{TRUE}, in which case the
+    `H`, `W` and `V` matrices will be returned as well in the \code{metadata} slot.
+    The integrated dimensionality reductions will be called "UMAP_ or PCA_\{method\}" 
+    where \{method\} is any method other than "LIGER", in which case the 
+    dimensionality reduction are called "LIGER", "LIGER_NORM" and "UMAP_LIGER".
 }
 \description{
 Pipeline for automatic processing and integration of SingleCellExperiment objects
+}
+\details{
+This function allows to use several dataset integration/batch effect
+correction methods for single cell datasets, allowing the user to supply
+any number of parameters using \code{...}. Due to syntax limitations, the
+parameters that can be tuned will only apply to *one* function within any
+integration pipeline. In particular, the following functions are affected:
+
+\itemize{
+ \item{"method = "fastMNN":}{ \code{batchelor::fastMNN()}}
+ \item{"method = "Harmony":}{ \code{harmony::RunHarmony()}}
+ \item{"method = "Seurat":}{  \code{Seurat::FindIntegrationAnchors()}}   
+ \item{"method = "LIGER":}{ \code{RcppPlanc::inmf}}
+ \item{"method = "regression":}{ \code{batchelor::regressBatches()}} 
+ \item{"method = "scMerge2"}{ \code{scMerge::scMerge2()}}
+ \item{"method = "STACAS"}{ \code{STACAS::RunStacas()}}
+}
+
+Users who desire further control/customization should apply the functions 
+from the respective packages directly, e.g. to change several parameters
+in the \code{Seurat} integration pipeline. 
+
+The following methods work out of the box:
+
+\itemize{
+ \item{"method = "fastMNN":}{ FastMNN correction from \code{batchelor}}
+ \item{"method = "Harmony":}{Integration on PCA embeddings from \code{harmony}}
+ \item{"method = "Seurat":}{\code{Seurat} CCA with de novo normalization 
+     and feature selection, anchor finding and integration}
+ \item{"method = "LIGER":}{LIGER iNMF using the \code{RcppPlanc} implementation,
+     with de novo normalization and feature selection through \code{rliger}}
+ \item{"method = "regression":}{Linear regression from \code{batchelor}} 
+ \item{"method = "scMerge2"}{scMerge2 pseudobulking and RUV from \code{scMerge}}
+ \item{"method = "STACAS"}{\code{Seurat} pre-processing and \code{STACAS} integration}
+}
 }

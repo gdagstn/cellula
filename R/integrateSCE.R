@@ -23,7 +23,48 @@
 #' @param ... extra arguments passed to the main integration functions used by each method. 
 #'
 #' @return a `SingleCellExperiment` object with integrated dimensionality reduction.
-#'     In the case of LIGER integration, only the `H.norm` slot will be returned.
+#'     In the case of LIGER integration, only the "H" and "H.norm" slots will be returned, 
+#'     unless the option \code{ret_nmf} is set to \code{TRUE}, in which case the
+#'     `H`, `W` and `V` matrices will be returned as well in the \code{metadata} slot.
+#'     The integrated dimensionality reductions will be called "UMAP_ or PCA_\{method\}" 
+#'     where \{method\} is any method other than "LIGER", in which case the 
+#'     dimensionality reduction are called "LIGER", "LIGER_NORM" and "UMAP_LIGER". 
+#'     
+#' @details 
+#' This function allows to use several dataset integration/batch effect
+#' correction methods for single cell datasets, allowing the user to supply
+#' any number of parameters using \code{...}. Due to syntax limitations, the
+#' parameters that can be tuned will only apply to *one* function within any
+#' integration pipeline. In particular, the following functions are affected:
+#'
+#'\itemize{
+#'  \item{"method = "fastMNN":}{ \code{batchelor::fastMNN()}}
+#'  \item{"method = "Harmony":}{ \code{harmony::RunHarmony()}}
+#'  \item{"method = "Seurat":}{  \code{Seurat::FindIntegrationAnchors()}}   
+#'  \item{"method = "LIGER":}{ \code{RcppPlanc::inmf}}
+#'  \item{"method = "regression":}{ \code{batchelor::regressBatches()}} 
+#'  \item{"method = "scMerge2"}{ \code{scMerge::scMerge2()}}
+#'  \item{"method = "STACAS"}{ \code{STACAS::RunStacas()}}
+#'}
+#' 
+#' Users who desire further control/customization should apply the functions 
+#' from the respective packages directly, e.g. to change several parameters
+#' in the \code{Seurat} integration pipeline. 
+#' 
+#' The following methods work out of the box:
+#' 
+#'\itemize{
+#'  \item{"method = "fastMNN":}{ FastMNN correction from \code{batchelor}}
+#'  \item{"method = "Harmony":}{Integration on PCA embeddings from \code{harmony}}
+#'  \item{"method = "Seurat":}{\code{Seurat} CCA with de novo normalization 
+#'      and feature selection, anchor finding and integration}
+#'  \item{"method = "LIGER":}{LIGER iNMF using the \code{RcppPlanc} implementation,
+#'      with de novo normalization and feature selection through \code{rliger}}
+#'  \item{"method = "regression":}{Linear regression from \code{batchelor}} 
+#'  \item{"method = "scMerge2"}{scMerge2 pseudobulking and RUV from \code{scMerge}}
+#'  \item{"method = "STACAS"}{\code{Seurat} pre-processing and \code{STACAS} integration}
+#'}
+#'     
 #'
 #' @importFrom SummarizedExperiment colData rowData
 #' @importFrom scater runPCA
@@ -52,15 +93,16 @@ integrateSCE <- function(sce,
 
   if (!is(sce, "SingleCellExperiment"))
     stop(ep, "Must provide a SingleCellExperiment object")
-  if (!(method %in% c("fastMNN", "Harmony", "Seurat", "LIGER", "regression")))
-    stop(ep, "method not recognized - must be one of \"fastMNN\", \"Harmony\", \"Seurat\", \"LIGER\", or \"regression\"")
+  if (!(method %in% c("fastMNN", "Harmony", "Seurat", "LIGER", "regression", "STACAS", "scMerge2")))
+    stop(ep, "method not recognized - must be one of \"fastMNN\", \"Harmony\", 
+         \"Seurat\", \"LIGER\", \"regression\", \"scMerge2\", \"STACAS\"")
   if (!(batch %in% colnames(colData(sce))))
     stop(ep,"batch column not found in the colData of the object")
   if (hvg_ntop > nrow(sce))
     stop(ep, "hvg_ntop cannot be higher than the number of features (nrow) in the object")
 
   if (is.null(neighbor_n)) {
-    message(message(.bluem("[INT]"), "neighbor_n was not supplied. Defaulting to floor(sqrt(ncells))"))
+    message(message(.bluem("[INT]"), " neighbor_n was not supplied. Defaulting to floor(sqrt(ncells))"))
     neighbor_n <- floor(sqrt(ncol(sce)))
   }
 
@@ -117,6 +159,7 @@ integrateSCE <- function(sce,
                                 verbose = verbose,
                                 hvgs = hvgs,
                                 ...)
+    
   } else if (method == "STACAS") {
     sce <- .integrateSTACAS(sce = sce, 
                             batch = batch,
@@ -126,19 +169,20 @@ integrateSCE <- function(sce,
                             hvg_ntop = hvg_ntop,
                             ...)
   }
+  
+  else if (method == "scMerge2") {
+    sce <- .integrateScMerge(sce = sce, 
+                            batch = batch,
+                            ndims = ndims,
+                            neighbor_n = neighbor_n,
+                            verbose = verbose,
+                            parallel_param = parallel_param,
+                            hvgs = hvgs,
+                            ...)
+  }
+  
   return(sce)
 }
-
-
-
-
-
-
-
-
-
-
-
 
 #' @importFrom SummarizedExperiment colData rowData
 #' @importFrom uwot umap
@@ -146,6 +190,8 @@ integrateSCE <- function(sce,
 
 .integrateMNN <- function(sce, batch, hvgs, ndims, neighbor_n, parallel_param, verbose, ...) {
   
+  ## Sanity checks
+  # Error prefix
   ep <- .redm("{cellula::integrateSCE() / method = \"MNN\"} - ")
   
   if (is.null(hvgs)) {

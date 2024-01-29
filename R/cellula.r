@@ -1,4 +1,4 @@
-#'#' SingleCellExperiment processing pipeline
+#' SingleCellExperiment processing pipeline
 #'
 #' Pipeline for automatic processing and integration of SingleCellExperiment objects
 #'

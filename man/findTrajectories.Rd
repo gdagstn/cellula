@@ -72,6 +72,9 @@ blocking factor in the differential expression analysis. Default is NULL.}
 \item{add_metadata}{logical, should additional data from trajectory inference be
 added to the \code{metadata(sce)}? Default is TRUE.}
 
+\item{return_sds}{logical, should the \code{SlingshotDataSet} object be returned
+in the metadata? Default is FALSE.}
+
 \item{verbose}{logical, should progress messages be printed? Default is FALSE.}
 }
 \value{
