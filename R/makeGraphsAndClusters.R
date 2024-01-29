@@ -257,7 +257,7 @@ metaCluster <- function(sce,
 #' @param neighbors numeric, the number of neighbors to be used for SNN graph 
 #'     construction. Default is \code{NULL} meaning the square root of the 
 #'     number of cells will be used. 
-#' @param numeric, the number of dimensions to use from \code{dr}. Default is 20.     
+#' @param ndims, numeric, the number of dimensions to use from \code{dr}. Default is 20.     
 #' @param labels character, the name of the \code{colData} column with cluster
 #'     labels to be used.
 #' @param weighting_scheme character, one of \code{"jaccard"} (default), 
@@ -281,13 +281,16 @@ metaCluster <- function(sce,
 #'     
 #' @importFrom SummarizedExperiment colData
 #' @importFrom S4Vectors metadata metadata<-
-#' @importFrom SingleCellExperiment reducedDim reducedDimnames
+#' @importFrom SingleCellExperiment reducedDim reducedDimNames
 #' @importFrom bluster makeSNNGraph pairwiseModularity 
 #' 
 #' @export
 
 rebuildModularity <- function(sce, dr = "PCA", neighbors = NULL, ndims = 20,
                               labels, weighting_scheme = "jaccard") {
+  
+  ep = .redm("{cellula::rebuildModularity} - ")
+    
     if (!dr %in% reducedDimNames(sce)) 
     stop(ep, "the dr name supplied was not found in the SingleCellExperiment object")
   if (!weighting_scheme %in%  c("jaccard", "rank", "number"))

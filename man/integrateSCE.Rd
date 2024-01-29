@@ -13,7 +13,9 @@ integrateSCE(
   ndims = 20,
   neighbor_n = NULL,
   parallel_param = SerialParam(),
-  verbose = FALSE
+  ret_nmf = FALSE,
+  verbose = FALSE,
+  ...
 )
 }
 \arguments{
@@ -26,7 +28,8 @@ integrateSCE(
 \item{hvg_ntop}{numeric, the number of top HVGs to retain. Default is 2000.}
 
 \item{method}{character, the integration method. One of \code{"fastMNN"}, \code{"Harmony"},
-\code{"Seurat"}, \code{"LIGER"}, and \code{"regression"}. Default is \code{"fastMNN"}.}
+\code{"Seurat"}, \code{"LIGER"}, \code{"regression"}, \code{"scMerge2"}, 
+and \code{"STACAS"}. Default is \code{"fastMNN"}.}
 
 \item{ndims}{numeric, the number of dimensions to use for integration. Default
 is 20. For LIGER, it is the value of the k parameter in \code{rliger::optimizeALS()}}
@@ -37,6 +40,10 @@ NULL, which results in the rounded squared root of the number of cells.}
 \item{parallel_param}{a \code{BiocParallel} object specifying the parallelization backend
 to be used in some steps of the pipeline. Note: for Seurat options, the
 \code{future} framework should be set up with maximum size and number of cores.}
+
+\item{ret_nmf}{logical, should the NMF matrices be returned with the object? 
+if \code{TRUE}, they will be saved in the \code{metadata} of the object
+as a list named \code{"LIGER_NMF_matrices"}. Default is FALSE.}
 
 \item{verbose}{logical, display messages on progress? Default is FALSE.}
 }

@@ -19,6 +19,7 @@ findTrajectories(
   do_de = FALSE,
   batch_de = NULL,
   add_metadata = TRUE,
+  return_sds = FALSE,
   verbose = FALSE
 )
 }

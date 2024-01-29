@@ -9,7 +9,7 @@ Description: Wrapper around a simple integration pipeline for scRNAseq with some
 License: MIT + file LICENSE
 Encoding: UTF-8
 LazyData: true
-RoxygenNote: 7.2.3
+RoxygenNote: 7.3.1
 Imports: 
     SingleCellExperiment,
     SummarizedExperiment,
@@ -32,7 +32,6 @@ Imports:
     gridExtra,
     S4Vectors,
     rlang,
-    methods,
     Matrix,
     matrixStats,
     ggrepel
@@ -42,12 +41,15 @@ Suggests:
     DropletUtils,
     harmony,
     rliger,
+    RcppPlanc,
     GSVA,
     monocle3,
     scDblFinder,
+    scMerge,
     SeuratObject,
     Seurat,
     slingshot,
+    STACAS,
     tricycle,
     TSCAN,
     UCell
