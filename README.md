@@ -8,8 +8,10 @@ You can read all about it on the companion [website](https://gdagstn.github.io/c
 
 ## Changelog
 
--   30/7/2023:
-
+-   29/1/2024:\
+    Added additional methods for integration: scMerge2 from `scMerge` and STACAS from `STACAS`
+    
+-   30/7/2023:\
     Added a function to build references for the Jaitin method from a SCE. Fixed minor bugs in identity assignment
 
 -   23/7/2023:\
