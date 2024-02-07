@@ -226,7 +226,7 @@ metaCluster <- function(sce,
     pal <- rainbow(length(groups(meta)), alpha = 0.3)
     plot(linked, vertex.color = pal[as.numeric(as.factor(meta$membership))],
        edge.width = E(linked)$weight * 2, vertex.size = 5, vertex.label.cex = 0.4)
-    legend("topleft", pt.bg = pal, pch = 21, legend = seq_len(10), bty = "n", title = "Metaclusters")
+    legend("topleft", pt.bg = pal, pch = 21, legend = seq_len(length(unique(meta$membership))), bty = "n", title = "Metaclusters")
   }
 
   meta_memberships <- data.frame(row.names = meta$names, "metacluster" = meta$membership)
