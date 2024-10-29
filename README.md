@@ -8,6 +8,9 @@ You can read all about it on the companion [website](https://gdagstn.github.io/c
 
 ## Changelog
 
+-   29/10/2024:\
+    Added stacked violin plots and multipanel dimensionality reduction plots
+
 -   29/1/2024:\
     Added additional methods for integration: scMerge2 from `scMerge` and STACAS from `STACAS`
     
