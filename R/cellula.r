@@ -96,7 +96,7 @@ cellula <- function(sce,
   # Make folder
   if(is.null(name)) {
     name <- .randomName()
-    message("No name selected so the randomly assigned name is: ", name)
+    message("No name selected, so the randomly assigned name is: ", name)
   }
 
   dir.create(name)
@@ -105,12 +105,12 @@ cellula <- function(sce,
   
   # Begin
     if(verbose) {
-    message("Working on object", name)
+    message("Working on object ", name)
     ncells <- ncol(sce)
     message("Input cells: ", ncells)
       clog$qc$input_cells <- ncells
     if(!is.null(batch)) {
-      message("By batch:")
+      message("By batch: ")
       print(table(colData(sce)[,batch]))
       clog$qc$input_by_batch <- table(colData(sce)[,batch])
     }
@@ -169,7 +169,7 @@ cellula <- function(sce,
   
   # Integration module
     if(!is.null(batch)) {
-    if(verbose) message(.bluem("[INT]"), "Integration.")
+    if(verbose) message(.bluem("[INT] "), "Integration.")
     sce <- integrateSCE(sce,
                        batch = batch,
                        hvgs = hvgs,

@@ -15,6 +15,9 @@ plot_UMAP(
   label_size = 2,
   outline = TRUE,
   outline_size = 1.3,
+  arrows = TRUE,
+  exprs_use = "logcounts",
+  num_scale = "auto",
   color_palette = NULL,
   trajectory = NULL,
   rescale = TRUE
@@ -51,6 +54,16 @@ Default is TRUE.}
 
 \item{outline_size}{numeric, the thickness of the outline, expressed as a fraction
 of the dot size. Default is 1.3, meaning the outline will be point size * 1.3.}
+
+\item{arrows}{logical, should two perpendicular arrows be drawn on the bottom left 
+corner of the plot be drawn? Default is TRUE.}
+
+\item{exprs_use}{character, the name of the assay to be used when plotting a 
+feature. Default is "logcounts".}
+
+\item{num_scale}{numeric or character, either "auto" (default), which computes
+color scale numbers automatically, or a numeric vector of length 2 with 
+lower and upper limits for the scale.}
 
 \item{color_palette}{a character string containing colors to be used. Default
 is \code{NULL}, meaning an automatic palette will be generated based on 

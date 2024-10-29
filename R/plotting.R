@@ -10,17 +10,20 @@
 #' @return a heatmap of pairwise modularity
 #'
 #' @importFrom igraph graph_from_adjacency_matrix E layout_with_lgl
+#' @importFrom ggplot2 scale_x_discrete geom_tile element_blank element_text
+#' @importFrom ggplot2 ggplot .data theme_classic
 #' @importFrom S4Vectors metadata metadata<-
 #'
 #' @export
 
 plotModularity <- function(sce, name, type = "heatmap") {
+
   name <- paste0("modularity_", name)
   modmat <- log2(metadata(sce)[[name]] + 1)
 
   if(type == "heatmap"){
     m <- as.data.frame(expand.grid(seq_along(rownames(modmat)), 
-                                  seq_along(rownames(modmat))))
+                                   seq_along(rownames(modmat))))
     colnames(m) <- c("x", "y")
     m$value <- vapply(seq_len(nrow(m)), 
                      function(x) modmat[m[x,1], m[x,2]])
@@ -101,7 +104,14 @@ plotSilhouette <- function(sce, name) {
 #' @param outline logical, should a black outline be painted around the point cloud?
 #'     Default is TRUE.
 #' @param outline_size numeric, the thickness of the outline, expressed as a fraction
-#'    of the dot size. Default is 1.3, meaning the outline will be point size * 1.3.     
+#'     of the dot size. Default is 1.3, meaning the outline will be point size * 1.3.  
+#' @param arrows logical, should two perpendicular arrows be drawn on the bottom left 
+#'     corner of the plot be drawn? Default is TRUE. 
+#' @param exprs_use character, the name of the assay to be used when plotting a 
+#'     feature. Default is "logcounts".
+#' @param num_scale numeric or character, either "auto" (default), which computes
+#'     color scale numbers automatically, or a numeric vector of length 2 with 
+#'     lower and upper limits for the scale.  
 #' @param color_palette a character string containing colors to be used. Default
 #'     is \code{NULL}, meaning an automatic palette will be generated based on 
 #'     the type of datum supplied in \code{color_by}. Some palettes can be named:
@@ -140,6 +150,9 @@ plot_UMAP <- function(sce,
                       label_size = 2,
                       outline = TRUE,
                       outline_size = 1.3,
+                      arrows = TRUE,
+                      exprs_use = "logcounts",
+                      num_scale = "auto",
                       color_palette = NULL,
                       trajectory = NULL,
                       rescale = TRUE) {
@@ -173,7 +186,11 @@ plot_UMAP <- function(sce,
     if(!is(colData(sce)[,group_by], "character") & !is(colData(sce)[,group_by], "factor"))
       stop(paste0(ep, "Cannot group by a numeric value, convert it to factor first."))
   }
-
+  if(num_scale != "auto" & !is(num_scale, "numeric")) 
+      stop(paste0(ep, " `num_scale` must be either a numeric vector or \"auto\""))
+  
+  if(is(num_scale, "numeric") & length(num_scale) != 2) 
+      stop(paste0(ep, " if specified, `num_scale` must contain exactly 2 numbers"))
 
   udf <- as.data.frame(reducedDim(sce, umap_slot)[,c(1,2)])
   udf <- udf[complete.cases(udf),]
@@ -190,7 +207,7 @@ plot_UMAP <- function(sce,
   if(!is.null(color_by) & (color_by %in% rowData(sce)$Symbol | color_by %in% rowData(sce)$ID | color_by %in% rownames(sce)) & 
      !color_by %in% colnames(colData(sce))) {
     feature <- which(rowData(sce)$Symbol == color_by | rowData(sce)$ID == color_by | rownames(sce) == color_by)
-    colData(sce)[,color_by] <- as.numeric(assay(sce[feature,], "logcounts"))
+    colData(sce)[,color_by] <- as.numeric(assay(sce[feature,], exprs_use))
   }
 
   # Check which mappings to include
@@ -213,8 +230,16 @@ plot_UMAP <- function(sce,
       udf <- udf[order(udf[,color_by]),]
       udf <- rbind(udf[is.na(udf[,color_by]),], 
                   udf[!is.na(udf[,color_by]),])
+
       pal <- .choosePalette(cpal = color_palette, default = "Sunset")
-      cscale <- scale_colour_gradientn(colours = pal, na.value = "lightgray")
+
+      if(num_scale != "auto") {
+        lims <- num_scale
+        cscale <- scale_colour_gradientn(colours = pal, na.value = "lightgray", 
+                                         limits = lims)
+      } else {
+        cscale <- scale_colour_gradientn(colours = pal, na.value = "lightgray")
+      }
       cguides <- NULL
     } else if(classes[color_by] %in% c("character", "logical")) {
       udf[,color_by] <- factor(udf[,color_by])
@@ -268,21 +293,27 @@ plot_UMAP <- function(sce,
   }
 
   # Plot construction
-  arrow_1 <- data.frame(x = 0, xend = 0.15, y = 0, yend = 0)
-  arrow_2 <- data.frame(x = 0, xend = 0, y = 0, yend = 0.15)
-  text_1 <- data.frame(x = -0.03, y = 0.02)
-  text_2 <- data.frame(x = 0.02, y = -0.03)
-
   p <- ggplot(udf, mapping = aes_umap) 
   
     if(outline) {
       p <- p + geom_point(size = point_size*outline_size, 
-                         shape = 16, color = "black")
+                         color = "black")
     }
-  
-    p <- p + geom_point(size = point_size, shape = 16) +
+
+   p <- p + geom_point(size = point_size) +
     theme_void() +
-    theme(plot.margin = margin(1, 1, 1, 1, "cm")) +
+    theme(plot.margin = margin(1, 1, 1, 1, "cm")) 
+
+  # Coordinate arrows (bottom left corner)
+
+    if(arrows) {
+
+   arrow_1 <- data.frame(x = 0, xend = 0.15, y = 0, yend = 0)
+   arrow_2 <- data.frame(x = 0, xend = 0, y = 0, yend = 0.15)
+   text_1 <- data.frame(x = -0.03, y = 0.02)
+   text_2 <- data.frame(x = 0.02, y = -0.03)  
+
+   p <- p +
     geom_segment(data = arrow_1,
                  mapping = aes(x = .data[["x"]],
                                y = .data[["y"]],
@@ -321,8 +352,10 @@ plot_UMAP <- function(sce,
               size = 2,
               hjust = "left",
               vjust = "bottom",
-              color = "black") +
-    coord_fixed()
+              color = "black")
+               }
+
+   p <- p + coord_fixed()
 
   if(!is.null(color_by)) {
     p <- p + cscale + cguides
@@ -427,6 +460,8 @@ plot_dots <- function(sce,
       stop(paste0(ep, group_by, " column not found in the colData of the SingleCellExperiment object"))
   if(!is(threshold, "numeric"))
       stop(paste0(ep, "Threshold must be numeric"))
+  if(!exprs_use %in% assayNames(sce))
+    stop(paste0(ep, "Could not find an assay named \"", exprs_use, "\" in the SingleCellExperiment object"))
   if(!is(colData(sce)[,group_by], "character") & !is(colData(sce)[,group_by], "factor"))
       stop(paste0(ep, "Cannot group by a numeric value, convert it to factor first."))
   if(any(!genes %in% rownames(sce))){
@@ -623,6 +658,308 @@ plot_Coldata <- function(sce,
   p
 }
 
+
+#' Plot a stacked violin plot
+#'
+#' Plots a stacked violin plot of at least two features in different groupings
+#'
+#' @param sce a \code{SingleCellExperiment} object
+#' @param features character vector, list of features from \code{sce}
+#' @param cluster character, column name in the \code{colData} slot of \code{sce},
+#'     e.g. "cluster". Will be used to assign colors. 
+#'     Must be a categorical variable.
+#' @param split_by character, column name in the \code{colData} slot of the \code{sce},
+#'     e.g. "individual". Will be used to divide violin plots. 
+#'     Must be a categorical variable.
+#' @param stack logical, should all violin plots be stacked on 1 column? 
+#'     Default is TRUE.
+#' @param de (optional) data frame containing the results of differential expression.
+#'     Standardized column names are enforced.
+#' @param significance logical, should a bar with adjusted p-value and log2(FC) values
+#'     be plotted on top of the violin plots? Default is FALSE. Requires \code{de} to
+#'     be specified as well.
+#' @param color_palette character, a vector of colors to be used for the \code{fill}
+#'     aesthetic for the violin plot areas.
+#' @param nrow numeric, the number of rows to build the facetted plot. Only used
+#'     if \code{stacked = FALSE}.
+#' @param ncol numeric, the number of columns to build the facetted plot. Only used
+#'     if \code{stacked = FALSE}.
+#'
+#' @return a ggplot object showing a facetted violin plot with several features grouped
+#'     and colored according to two categorical variables.
+#' 
+#' @details This function has two possible outcomes, controlled by the \code{stack} argument: 
+#'     1) \code{stack = TRUE} returns a stacked violin plot where each feature is a row, and 
+#'     violins correspond to whatever grouping is specified in "cluster"; 
+#'     2) \code{stack = FALSE} returns a faceted grid of violin plots where each feature is a
+#'     panel.
+#' 
+#'     The first behaviour is useful to check markers/gene expression patterns in different 
+#'     groupings with an idea of the distribution. It reproduces \code{scanpy}'s stacked
+#'     violin plot. 
+#'     The second behaviour is useful to show comparisons between groupings/conditions 
+#'     for a set of features, and allows differential expression significance information
+#'     to be overlaid. 
+#' 
+#'     Since the idea is to make different groupings and features comparable
+#'     the \code{geom_violin} geom is set with \code{scale = "width"}, which can show the
+#'     distribution of the data but does not scale with the number of data points (cells).
+#'
+#' @importFrom SummarizedExperiment colData rowData assay
+#' @importFrom ggplot2 ggplot aes .data theme_minimal theme element_text element_blank
+#' @importFrom ggplot2 geom_violin geom_segment geom_text element_line
+#' @importFrom ggplot2 facet_wrap vars scale_fill_manual ggplot_build
+#' @importFrom reshape2 melt
+#' @importFrom methods is
+#'
+#' @export
+
+stacked_Violin <- function(sce, features, cluster, split_by = NULL, stack = TRUE,
+                          de = NULL, significance = FALSE, color_palette = NULL,
+                          nrow = NULL, ncol = NULL) {
+
+## Sanity checks
+  # Error prefix
+  ep <- .redm("{cellula::stacked_Violin()} - ")
+
+  # Checks
+  if(!is(sce, "SingleCellExperiment"))
+    stop(paste0(ep, "Must provide a SingleCellExperiment object"))
+  if(is.null(features))
+      stop(paste0(ep, "Must provide features to plot"))
+  if(length(features) < 2)
+      stop(paste0(ep, "Must provide at least two features to plot. To plot a single feature use `plot_Coldata()`"))     
+  if(is.null(cluster))
+      stop(paste0(ep, "Must provide a cluster column name"))
+  if(!cluster %in% colnames(colData(sce)))
+      stop(paste0(ep, cluster, " is not a column of the SingleCellExperiment object"))
+  if(!is(colData(sce)[,cluster], "character") & !is(colData(sce)[,cluster], "factor"))
+      stop(paste0(ep, "`cluster` cannot be a numeric value, convert it to factor first."))
+
+  if(!is.null(split_by)) {
+    if(!split_by %in% colnames(colData(sce)))
+      stop(paste0(ep, split_by, " is not a column of the SingleCellExperiment object"))
+    if(!is(colData(sce)[,split_by], "character") & !is(colData(sce)[,split_by], "factor"))
+      stop(paste0(ep, " `split_by` cannot be a numeric value, convert it to factor first."))
+  }
+  if(!is.null(color_palette)){
+    if(length(color_palette) < length(unique(colData(sce)[,cluster])))
+      stop(paste0(ep, "the color palette cannot be shorter than the number of unique values of `cluster`")) 
+  }
+
+  if(significance & is.null(de))
+      stop(paste0(ep, "`signifiance` cannot be TRUE if you do not provide `de`."))
+
+  if(is.null(split_by)) split_by = cluster
+  
+    feat_index <- which(rowData(sce)$Symbol %in% features | rowData(sce)$ID %in% features | rownames(sce) %in% features)
+   
+    featuredf = as.data.frame(t(assay(sce, "logcounts")[feat_index,]))
+    colnames(featuredf) = features = rowData(sce)[colnames(featuredf), "Symbol"]
+    
+    featuredf$cluster = colData(sce)[,cluster]
+    featuredf$splitby = colData(sce)[,split_by]
+    fdf_melt = reshape2::melt(featuredf, value.name = "expression")
+    fdf_melt$variable = factor(fdf_melt$variable, levels = colnames(featuredf))
+    
+    if(stack) {
+      p = ggplot(fdf_melt, aes(y = .data[["expression"]], 
+                               x = .data[["cluster"]], 
+                               fill = .data[["splitby"]])) + 
+          geom_violin(scale = "width") + 
+        facet_wrap(~factor(variable, levels = features),
+                  nrow = length(features), 
+                  strip.position = "right", 
+                  scales = "free",
+                  axis.labels = "all_y") +
+        theme_minimal() + 
+        theme(panel.grid = element_blank(),
+              axis.line = element_line(),
+              axis.ticks = element_line(),
+              axis.text.x = element_blank(),
+              axis.text.y = element_text(size = 15)) 
+
+      if(!is.null(color_palette)) {
+        p = p + scale_fill_manual(values = color_palette)
+    }
+      
+    } else {
+      p = ggplot(fdf_melt, aes(y = .data[["expression"]], 
+                               x = .data[["cluster"]], 
+                               fill = .data[["splitby"]])) + 
+        geom_violin(scale = "width") + 
+        geom_boxplot(data = fdf_melt, mapping =  aes(y = .data[["expression"]], x = .data[["cluster"]]),
+                     width = 0.2,
+                     position = position_dodge(width = 0.9), outliers = FALSE) +
+        ylim(0, max(fdf_melt$expression) * 1.6) +
+        facet_wrap(~factor(variable, levels = features), nrow = nrow, ncol = ncol) +
+        theme_minimal() + 
+        theme(panel.grid = element_blank(),
+              axis.line = element_line(),
+              axis.ticks = element_line(),
+              axis.text.x = element_blank(),
+              axis.text.y = element_text(size = 12)) 
+      if(!is.null(color_palette)) {
+        p = p + scale_fill_manual(values = color_palette)
+      }
+    }
+    
+    if(significance) {
+      
+      built = ggplot_build(p)$data[[1]]
+      xcoords = unique(built$x)
+      ymax = max(built$y)*1.1
+      
+      sigdf = as.data.frame(de[de$gene %in% features, c("gene", "logFC", "padj")])
+      sigdf$variable = sigdf$gene
+      sigdf$logFC = round(sigdf$logFC, digits = 2)
+      sigdf$padj = formatC(sigdf$padj, format = "e", digits = 2)
+      sigdf$padj[sigdf$padj == "0.00e+00"] = "< 1e-299"
+      sigdf$lab = paste0("logFC: ", sigdf$logFC, "\n", "p: ", sigdf$padj)
+      
+      p = p + geom_segment(aes(x = xcoords[1], xend = xcoords[2], 
+                               y = ymax, yend = ymax), 
+                            linewidth = 0.5) +
+          geom_text(data = sigdf, 
+                   aes(x = min(xcoords) + 0.45, y = ymax * 1.3, label = .data[["lab"]]), 
+                   inherit.aes = FALSE, nudge_x = -.225, size = 2.5) 
+      
+    }
+    p
+}
+
+
+#' Plot a multi-panel dimensionality reduction 
+#'
+#' Plots a multi-panel dimensionality reduction where points are colored 
+#' by different features (one per panel)
+#'
+#' @param sce a \code{SingleCellExperiment} object
+#' @param dr character, the name of the dimensional reduction slot (retrieved through 
+#'     \code{reducedDim(sce, dr)}). Default is "UMAP".
+#' @param dims numeric, vector of 2 dimensions to plot. Default is 1, 2
+#' @param features character vector with features (e.g. genes) from \code{sce}. 
+#' @param point_size numeric, the size of the points in the plot. Default is 1.2
+#' @param plot_order character, one of "decreasing" (default), "increasing", or "random". 
+#'    Influences the way points are plotted, important when dealing with overplotting.
+#' @param exprs_use character, the name of the \code{assay} in the object whose values will
+#'    be plotted. Default is "logcounts".
+#' @param rng_seed numeric, the random number generator seed used when \code{plot_order = "random"}.
+#' @param common_scale logical, should the points have a single, common color scale (TRUE) or 
+#'    should each panel have its own scale? Deafult is FALSE. 
+#' @param color_palette character, vector of colors to be interpolated across for the color
+#'    aesthetic. Default is NULL meaning a standard quantitative palette from \code{cellula}
+#'    will be used.
+#' @return a ggplot object showing a multi-panel plot of different features - one feature per panel -
+#'    where there is either a common scale or an individual scale per panel.
+#' 
+#' @details This function is inspired by Seurat's \code{FeaturePlot}. 
+#'     This function has two possible outcomes, controlled by the \code{common_scale} argument: 
+#'     1) \code{common_scale = TRUE} returns a faceted plot where there is a single scale for color.
+#'     This can be useful to compare gene expression across genes using color. 
+#'     2) \code{common_scale = FALSE} returns a \code{patchwork} grid of feature plots, each with its own
+#'     individual scale. 
+#' 
+#' @importFrom SummarizedExperiment rowData assay 
+#' @importFrom SingleCellExperiment reducedDim
+#' @importFrom ggplot2 ggplot aes .data theme_minimal theme element_blank
+#' @importFrom ggplot2 geom_point facet_wrap 
+#' @importFrom ggplot2 scale_colour_gradientn coord_fixed
+#' @importFrom reshape2 melt
+#' @importFrom methods is
+#' @importFrom patchwork wrap_plots
+#'
+#' @export
+
+
+multipanel_DR <- function(sce, dr = "UMAP", dims = c(1,2), 
+                          features, point_size = 1.2, 
+                          plot_order = "decreasing",
+                          exprs_use = "logcounts",
+                          rng_seed = 11,
+                          common_scale = FALSE,
+                          color_palette = NULL) {
+
+ ## Sanity checks
+  # Error prefix
+  ep <- .redm("{cellula::multipanel_DR()} - ")
+
+  # Checks                          
+  if(!is(sce, "SingleCellExperiment"))
+    stop(paste0(ep, "Must provide a SingleCellExperiment object"))
+  if(!dr %in% reducedDimNames(sce))
+    stop(paste0(ep, "the `dr` provided was not found in this object."))
+  if(is.null(features))
+      stop(paste0(ep, "Must provide features to plot"))
+  if(length(features) < 2)
+      stop(paste0(ep, "Must provide at least two features to plot. To plot a single feature use `plot_UMAP()`"))     
+  if(!plot_order %in% c("decreasing", "increasing", "random"))
+      stop(paste0(ep, "`plot_order` must be one of \"decreasing\", \"increasing\", or \"random\""))
+  if(!is(rng_seed, "numeric"))
+      stop(paste0(ep, "`rng_seed` must be a numeric"))
+
+  feat_index <- which(rowData(sce)$Symbol %in% features | rowData(sce)$ID %in% features | rownames(sce) %in% features)
+  
+  featuredf = as.data.frame(as(t(assay(sce, exprs_use)[feat_index,]), "matrix"))
+  colnames(featuredf) = features = rowData(sce)[colnames(featuredf), "Symbol"]
+  
+  fdf_melt = reshape2::melt(featuredf, value.name = "expression")
+  fdf_melt$variable = factor(fdf_melt$variable, levels = colnames(featuredf))
+  fdf_melt$x = rep(reducedDim(sce, dr)[,dims[1]], length(features))
+  fdf_melt$y = rep(reducedDim(sce, dr)[,dims[2]], length(features))
+  
+  if(is.null(color_palette)) {
+    colorpal = .cpal_seq_ylgnbu()
+  } else {
+    colorpal = color_palette
+  }
+  
+  if(plot_order == "decreasing") {
+    fdf_melt = fdf_melt[order(fdf_melt$expression),]
+  } else if(plot_order == "increasing") {
+    fdf_melt = fdf_melt[order(fdf_melt$expression, decreasing = TRUE),]
+  } else if(plot_order == "random") {
+    set.seed(rng_seed)
+    new_ord = sample(seq_len(nrow(fdf_melt)), size = nrow(fdf_melt), replace = FALSE)
+    fdf_melt = fdf_melt[new_ord,]
+  }
+  
+  if(common_scale) {
+    p = ggplot(fdf_melt, aes(x = .data[["x"]], 
+                             y = .data[["y"]], 
+                             color = .data[["expression"]])) + 
+      geom_point(size = point_size) + 
+      facet_wrap(~factor(variable, levels = features)) +
+      theme_minimal() + 
+      theme(panel.grid = element_blank(),
+            axis.line = element_blank(),
+            axis.ticks = element_blank(),
+            axis.title = element_blank(),
+            axis.text.x = element_blank(),
+            axis.text.y = element_blank()) +
+      scale_colour_gradientn(colours = colorpal) +
+      coord_fixed()
+  } else {
+    plotlist = lapply(split(fdf_melt, fdf_melt$variable), function(x) {
+      ggplot(x, aes(x = .data[["x"]], 
+                    y = .data[["y"]], 
+                    color = .data[["expression"]])) + 
+        geom_point(size = point_size) + 
+        theme_minimal() + 
+        theme(panel.grid = element_blank(),
+              axis.line = element_blank(),
+              axis.ticks = element_blank(),
+              axis.title = element_blank(),
+              axis.text.x = element_blank(),
+              axis.text.y = element_blank()) +
+        scale_colour_gradientn(colours = colorpal, name = unique(x$variable)) +
+        coord_fixed()
+    })
+      p = patchwork::wrap_plots(plotlist = plotlist)
+  }
+  p
+}
+
 #' @importFrom ggplot2 .data aes position_dodge ggplot geom_violin geom_boxplot guides
 #' @importFrom ggplot2 theme_minimal theme element_blank labs element_line xlab scale_fill_manual
 #' @importFrom ggplot2 element_text
@@ -743,7 +1080,6 @@ plot_Coldata <- function(sce,
   p
 }
 
-
 #' @importFrom ggplot2 .data aes ggplot stat_density_2d after_stat scale_fill_gradientn
 #' @importFrom ggplot2 theme_minimal theme element_blank labs element_line
 
@@ -856,3 +1192,5 @@ plot_Coldata <- function(sce,
   p = p + cscale
   p
 }
+
+#feature_Heatmap <- function() {}
