@@ -195,7 +195,7 @@ assignIdentities <- function(sce, genesets = NULL, method, ref = NULL,
                                           meta.data = as.data.frame(colData(sce)))
   logc <- logcounts(sce)
   rownames(logc) <- rownames(seu)
-  seu <- SeuratObject::SetAssayData(object = seu, slot = "data", new.data = logc)
+  seu <- SeuratObject::SetAssayData(object = seu, layer = "data", new.data = logc)
   # Module score
   seu <- Seurat::AddModuleScore(seu, features = genesets, ...)
   colnames(seu@meta.data)[tail(seq_along(seu@meta.data), length(genesets))] <- names(genesets)

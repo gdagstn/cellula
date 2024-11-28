@@ -371,30 +371,33 @@ integrateSCE <- function(sce,
   l <- rliger::scaleNotCenter(l)
 
   if (verbose) message(.bluem("[INT/LIGER]"), " Factorization.")
-  infmats <- RcppPlanc::inmf(l@scale.data, k = ndims, verbose = verbose, ...)
-  l@H <- infmats$H
-  l@W <- infmats$W
-  l@V <- infmats$V
-
-  for(i in seq_along(countlist)){
-    rownames(l@H[[i]]) = colnames(l@scale.data)
-    rownames(l@V[[i]]) = rownames(l@scale.data)
-    rownames(l@W) = rownames(l@scale.data)
-  }
+	l <- rliger::runINMF(l, k = neighbor_n,	verbose = verbose, ...)
 
   if (verbose) message(.bluem("[INT/LIGER]"), " Quantile normalization.")
-  l <- rliger::quantile_norm(l, verbose = verbose)
+	l <- rliger::quantileNorm(l, verbose = verbose)		
 
   if (verbose) message(.bluem("[INT/LIGER]"), " Transferring to SCE object.")
-  reducedDim(sce, type = "LIGER_iNMF") = do.call(rbind, l@H)[colnames(sce),]
+  Hmat = do.call(cbind, lapply(names(l@datasets), function(x) {
+  	h = l@datasets[[x]]@H
+  	colnames(h) = gsub(paste0("^", x, "_"), "", colnames(h)) 
+  	h}))[,colnames(sce)]
+
+  reducedDim(sce, type = "LIGER_iNMF") = t(Hmat)
+
+  for(i in names(l@datasets)) {
+	rownames(l@H.norm) = gsub(paste0("^", i, "_"), "",  rownames(l@H.norm)) 
+  }
   reducedDim(sce, type = "LIGER_iNMF_NORM") = l@H.norm[colnames(sce),]
 
-  if(ret_nmf) sce@metadata$LIGER_NMF_matrices = list("H" = l@H,
-                                                     "V" = l@V,
-                                                     "W" = l@W)
+  if(ret_nmf) {
+	Vmats = lapply(l@datasets, function(x) x@V)
+	sce@metadata$LIGER_NMF_matrices = list("H" = Hmat,
+                                           "V" = Vmats,
+                                            "W" = l@W)
+  }
 
   if (verbose) message(.bluem("[INT/LIGER]"), " Running UMAP on LIGER factorization.")
-  reducedDim(sce, "UMAP_LIGER") <- umap(reducedDim(sce, "LIGER_iNMF_NORM")[,seq_len(min(ncol(reducedDim(sce, "LIGER_NORM")), ndims))],
+  reducedDim(sce, "UMAP_LIGER") <- umap(reducedDim(sce, "LIGER_iNMF_NORM")[,seq_len(min(ncol(reducedDim(sce, "LIGER_iNMF_NORM")), ndims))],
                                         n_neighbors = neighbor_n,
                                         min_dist = 0.7)
 

@@ -151,6 +151,7 @@ plot_UMAP <- function(sce,
                       outline = TRUE,
                       outline_size = 1.3,
                       arrows = TRUE,
+					  coords = FALSE,
                       exprs_use = "logcounts",
                       num_scale = "auto",
                       color_palette = NULL,
@@ -300,13 +301,23 @@ plot_UMAP <- function(sce,
                          color = "black")
     }
 
-   p <- p + geom_point(size = point_size) +
-    theme_void() +
-    theme(plot.margin = margin(1, 1, 1, 1, "cm")) 
+   p <- p + geom_point(size = point_size)
+
+   if(coords) {
+	p <- p + 
+	theme_bw() +
+	ylab(paste0(umap_slot, "_2")) +
+	xlab(paste0(umap_slot, "_1")) +
+	theme(panel.grid = element_blank())
+   } else {
+	p <- p + theme_void()
+   }
+    
+    p <- p + theme(plot.margin = margin(2, 2, 2, 2, "cm")) 
 
   # Coordinate arrows (bottom left corner)
 
-    if(arrows) {
+if(arrows) {
 
    arrow_1 <- data.frame(x = 0, xend = 0.15, y = 0, yend = 0)
    arrow_2 <- data.frame(x = 0, xend = 0, y = 0, yend = 0.15)
@@ -353,7 +364,7 @@ plot_UMAP <- function(sce,
               hjust = "left",
               vjust = "bottom",
               color = "black")
-               }
+}
 
    p <- p + coord_fixed()
 
@@ -754,7 +765,7 @@ stacked_Violin <- function(sce, features, cluster, split_by = NULL, stack = TRUE
   
     feat_index <- which(rowData(sce)$Symbol %in% features | rowData(sce)$ID %in% features | rownames(sce) %in% features)
    
-    featuredf = as.data.frame(t(assay(sce, "logcounts")[feat_index,]))
+    featuredf = as.data.frame(as.matrix(t(assay(sce, "logcounts")[feat_index,])))
     colnames(featuredf) = features = rowData(sce)[colnames(featuredf), "Symbol"]
     
     featuredf$cluster = colData(sce)[,cluster]
@@ -776,7 +787,7 @@ stacked_Violin <- function(sce, features, cluster, split_by = NULL, stack = TRUE
         theme(panel.grid = element_blank(),
               axis.line = element_line(),
               axis.ticks = element_line(),
-              axis.text.x = element_blank(),
+              #axis.text.x = element_blank(),
               axis.text.y = element_text(size = 15)) 
 
       if(!is.null(color_palette)) {
@@ -797,7 +808,7 @@ stacked_Violin <- function(sce, features, cluster, split_by = NULL, stack = TRUE
         theme(panel.grid = element_blank(),
               axis.line = element_line(),
               axis.ticks = element_line(),
-              axis.text.x = element_blank(),
+              #axis.text.x = element_blank(),
               axis.text.y = element_text(size = 12)) 
       if(!is.null(color_palette)) {
         p = p + scale_fill_manual(values = color_palette)
