@@ -156,7 +156,6 @@ plot_DR <- function(sce,
                       outline = TRUE,
                       outline_size = 1.3,
                       arrows = TRUE,
-					  coords = FALSE,
                       exprs_use = "logcounts",
                       num_scale = "auto",
                       color_palette = NULL,
@@ -306,19 +305,8 @@ plot_DR <- function(sce,
                          color = "black")
     }
 
-   p <- p + geom_point(size = point_size)
-
-   if(coords) {
-	p <- p + 
-	theme_classic() +
-	ylab(paste0(dr, "_2")) +
-	xlab(paste0(dr, "_1")) +
-	theme(panel.grid = element_blank())
-   } else {
-	p <- p + theme_void()
-   }
-    
-    p <- p + theme(plot.margin = margin(2, 2, 2, 2, "cm")) 
+   p <- p + geom_point(size = point_size) + 
+   theme(plot.margin = margin(2, 2, 2, 2, "cm")) 
 
   # Coordinate arrows (bottom left corner)
 
