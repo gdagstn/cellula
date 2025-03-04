@@ -226,8 +226,8 @@ integrateSCE <- function(sce,
 
   ep <- .redm("{cellula::integrateSCE() / method = \"Harmony\"} - ")
 
-  if (!"harmony" %in% rownames(installed.packages()))
-    stop(paste0(ep, "the `harmony` package must be installed first.\n
+if (!requireNamespace("harmony", quietly = TRUE)) 
+   stop(paste0(ep, "the `harmony` package must be installed first.\n
                   Run `BiocManager::install(\"harmony\") to use this function."))
   if(!dr %in% reducedDimNames(sce))
     stop(paste0(ep, "there is no reducedDim slot named ", dr, " in the object."))
@@ -257,7 +257,7 @@ integrateSCE <- function(sce,
 
   ep <- .redm("{cellula::integrateSCE() / method = \"Seurat\"} - ")
 
-  if (!"Seurat" %in% rownames(installed.packages()))
+  if (!requireNamespace("Seurat", quietly = TRUE))
     stop(paste0(ep, "the `Seurat` package must be installed first.\n
                 Run `BiocManager::install(\"Seurat\") to use this function."))
 
@@ -344,7 +344,7 @@ integrateSCE <- function(sce,
 
   ep <- .redm("{cellula::integrateSCE() / method = \"LIGER\"} - ")
 
-  if (!"rliger" %in% rownames(installed.packages()))
+  if (!requireNamespace("rliger", quietly = TRUE))
     stop(paste0(ep, "the `rliger` and `RcppPlanc` packages must be installed first.\n
                 Run `BiocManager::install(c(\"rliger\", \"welch-lab/RcppPlanc\")
                 to use this function."))
@@ -451,7 +451,7 @@ integrateSCE <- function(sce,
 
   ep <- .redm("{cellula::integrateSCE() / method = \"scMerge2\"} - ")
 
-  if (!"scMerge" %in% rownames(installed.packages()))
+  if (!requireNamespace("scMerge", quietly = TRUE))
     stop(paste0(ep, "the `scMerge` package must be installed first.\n
                 Run `BiocManager::install(\"scMerge\") to use this function."))
 
@@ -493,7 +493,7 @@ integrateSCE <- function(sce,
 
   ep <- .redm("{cellula::integrateSCE() / method = \"STACAS\"} - ")
 
-  if (!"Seurat" %in% rownames(installed.packages()))
+  if (!requireNamespace("STACAS", quietly = TRUE))
     stop(paste0(ep, "the `STACAS` package must be installed first.\n
                 Run `BiocManager::install(\"carmonalab/STACAS\") to use this function."))
 
@@ -539,4 +539,3 @@ integrateSCE <- function(sce,
 
   sce
 }
-

@@ -80,13 +80,14 @@ plotSilhouette <- function(sce, name) {
     theme_classic()
 }
 
-#' Plot UMAP
+#' Plot Dimensionality Reduction
 #'
-#' Plots the UMAP from a SingleCellExperiment object
+#' Plots dimensionality reduction coordinates from a SingleCellExperiment object,
+#' coloured and grouped according to colData fields
 #'
 #' @param sce a \code{SingleCellExperiment} object
-#' @param umap_slot character, the name in the reducedDim slot of \code{sce}, e.g.
-#'     \code{"UMAP_Harmony"}
+#' @param dr character, the name in the reducedDim slot of \code{sce}, e.g.
+#'     \code{"UMAP"}
 #' @param color_by character, column name in the \code{colData} slot of \code{sce},
 #'     e.g. "cluster". Will be used to assign colors. Automatically detects
 #'     whether the variable is categorical or continuous.
@@ -108,7 +109,7 @@ plotSilhouette <- function(sce, name) {
 #' @param arrows logical, should two perpendicular arrows be drawn on the bottom left 
 #'     corner of the plot be drawn? Default is TRUE. 
 #' @param exprs_use character, the name of the assay to be used when plotting a 
-#'     feature. Default is "logcounts".
+#'     feature. Default is \code{"logcounts"}.
 #' @param num_scale numeric or character, either "auto" (default), which computes
 #'     color scale numbers automatically, or a numeric vector of length 2 with 
 #'     lower and upper limits for the scale.  
@@ -124,8 +125,13 @@ plotSilhouette <- function(sce, name) {
 #'     \code{"Slingshot_embedded_curves"} or \code{"Monocle_embedded_curves"}.  
 #' @param rescale logical, should coordinates be rescaled between 0 and 1? Default is TRUE.
 #'
-#' @return a ggplot object showing the UMAP coordinates colored, shaped and
+#' @return a ggplot object showing the dimensionality reduction coordinates colored, shaped and/or
 #'     faceted as set by the arguments.
+#' 
+#' @details This plotting function is heavily inspired by the \code{plotReducedDim()} 
+#' function from the \code{{scater}} package.
+#' 
+#'
 #'
 #' @importFrom SingleCellExperiment reducedDimNames reducedDim
 #' @importFrom SummarizedExperiment colData
@@ -134,14 +140,13 @@ plotSilhouette <- function(sce, name) {
 #' @importFrom ggplot2 facet_wrap vars arrow unit geom_label scale_colour_manual theme
 #' @importFrom ggplot2 margin theme_minimal
 #' @importFrom ggrepel geom_label_repel
-#' @importFrom rlang sym
 #' @importFrom stats median complete.cases
 #' @importFrom methods is
 #'
 #' @export
 
-plot_UMAP <- function(sce,
-                      umap_slot = "UMAP",
+plot_DR <- function(sce,
+                      dr = "UMAP",
                       color_by = NULL,
                       shape_by = NULL,
                       group_by = NULL,
@@ -160,13 +165,13 @@ plot_UMAP <- function(sce,
 
   ## Sanity checks
   # Error prefix
-  ep <- .redm("{cellula::plot_UMAP()} - ")
+  ep <- .redm("{cellula::plot_DR()} - ")
 
   # Checks
   if(!is(sce, "SingleCellExperiment"))
     stop(paste0(ep, "Must provide a SingleCellExperiment object"))
-  if(!umap_slot %in% reducedDimNames(sce))
-    stop(paste0(ep, "Could not find a slot named \"", umap_slot, "\" in the SingleCellExperiment object"))
+  if(!dr %in% reducedDimNames(sce))
+    stop(paste0(ep, "Could not find a slot named \"", dr, "\" in the SingleCellExperiment object"))
   if(!is.null(color_by)){
     if(!color_by %in% colnames(colData(sce)) & !color_by %in% rowData(sce)$Symbol & !color_by %in% rowData(sce)$ID)
       stop(paste0(ep, color_by, " is not a column or a rowData element of the SingleCellExperiment object"))
@@ -193,7 +198,7 @@ plot_UMAP <- function(sce,
   if(is(num_scale, "numeric") & length(num_scale) != 2) 
       stop(paste0(ep, " if specified, `num_scale` must contain exactly 2 numbers"))
 
-  udf <- as.data.frame(reducedDim(sce, umap_slot)[,c(1,2)])
+  udf <- as.data.frame(reducedDim(sce, dr)[,c(1,2)])
   udf <- udf[complete.cases(udf),]
 
   # Rescaling
@@ -305,9 +310,9 @@ plot_UMAP <- function(sce,
 
    if(coords) {
 	p <- p + 
-	theme_bw() +
-	ylab(paste0(umap_slot, "_2")) +
-	xlab(paste0(umap_slot, "_1")) +
+	theme_classic() +
+	ylab(paste0(dr, "_2")) +
+	xlab(paste0(dr, "_1")) +
 	theme(panel.grid = element_blank())
    } else {
 	p <- p + theme_void()
@@ -349,7 +354,7 @@ if(arrows) {
               aes(x = .data[["x"]],
                   y = .data[["y"]]),
               inherit.aes = FALSE,
-              label = paste0(umap_slot, " 2"),
+              label = paste0(dr, " 2"),
               angle = 90,
               size = 2,
               hjust = "left",
@@ -359,7 +364,7 @@ if(arrows) {
               aes(x = .data[["x"]],
                   y = .data[["y"]]),
               inherit.aes = FALSE,
-              label = paste0(umap_slot, " 1"),
+              label = paste0(dr, " 1"),
               size = 2,
               hjust = "left",
               vjust = "bottom",
@@ -415,7 +420,7 @@ if(arrows) {
   p
 }
 
-#' Plot a dot plot
+#' Plot a gene expression dot plot
 #'
 #' Plots a dot plot with gene expression from a SingleCellExperiment object
 #'
@@ -613,7 +618,6 @@ plot_dots <- function(sce,
 #'     All plots can be facetted.
 #'
 #' @importFrom ggplot2 facet_wrap
-#' @importFrom rlang sym
 #' @importFrom methods is
 #'
 #' @export
@@ -903,7 +907,7 @@ multipanel_DR <- function(sce, dr = "UMAP", dims = c(1,2),
   if(is.null(features))
       stop(paste0(ep, "Must provide features to plot"))
   if(length(features) < 2)
-      stop(paste0(ep, "Must provide at least two features to plot. To plot a single feature use `plot_UMAP()`"))     
+      stop(paste0(ep, "Must provide at least two features to plot. To plot a single feature use `plot_DR()`"))     
   if(!plot_order %in% c("decreasing", "increasing", "random"))
       stop(paste0(ep, "`plot_order` must be one of \"decreasing\", \"increasing\", or \"random\""))
   if(!is(rng_seed, "numeric"))

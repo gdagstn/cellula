@@ -137,7 +137,7 @@ assignIdentities <- function(sce, genesets = NULL, method, ref = NULL,
     # Checks
     ep <- .redm("{cellula::.assignIdentities_AUC()} - ")
     
-    if (!"AUCell" %in% rownames(installed.packages()))
+if (!requireNamespace("AUCell", quietly = TRUE))
       stop(ep, "the `AUCell` package must be installed first.\n
                 Run `BiocManager::install(\"AUCell\") to use this function.")
     if (is.null(name)) labelname <- "labels_AUC" else labelname <- name
@@ -178,7 +178,7 @@ assignIdentities <- function(sce, genesets = NULL, method, ref = NULL,
                                      ...){
   # Checks
   ep <- .redm("{cellula::.assignIdentities_Seurat()} - ")
-  if(!"Seurat" %in% rownames(installed.packages()))
+if (!requireNamespace("Seurat", quietly = TRUE))
     stop(ep, "the `Seurat` package must be installed first.\n
                 Run `BiocManager::install(\"Seurat\") to use this function.")
   
@@ -226,8 +226,8 @@ assignIdentities <- function(sce, genesets = NULL, method, ref = NULL,
   
   # Checks
   ep <- .redm("{cellula::.assignIdentities_ssGSEA()} - ")
-    if (!"GSVA" %in% rownames(installed.packages()))
-    stop(ep, "the `GSVA` package must be installed first.\n
+if (!requireNamespace("GSVA", quietly = TRUE))   
+stop(ep, "the `GSVA` package must be installed first.\n
                 Run `BiocManager::install(\"GSVA\") to use this function.")
   if (is.null(name)) labelname <- "labels_ssGSEA" else labelname <- name
   if (is.null(assay))
@@ -268,7 +268,7 @@ assignIdentities <- function(sce, genesets = NULL, method, ref = NULL,
   
   ep <- .redm("{cellula::.assignIdentities_UCell()} - ")
   
-  if (!"UCell" %in% rownames(installed.packages()))
+  if (!requireNamespace("UCell", quietly = TRUE))
     stop(ep, "the `UCell` package must be installed first.\n
                 Run `BiocManager::install(\"UCell\") to use this function.")
   if (is.null(name)) 

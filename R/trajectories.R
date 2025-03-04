@@ -169,7 +169,7 @@ findTrajectories <- function(sce, dr = "PCA", clusters, method = "slingshot",
     
     ## Sanity checks
     # Error prefix
-    ep <- "{cellula::findTrajectories()} - "
+    ep <- .redm("{cellula::findTrajectories()} - ")
     
     if(!is(sce, "SingleCellExperiment"))
       stop(paste0(ep, "Must provide a SingleCellExperiment object"))
@@ -248,8 +248,8 @@ findTrajectories <- function(sce, dr = "PCA", clusters, method = "slingshot",
                                     add_metadata = TRUE,
                                     verbose = TRUE){
   
-    ep <- "{cellula::.getMonocleTrajectories()} - "
-    if(!"monocle3" %in% rownames(installed.packages()))
+    ep <- .redm("{cellula::.getMonocleTrajectories()} - ")
+    if (!requireNamespace("monocle3", quietly = TRUE))
       stop(paste0(.redm(ep), "the `monocle3` package must be installed first.\n
                   Run `BiocManager::install(\"cole-trapnell-lab/monocle3\") to use this function."))
     rd <- rowData(sce)
@@ -429,9 +429,9 @@ findTrajectories <- function(sce, dr = "PCA", clusters, method = "slingshot",
                                       verbose = FALSE,
                                       BPPARAM = SerialParam()){
   
-    ep <- "{cellula::.getSlingshotTrajectories()} - "
+    ep <- .redm("{cellula::.getSlingshotTrajectories()} - ")
     
-    if(!"slingshot" %in% rownames(installed.packages()))
+    if (!requireNamespace("slingshot", quietly = TRUE))
       stop(paste0(ep, "the `slingshot` package must be installed first.\n
                   Run `BiocManager::install(\"slingshot\") to use this function."))
     
@@ -502,12 +502,11 @@ findTrajectories <- function(sce, dr = "PCA", clusters, method = "slingshot",
                                 dr_embed = "UMAP", 
                                 start, 
                                 add_metadata = TRUE,
-                                verbose = FALSE){#,
-                                #BPPARAM = SerialParam()) {
+                                verbose = FALSE) {
   
     ep <- .redm("{cellula::.getDPTtrajectories()} - ")
     
-    if(!"destiny" %in% rownames(installed.packages()))
+   if (!requireNamespace("destiny", quietly = TRUE))
       stop(paste0(.redm(ep), "the `destiny` package must be installed first.\n
                   Run `BiocManager::install(\"destiny\") to use this function."))
     
@@ -565,7 +564,7 @@ findTrajectories <- function(sce, dr = "PCA", clusters, method = "slingshot",
     }
     
     if(add_metadata) {
-      if(verbose) message(paste0(.bluem("[TRAJ/MOD-DPT] "),"Adding metadata"))
+      if(verbose) message(paste0(.bluem("[TRAJ/MOD-DPT] "), "Adding metadata"))
       metadata(sce)[["MODDPT_MST"]] <- msgr
       metadata(sce)[["MODDPT_lineages"]] <- paths
       metadata(sce)[["MODDPT_DiffusionMaps"]] <- dmlist

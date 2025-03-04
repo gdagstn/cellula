@@ -31,7 +31,6 @@ Imports:
     igraph,
     gridExtra,
     S4Vectors,
-    rlang,
     Matrix,
     matrixStats,
     ggrepel,

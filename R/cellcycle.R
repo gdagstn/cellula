@@ -41,7 +41,7 @@ assignCellCycle <- function(sce, recenter_method = "optim", species = "human",
                             exprs_values = "logcounts") {
   # Checks
   ep <- .redm("{cellula::assignCellCycle()} - ")
-  if (!"tricycle" %in% rownames(installed.packages()))
+  if (!requireNamespace("tricycle", quietly = TRUE))
     stop(ep, "the `tricycle` package must be installed first.\n
                 Run `BiocManager::install(\"tricycle\") to use this function.")
   if (!is(sce, "SingleCellExperiment"))

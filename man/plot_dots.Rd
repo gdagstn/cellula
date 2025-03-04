@@ -2,7 +2,7 @@
 % Please edit documentation in R/plotting.R
 \name{plot_dots}
 \alias{plot_dots}
-\title{Plot a dot plot}
+\title{Plot a gene expression dot plot}
 \usage{
 plot_dots(
   sce,
