@@ -38,13 +38,13 @@
 #' integration pipeline. In particular, the following functions are affected:
 #'
 #'\itemize{
-#'  \item{"method = "fastMNN":}{ \code{batchelor::fastMNN()}}
-#'  \item{"method = "Harmony":}{ \code{harmony::RunHarmony()}}
-#'  \item{"method = "Seurat":}{  \code{Seurat::FindIntegrationAnchors()}}
-#'  \item{"method = "LIGER":}{ \code{RcppPlanc::inmf}}
-#'  \item{"method = "regression":}{ \code{batchelor::regressBatches()}}
-#'  \item{"method = "scMerge2"}{ \code{scMerge::scMerge2()}}
-#'  \item{"method = "STACAS"}{ \code{STACAS::RunStacas()}}
+#'  \item{method = "fastMNN":}{ \code{batchelor::fastMNN()}}
+#'  \item{method = "Harmony":}{ \code{harmony::RunHarmony()}}
+#'  \item{method = "Seurat":}{  \code{Seurat::FindIntegrationAnchors()}}
+#'  \item{method = "LIGER":}{ \code{RcppPlanc::inmf}}
+#'  \item{method = "regression":}{ \code{batchelor::regressBatches()}}
+#'  \item{method = "scMerge2"}{ \code{scMerge::scMerge2()}}
+#'  \item{method = "STACAS"}{ \code{STACAS::RunStacas()}}
 #'}
 #'
 #' Users who desire further control/customization should apply the functions
@@ -54,25 +54,18 @@
 #' The following methods work out of the box:
 #'
 #'\itemize{
-#'  \item{"method = "fastMNN":}{ FastMNN correction from \code{batchelor}}
-#'  \item{"method = "Harmony":}{Integration on PCA embeddings from \code{harmony}}
-#'  \item{"method = "Seurat":}{\code{Seurat} CCA with de novo normalization
+#'  \item{method = "fastMNN":}{ FastMNN correction from \code{batchelor}}
+#'  \item{method = "Harmony":}{Integration on PCA embeddings from \code{harmony}}
+#'  \item{method = "Seurat":}{\code{Seurat} CCA with de novo normalization
 #'      and feature selection, anchor finding and integration}
-#'  \item{"method = "LIGER":}{LIGER iNMF using the \code{RcppPlanc} implementation,
+#'  \item{method = "LIGER":}{LIGER iNMF using the \code{RcppPlanc} implementation,
 #'      with de novo normalization and feature selection through \code{rliger}}
-#'  \item{"method = "regression":}{Linear regression from \code{batchelor}}
-#'  \item{"method = "scMerge2"}{scMerge2 pseudobulking and RUV from \code{scMerge}}
-#'  \item{"method = "STACAS"}{\code{Seurat} pre-processing and \code{STACAS} integration}
+#'  \item{method = "regression":}{Linear regression from \code{batchelor}}
+#'  \item{method = "scMerge2"}{scMerge2 pseudobulking and RUV from \code{scMerge}}
+#'  \item{method = "STACAS"}{\code{Seurat} pre-processing and \code{STACAS} integration}
 #'}
 #'
-#'
-#' @importFrom SummarizedExperiment colData rowData
-#' @importFrom scater runPCA
-#' @importFrom uwot umap
-#' @importFrom scran quickCluster computeSumFactors modelGeneVar
-#' @importFrom batchelor multiBatchNorm fastMNN regressBatches
-#' @importFrom SingleCellExperiment reducedDim
-#' @importFrom BiocParallel SerialParam
+#' @importFrom SummarizedExperiment colData
 #'
 #' @export
 
@@ -187,6 +180,7 @@ integrateSCE <- function(sce,
 #' @importFrom SummarizedExperiment colData rowData
 #' @importFrom uwot umap
 #' @importFrom S4Vectors metadata
+#' @importFrom batchelor fastMNN
 
 .integrateMNN <- function(sce, batch, hvgs, ndims, neighbor_n, parallel_param, verbose, ...) {
 
@@ -197,7 +191,7 @@ integrateSCE <- function(sce,
   if (is.null(hvgs)) {
     if (!is.null(metadata(sce)$hvgs)) {
       hvgs <- metadata(sce)$hvgs
-    } else stop(ep, "Highly variable genes not supplied and not previously calculated")
+    } else stop(ep, "Highly variable genes not supplied and were not previously calculated")
   }
 
   sce_corr <- fastMNN(sce,
@@ -273,7 +267,7 @@ if (!requireNamespace("harmony", quietly = TRUE))
   lc <- logcounts(sce)
   rownames(lc) <- rownames(seu)
   seu <- SeuratObject::SetAssayData(object = seu, layer = "data", new.data = lc)
-  seu[["pca"]] <-SeuratObject:: CreateDimReducObject(embeddings = reducedDim(sce, "PCA"), key = "PC_")
+  seu[["pca"]] <- SeuratObject::CreateDimReducObject(embeddings = reducedDim(sce, "PCA"), key = "PC_")
 
   batches <-  unique(as.character((seu[[batch]][[batch]])))
   seulist <- lapply(batches, function(x) seu[,seu[[batch]] == x])
@@ -409,6 +403,7 @@ if (!requireNamespace("harmony", quietly = TRUE))
 #' @importFrom SingleCellExperiment reducedDim counts
 #' @importFrom SummarizedExperiment colData
 #' @importFrom uwot umap
+#' @importFrom batchelor regressBatches
 
 .integrateRegression <- function(sce, batch, ndims, hvgs, neighbor_n,
                                  parallel_param, verbose, ...){
@@ -483,7 +478,6 @@ if (!requireNamespace("harmony", quietly = TRUE))
   sce
 }
 
-
 #' @importFrom SummarizedExperiment colData rowData assay
 #' @importFrom SingleCellExperiment reducedDim counts logcounts
 #' @importFrom uwot umap
@@ -538,4 +532,262 @@ if (!requireNamespace("harmony", quietly = TRUE))
   colnames(sce) <- nf[colnames(sce), 1]
 
   sce
+}
+
+
+#' Integration diagnostics
+#'
+#' Diagnose the integration or batch effect correction with different metrics
+#'
+#' @param sce a \code{SingleCellExperiment} object
+#' @param batch character, the name(s) of the column(s) in \code{colData(sce)} with batch labels.
+#' 	   It can be more than one column.
+#' @param method character, the integration diagnosis method. One of \code{"iLISI"}, \code{"Gini"},
+#'     \code{"Jaccard"}, or \code{"HDB"}. Default is \code{"iLISI"}.
+#' @param dr character, the name(s) of the dimensional reduction slot(s) to be tested for integration. 
+#'     It can be more than one slot. 
+#' @param ndims numeric, the number of dimensions to use for integration. Default
+#'     is 20. 
+#' @param verbose logical, display messages on progress? Default is FALSE.
+#' @param ... extra arguments passed to the main diagnosis functions used by each method (see Details).
+#'
+#' @return depending on the diagnosis methods of choice, a list, a matrix, or a data frame (see Details).
+#'
+#' @details
+#' This function allows to use several dataset integration/batch effect
+#' diagnostic methods for single cell datasets, allowing the user to supply
+#' any number of parameters using \code{...}.
+#' 
+#' Depending on the method of choice, the \code{...} placeholder and the output will vary. 
+#' 
+#' The methods vary as follows:
+#' 
+#'\itemize{
+#'  \item{"iLISI:"}{ integration Local Inverse Simpson's Index from \code{lisi}. 
+#'     Provides a per-cell value of "good mixing" within a neighbourhood across one or more
+#'     batch variables. It is a numeric index bound between 1 (bad mixing) and the total number
+#' 	   of batches for each variable (perfect mixing). 
+#' 
+#'     The argument placeholder \code{...} can be used to supply arguments to the
+#'     \code{compute_lisi()} function from the \code{{lisi}} package, e.g. \code{perplexity} or
+#'     \code{nn_eps}.}
+#' 
+#'  \item{"Gini:"}{ Gini index for inequality. Provides a coarser value of "good mixing"
+#'     by over-clustering the space using k-means clustering and calculating the Gini index for
+#'     the batch variables. Each k-means cluster will be assigned a value between 0 (perfect equality,
+#' 	   i.e. perfect mixing) and 1 (perfect inequality, i.e. bad/no mixing). 
+#' 
+#'  \item{"Jaccard:"}{ Mean-maximum Jaccard index to compare unbiased clustering and 
+#'     ground truth labels. Provides a coarse value of agreement between various clustering resolutions
+#' 	   of a space and a previously known cell type annotation, such as one assigned by \code{assignIdentities()}.
+#'     
+#'     The value is calculated by clustering the data at various sensible resolutions and comparing the
+#'     clustering results with ground truth labels, taking the maximum Jaccard index as a measure of 
+#' 	   the best possible overlap of a label with any cluster. 
+#' 
+#'     The mean value of these maximum indices is taken as a measure of the overall 
+#'     agreement between the two clusterings. Bound between 0 (no overlap between two 
+#'     clusterings) and 1 (perfect overlap between two clusterings). 
+#' 	   This method provides some level of information on the preservation of biological variability
+#'     after integration, since over-integrated samples should show poor agreement with ground
+#'     truth labels by pushing cells with different labels together.
+#' 
+#'  \item{"HDB:"}{ Hausdorff Distance of Batches. Provides an asymmetric and statistically
+#'     tested pairwise measure of overlap between batches in any space. 
+#' 
+#'    See the \code{{HDB}} package for more information and arguments to the \code{HDB()} function.}
+#'}
+#' 
+#'  The argument placeholder \code{...} can be used to supply different extra arguments depending on 
+#'  the method:
+#' \itemize{
+#'    \item{"iLISI:"}{ Supply arguments to the
+#'     \code{compute_lisi()} function from the \code{{lisi}} package, e.g. \code{perplexity} or
+#'     \code{nn_eps}.}
+#'    \item{"Gini":}{ Supply the number of k-means clusters using the \code{centers} argument.}
+#'    \item{"Jaccard:"}{ Supply the colData column with ground trugh labels (\code{labels}), the
+#'     numeric vector of clustering resolutions (\code{k}, default = 0.1, 0.3, 0.5, 0.7, 0.9), 
+#'     and the number of neighbors for SNN graph construction (\code{neighbors}, default = 30)}
+#'    \item{"HDB:"}{ Supply arguments to the \code{HDB} function from the \code{{HDB}} package.}
+#' }
+#' 
+#' 
+#' 
+#' 
+#' @importFrom SingleCellExperiment reducedDimNames
+#' @importFrom SummarizedExperiment colData
+#' 
+#' @export
+
+
+diagnoseIntegration <- function(sce, 
+								batch, 
+								dr, 
+								ndims = 20,
+								method = "iLISI", 
+								verbose, 
+								...){
+
+## Sanity checks
+  # Error prefix
+  ep <- .redm("{cellula::diagnoseIntegration()} - ")
+
+  if (!is(sce, "SingleCellExperiment"))
+    stop(ep, "Must provide a SingleCellExperiment object")
+  if (!(method %in% c("iLISI", "Gini", "HDB", "Jaccard")))
+    stop(ep, "method not recognized - must be one of \"iLISI\", \"Gini\",
+         \"HDB\", or \"Jaccard\"")
+  if (!(any(batch %in% colnames(colData(sce)))))
+    stop(ep,"batch column(s) not found in the colData of the object")
+  if (!(any(dr %in% reducedDimNames(sce))))
+    stop(ep, "dr slot(s) not found in the object")
+
+  if (method == "iLISI") {
+	diagnosis = .diagnoseInt_iLISI(sce = sce, batch = batch, dr = dr, ndims = ndims, verbose = verbose, ...)
+  } 
+  else if (method == "Gini") {
+	diagnosis = .diagnoseInt_Gini(sce = sce, batch = batch, dr = dr, ndims = ndims, verbose = verbose, ...)
+  }
+  else if (method == "Jaccard") {
+	diagnosis = .diagnoseInt_Jaccard(sce = sce, batch = batch, dr = dr, ndims = ndims, verbose = verbose, ...)
+  }
+  else if (method == "HDB") {
+	diagnosis = .diagnoseInt_HDB(sce = sce, batch = batch, dr = dr, ndims = ndims, verbose = verbose, ...)
+  }
+  return(diagnosis)
+}
+
+
+#' @importFrom SummarizedExperiment colData
+#' @importFrom SingleCellExperiment reducedDimNames
+
+.diagnoseInt_iLISI <- function(sce, batch, dr, ndims, verbose, ...) {
+	
+## Sanity checks
+  # Error prefix
+  ep <- .redm("{cellula::diagnoseIntegration() / method = \"iLISI\"} - ")
+
+ if (!requireNamespace("lisi", quietly = TRUE)) 
+   		stop(paste0(ep, "the `lisi` package must be installed first.\n
+                  Run `BiocManager::install(\"immunogenomics/lisi\") to use this function."))
+
+	lisil = lapply(dr, 
+                function(r) {
+                  if(verbose) message(paste0(.bluem("[INT/Diagnosis - iLISI]"), " Calculating iLISI for reduction ", r))
+                  lisi::compute_lisi(reducedDim(sce, r)[,seq_len(ndims)], 
+				  meta_data = colData(sce), 
+				  label_colnames = batch,
+				  ...)
+                })
+	if(length(dr) > 1) {
+		names(lisil) = dr
+		out = do.call(cbind, lisil)
+		rownames(out) = colnames(sce)
+	} else {
+		out = unlist(lisil)
+		names(out) = colnames(sce)
+	}	
+	return(out)
+}
+
+#' @importFrom SummarizedExperiment colData
+#' @importFrom SingleCellExperiment reducedDimNames
+#' @importFrom stats kmeans
+#' @importFrom utils combn
+
+.diagnoseInt_Gini <- function(sce, batch, dr, ndims, verbose, centers = 200) {
+
+## Sanity checks
+  # Error prefix
+  ep <- .redm("{cellula::diagnoseIntegration() / method = \"Gini\"} - ")
+
+  ginil = lapply(dr,
+    function(r) {
+    	if(verbose) message(paste0(.bluem("[INT/Diagnosis - Gini]"), " Calculating Gini index for reduction ", r))
+         sce_overcl = kmeans(reducedDim(sce, r)[,seq_len(ndims)], centers = centers)$cluster
+         index_tab = table(sce_overcl, colData(sce)[,batch])
+         unlist(lapply(seq_len(nrow(index_tab)), function(x) {
+           diffs = abs(apply(t(combn(index_tab[x,], 2)), 1, diff))
+           gini_int = ((sum(diffs)/length(diffs))/2)/mean(index_tab[x,])
+		   gini_int
+         }))
+       })
+if(length(dr) > 1) {
+		names(ginil) = dr
+		out = do.call(cbind, ginil)
+	} else {
+		out = unlist(ginil)
+	}	
+	return(out)
+}
+
+#' @importFrom SummarizedExperiment colData
+#' @importFrom SingleCellExperiment reducedDimNames
+
+.diagnoseInt_Jaccard <- function(sce, batch, dr, ndims, verbose, labels, neighbors = 30, k = c(0.1, 0.3, 0.5, 0.7, 0.9)) {
+	
+	## Sanity checks
+	# Error prefix
+	ep <- .redm("{cellula::diagnoseIntegration() / method = \"Jaccard\"} - ")
+
+	if (!(labels %in% colnames(colData(sce))))
+		stop(ep, "labels must be a column of the colData")
+		if(length(k) < 1)
+		stop(ep, "specify at least 1 value of k")
+
+	jacl = lapply(dr,
+		function(r) {
+    	if(verbose) message(paste0(.bluem("[INT/Diagnosis - Jaccard]"), " Calculating mean-max Jaccard index for reduction ", r))
+			
+			sce_overcl = colData(makeGraphsAndClusters(sce, neighbors = neighbors, k = k, dr = r))[,paste0("SNN_", k)]
+			
+			jac = lapply(sce_overcl, function(x) {
+				pairs = as.data.frame(expand.grid(unique(x), unique(colData(sce)[,labels])))
+				pairs$intersect = apply(pairs, 1, function(y)
+				length(intersect(which(x == y[1]), which(colData(sce)[,labels] == y[2]))))
+				pairs$union = apply(pairs, 1, function(y) {
+					length(union(which(x == y[1]), which(colData(sce)[,labels] == y[2])))
+				})
+				pairs$jaccard = pairs$intersect/pairs$union
+				jacmat = matrix(pairs$jaccard, ncol = length(unique(colData(sce)[,labels])))
+				mmj = mean(colMaxs(jacmat))
+				return(list("jacmat" = jacmat, "meanmax_jaccard" = mmj))
+			}
+		)
+		list(clusters = sce_overcl,jaccard = jac)
+		}
+	)
+	if(length(dr) > 1) {
+		names(jacl) = dr
+		out = do.call(rbind, lapply(jacl, function(x) 
+   			unlist(lapply(x$jaccard, function(y) y$meanmax_jaccard))))
+	} else {
+		out = unlist(jacl)
+	}
+	return(out)
+}
+
+#' @importFrom BiocParallel SerialParam
+
+.diagnoseInt_HDB <- function(sce, batch, dr, ndims, verbose, ...) {
+
+	## Sanity checks
+	# Error prefix
+	ep <- .redm("{cellula::diagnoseIntegration() / method = \"HDB\"} - ")
+
+	if (!requireNamespace("HDB", quietly = TRUE)) 
+			stop(paste0(ep, "the `HDB` package must be installed first.\n
+					Run `BiocManager::install(\"gdagstn/HDB\") to use this function."))
+	
+	if (!requireNamespace("BiocNeighbors", quietly = TRUE)) 
+			stop(paste0(ep, "the `HDB` package must be installed first.\n
+					Run `BiocManager::install(\"BiocNeighbors\") to use this function."))
+	hdl = lapply(dr, function(r) {
+	    	if(verbose) message(paste0(.bluem("[INT/Diagnosis - HDB]"), " Calculating HDB for reduction ", r))
+
+		HDB::HDB(sce = sce, dimred = r, group = batch, distance = "Euclidean", q = 3, dims = ndims, 
+			 	props = c(0.2, 0.5, 0.8), samples = 50, BPPARAM = SerialParam(), doplot = FALSE, verbose = verbose, ...)
+	})	
+	names(hdl) = dr
+	return(hdl)
 }

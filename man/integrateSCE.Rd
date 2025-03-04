@@ -69,13 +69,13 @@ parameters that can be tuned will only apply to *one* function within any
 integration pipeline. In particular, the following functions are affected:
 
 \itemize{
- \item{"method = "fastMNN":}{ \code{batchelor::fastMNN()}}
- \item{"method = "Harmony":}{ \code{harmony::RunHarmony()}}
- \item{"method = "Seurat":}{  \code{Seurat::FindIntegrationAnchors()}}
- \item{"method = "LIGER":}{ \code{RcppPlanc::inmf}}
- \item{"method = "regression":}{ \code{batchelor::regressBatches()}}
- \item{"method = "scMerge2"}{ \code{scMerge::scMerge2()}}
- \item{"method = "STACAS"}{ \code{STACAS::RunStacas()}}
+ \item{method = "fastMNN":}{ \code{batchelor::fastMNN()}}
+ \item{method = "Harmony":}{ \code{harmony::RunHarmony()}}
+ \item{method = "Seurat":}{  \code{Seurat::FindIntegrationAnchors()}}
+ \item{method = "LIGER":}{ \code{RcppPlanc::inmf}}
+ \item{method = "regression":}{ \code{batchelor::regressBatches()}}
+ \item{method = "scMerge2"}{ \code{scMerge::scMerge2()}}
+ \item{method = "STACAS"}{ \code{STACAS::RunStacas()}}
 }
 
 Users who desire further control/customization should apply the functions
@@ -85,14 +85,14 @@ in the \code{Seurat} integration pipeline.
 The following methods work out of the box:
 
 \itemize{
- \item{"method = "fastMNN":}{ FastMNN correction from \code{batchelor}}
- \item{"method = "Harmony":}{Integration on PCA embeddings from \code{harmony}}
- \item{"method = "Seurat":}{\code{Seurat} CCA with de novo normalization
+ \item{method = "fastMNN":}{ FastMNN correction from \code{batchelor}}
+ \item{method = "Harmony":}{Integration on PCA embeddings from \code{harmony}}
+ \item{method = "Seurat":}{\code{Seurat} CCA with de novo normalization
      and feature selection, anchor finding and integration}
- \item{"method = "LIGER":}{LIGER iNMF using the \code{RcppPlanc} implementation,
+ \item{method = "LIGER":}{LIGER iNMF using the \code{RcppPlanc} implementation,
      with de novo normalization and feature selection through \code{rliger}}
- \item{"method = "regression":}{Linear regression from \code{batchelor}}
- \item{"method = "scMerge2"}{scMerge2 pseudobulking and RUV from \code{scMerge}}
- \item{"method = "STACAS"}{\code{Seurat} pre-processing and \code{STACAS} integration}
+ \item{method = "regression":}{Linear regression from \code{batchelor}}
+ \item{method = "scMerge2"}{scMerge2 pseudobulking and RUV from \code{scMerge}}
+ \item{method = "STACAS"}{\code{Seurat} pre-processing and \code{STACAS} integration}
 }
 }

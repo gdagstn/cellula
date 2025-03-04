@@ -16,7 +16,6 @@ plot_DR(
   outline = TRUE,
   outline_size = 1.3,
   arrows = TRUE,
-  coords = FALSE,
   exprs_use = "logcounts",
   num_scale = "auto",
   color_palette = NULL,

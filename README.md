@@ -8,6 +8,9 @@ You can read all about it on the companion [website](https://gdagstn.github.io/c
 
 ## Changelog
 
+-   4/3/2025:\
+    Added integration diagnostics
+
 -   29/10/2024:\
     Added stacked violin plots and multipanel dimensionality reduction plots
 

@@ -13,7 +13,6 @@ RoxygenNote: 7.3.2
 Depends:
 	SingleCellExperiment
 Imports: 
-    SingleCellExperiment,
     SummarizedExperiment,
     BiocNeighbors,
     ggplot2,
@@ -43,6 +42,8 @@ Suggests:
     destiny,
     DropletUtils,
     harmony,
+	HDB,
+	lisi,
     rliger,
     RcppPlanc,
     GSVA,
