@@ -32,5 +32,56 @@ depending on the diagnosis methods of choice, a list, a matrix, or a data frame 
 Diagnose the integration or batch effect correction with different metrics
 }
 \details{
+This function allows to use several dataset integration/batch effect
+diagnostic methods for single cell datasets, allowing the user to supply
+any number of parameters using \code{...}.
 
+Depending on the method of choice, the \code{...} placeholder and the output will vary. 
+
+The methods vary as follows:
+
+\itemize{
+ \item{"iLISI:"}{ integration Local Inverse Simpson's Index from \code{lisi}. 
+    Provides a per-cell value of "good mixing" within a neighbourhood across one or more
+    batch variables. It is a numeric index bound between 1 (bad mixing) and the total number
+	   of batches for each variable (perfect mixing)}
+
+ \item{"Gini:"}{ Gini index for inequality. Provides a coarser value of "good mixing"
+    by over-clustering the space using k-means clustering and calculating the Gini index for
+    the batch variables. Each k-means cluster will be assigned a value between 0 (perfect equality,
+	   i.e. perfect mixing) and 1 (perfect inequality, i.e. bad/no mixing).} 
+
+ \item{"Jaccard:"}{ Mean-maximum Jaccard index to compare unbiased clustering and 
+    ground truth labels. Provides a coarse value of agreement between various clustering resolutions
+	   of a space and a previously known cell type annotation, such as one assigned by \code{assignIdentities()}.
+    
+    The value is calculated by clustering the data at various sensible resolutions and comparing the
+    clustering results with ground truth labels, taking the maximum Jaccard index as a measure of 
+	   the best possible overlap of a label with any cluster. 
+
+    The mean value of these maximum indices is taken as a measure of the overall 
+    agreement between the two clusterings. Bound between 0 (no overlap between two 
+    clusterings) and 1 (perfect overlap between two clusterings). 
+	   This method provides some level of information on the preservation of biological variability
+    after integration, since over-integrated samples should show poor agreement with ground
+    truth labels by pushing cells with different labels together.}
+
+ \item{"HDB:"}{ Hausdorff Distance of Batches. Provides an asymmetric and statistically
+    tested pairwise measure of overlap between batches in any space. 
+
+   See the \code{{HDB}} package for more information and arguments to the \code{HDB()} function.}
+}
+
+ The argument placeholder \code{...} can be used to supply different extra arguments depending on 
+ the method:
+\itemize{
+   \item{"iLISI:"}{ Supply arguments to the
+    \code{compute_lisi()} function from the \code{{lisi}} package, e.g. \code{perplexity} or
+    \code{nn_eps}.}
+   \item{"Gini":}{ Supply the number of k-means clusters using the \code{centers} argument.}
+   \item{"Jaccard:"}{ Supply the colData column with ground trugh labels (\code{labels}), the
+    numeric vector of clustering resolutions (\code{k}, default = 0.1, 0.3, 0.5, 0.7, 0.9), 
+    and the number of neighbors for SNN graph construction (\code{neighbors}, default = 30)}
+   \item{"HDB:"}{ Supply arguments to the \code{HDB} function from the \code{{HDB}} package.}
+}
 }

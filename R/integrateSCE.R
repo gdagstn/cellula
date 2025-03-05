@@ -566,16 +566,12 @@ if (!requireNamespace("harmony", quietly = TRUE))
 #'  \item{"iLISI:"}{ integration Local Inverse Simpson's Index from \code{lisi}. 
 #'     Provides a per-cell value of "good mixing" within a neighbourhood across one or more
 #'     batch variables. It is a numeric index bound between 1 (bad mixing) and the total number
-#' 	   of batches for each variable (perfect mixing). 
-#' 
-#'     The argument placeholder \code{...} can be used to supply arguments to the
-#'     \code{compute_lisi()} function from the \code{{lisi}} package, e.g. \code{perplexity} or
-#'     \code{nn_eps}.}
+#' 	   of batches for each variable (perfect mixing)}
 #' 
 #'  \item{"Gini:"}{ Gini index for inequality. Provides a coarser value of "good mixing"
 #'     by over-clustering the space using k-means clustering and calculating the Gini index for
 #'     the batch variables. Each k-means cluster will be assigned a value between 0 (perfect equality,
-#' 	   i.e. perfect mixing) and 1 (perfect inequality, i.e. bad/no mixing). 
+#' 	   i.e. perfect mixing) and 1 (perfect inequality, i.e. bad/no mixing).} 
 #' 
 #'  \item{"Jaccard:"}{ Mean-maximum Jaccard index to compare unbiased clustering and 
 #'     ground truth labels. Provides a coarse value of agreement between various clustering resolutions
@@ -590,7 +586,7 @@ if (!requireNamespace("harmony", quietly = TRUE))
 #'     clusterings) and 1 (perfect overlap between two clusterings). 
 #' 	   This method provides some level of information on the preservation of biological variability
 #'     after integration, since over-integrated samples should show poor agreement with ground
-#'     truth labels by pushing cells with different labels together.
+#'     truth labels by pushing cells with different labels together.}
 #' 
 #'  \item{"HDB:"}{ Hausdorff Distance of Batches. Provides an asymmetric and statistically
 #'     tested pairwise measure of overlap between batches in any space. 
