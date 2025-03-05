@@ -145,7 +145,7 @@ doQC <- function(sce,
     if (save_plots){
       if (verbose) message(.bluem("[QC]"),"   Saving QC plots.")
       savepath <- paste0(path, "/", name)
-      dir.create(paste0(savepath, "/plots"), showWarnings = FALSE)
+      dir.create(paste0(savepath, "/plots"), showWarnings = FALSE, recursive = TRUE)
       savepath <- paste0(savepath, "/plots")
       if (!is.null(batch)) {
         xlen <- length(unique(colData(sce)[,batch])) * 2

@@ -102,9 +102,9 @@ cellula <- function(sce,
     message("No name selected, so the randomly assigned name is: ", name)
   }
 
-  dir.create(name)
+  dir.create(paste0(path, "/", name))
   clog$name <- name
-  clog$dir <- paste0(getwd(), "/name")
+  clog$dir <- paste0(path, "/", name)
   
   # Begin
     if(verbose) {
