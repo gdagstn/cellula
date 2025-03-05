@@ -601,14 +601,11 @@ if (!requireNamespace("harmony", quietly = TRUE))
 #'     \code{compute_lisi()} function from the \code{{lisi}} package, e.g. \code{perplexity} or
 #'     \code{nn_eps}.}
 #'    \item{"Gini":}{ Supply the number of k-means clusters using the \code{centers} argument.}
-#'    \item{"Jaccard:"}{ Supply the colData column with ground trugh labels (\code{labels}), the
+#'    \item{"Jaccard:"}{ Supply the colData column with ground truth labels (\code{labels}), the
 #'     numeric vector of clustering resolutions (\code{k}, default = 0.1, 0.3, 0.5, 0.7, 0.9), 
 #'     and the number of neighbors for SNN graph construction (\code{neighbors}, default = 30)}
 #'    \item{"HDB:"}{ Supply arguments to the \code{HDB} function from the \code{{HDB}} package.}
 #' }
-#' 
-#' 
-#' 
 #' 
 #' @importFrom SingleCellExperiment reducedDimNames
 #' @importFrom SummarizedExperiment colData
@@ -616,12 +613,12 @@ if (!requireNamespace("harmony", quietly = TRUE))
 #' @export
 
 
-diagnoseIntegration <- function(sce, 
-								batch, 
-								dr, 
+diagnoseIntegration <- function(sce,
+								batch,
+								dr,
 								ndims = 20,
-								method = "iLISI", 
-								verbose, 
+								method = "iLISI",
+								verbose,
 								...){
 
 ## Sanity checks

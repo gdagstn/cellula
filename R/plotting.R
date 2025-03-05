@@ -3,9 +3,10 @@
 #' Plots a heatmap showing pairwise cluster modularity from a SCE object
 #'
 #' @param sce a \code{SingleCellExperiment} object
-#' @param name character, the name in the \code{metadata slot} of the \code{SingleCellExperiment} object, e.g.
-#'     "modularity_SNN_100"
-#' @param type character, one of \code{"heatmap"} or \code{"graph"} for different plot types
+#' @param name character, the name in the \code{metadata slot} of the
+#'     \code{SingleCellExperiment} object, e.g. "modularity_SNN_100"
+#' @param type character, one of \code{"heatmap"} or \code{"graph"}
+#'     for different plot types
 #'
 #' @return a heatmap of pairwise modularity
 #'
@@ -27,14 +28,12 @@ plotModularity <- function(sce, name, type = "heatmap") {
     colnames(m) <- c("x", "y")
     m$value <- vapply(seq_len(nrow(m)), 
                      function(x) modmat[m[x,1], m[x,2]])
-      
     p <- ggplot(m, aes(x = .data[["x"]], y = .data[["y"]])) + 
-        geom_tile(aes(fill = .data[["value"]], color = NA)) +
+    	geom_tile(aes(fill = .data[["value"]], color = NA)) +
         scale_x_discrete(position = "top")
-    
     p <- p + theme_classic() +
       theme(plot.margin = margin(1, 1, 1, 1, "cm"),
-            panel.grid.major = element_blank(),
+        	panel.grid.major = element_blank(),
             panel.grid.minor = element_blank(),
             axis.line = element_blank(),
             text = element_text(family = "sans"),
@@ -1017,9 +1016,9 @@ multipanel_DR <- function(sce, dr = "UMAP", dims = c(1,2),
       aes_bee <- aes_cd
       aes_bee$x <- aes(x = .data[[color_by]])$x
       aes_bee$colour <- aes(colour = .data[[color_by]])$colour
-      pwidth <- 1/length(levels(df[,color_by]))
+      #pwidth <- 1/length(levels(df[,color_by]))
     } else if(!is.null(x) & is.null(color_by)){
-      pwidth <- 1/length(levels(df[,x]))
+      #pwidth <- 1/length(levels(df[,x]))
       aes_bee <- aes_cd
       aes_bee$x <- aes(x = .data[[x]])$x
       aes_bee$colour <- aes(colour = .data[[x]])$colour
@@ -1027,7 +1026,7 @@ multipanel_DR <- function(sce, dr = "UMAP", dims = c(1,2),
       if(x != color_by) {
         aes_bee <- aes(y = .data[[y]], x = .data[[x]])
         pwscale <- length(unique(paste0(df[,x], "_", df[,color_by])))
-        pwidth <- 1/pwscale
+        #pwidth <- 1/pwscale
       }
     }
 
