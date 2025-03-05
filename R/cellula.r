@@ -37,6 +37,8 @@
 #' @param save_plots logical, should plots be drawn and saved? Default is \code{TRUE}
 #' @param save_temp logical, should temporary files be saved as the pipeline progresses?
 #'     Default is \code{FALSE}
+#' @param path character, the path where the files will be saved. Default is the current
+#'     working directory.
 #' @param parallel_param a \code{BiocParallel} object specifying the parallelization backend
 #'     to be used in some steps of the pipeline. Default is \code{SerialParam()}
 #'     meaning no parallelization will be used. Note: for Seurat options, the
@@ -78,6 +80,7 @@ cellula <- function(sce,
                      verbose = FALSE,
                      save_plots = TRUE,
                      save_temp = FALSE,
+					 path = "./",
                      parallel_param = SerialParam()) {
 
   # Checks (mostly delegated to single modules)
@@ -148,7 +151,7 @@ cellula <- function(sce,
     
     if(save_temp) {
       if(verbose) message("Saving temporary file.")
-      saveRDS(sce, file = paste0("./", name, "/", name, "_tempSCE.RDS"))
+      saveRDS(sce, file = paste0(path, "/", name, "/", name, "_tempSCE.RDS"))
     }
   }
 
@@ -162,7 +165,7 @@ cellula <- function(sce,
 
     if(save_temp) {
       if(verbose) message("Saving temporary file. \n")
-      saveRDS(sce, file = paste0("./", name, "/", name, "_tempSCE.RDS"))
+      saveRDS(sce, file = paste0(path, "/", name, "/", name, "_tempSCE.RDS"))
     }
   }
   hvgs <- metadata(sce)$hvgs
@@ -181,11 +184,13 @@ cellula <- function(sce,
   }
 
   if(verbose) message("Saving final object.")
-  saveRDS(sce, file = paste0("./", name, "/", name, "_PS_INT_SCE.RDS"))
+  	saveRDS(sce, file = paste0(path, "/", name, "/", name, "_PS_INT_SCE.RDS"))
+
   if (save_temp) {
     if (verbose) message("Deleting temporary file.")
-    file.remove(paste0("./", name, "/", name, "_tempSCE.RDS"))
+    file.remove(paste0(path, "/", name, "/", name, "_tempSCE.RDS"))
   }
+
   if (verbose) message("All done. Input cells: ", ncells, ", final cell number: ", ncol(sce))
   metadata(sce)$cellula_log[["output_cells"]] <- ncol(sce)
   if (!is.null(batch)) {
