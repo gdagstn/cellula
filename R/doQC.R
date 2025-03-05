@@ -23,6 +23,7 @@
 #' @param emptydrops_alpha numeric, the FDR threshold to call an empty barcode.
 #' @param verbose logical, display messages on progress? Default is \code{FALSE}
 #' @param save_plots logical, should plots be drawn and saved? Default is \code{TRUE}
+#' @param path character, the path to save the plots. Default is the local working directory ("./")
 #' @param parallel_param a \code{BiocParallel} object specifying the parallelization backend
 #'     to be used in some steps of the pipeline. Default is \code{SerialParam()}
 #'     meaning no parallelization will be used.
@@ -31,7 +32,6 @@
 #'
 #' @importFrom SummarizedExperiment colData rowData assay
 #' @importFrom gridExtra grid.arrange arrangeGrob
-#' @importFrom scater plotColData
 #' @importFrom scuttle isOutlier perCellQCMetrics
 #' @importFrom ggplot2 scale_y_log10 ggtitle ggsave ylab
 #' @importFrom BiocParallel SerialParam
@@ -51,6 +51,7 @@ doQC <- function(sce,
                  emptydrops_alpha = 0.01,
                  verbose = TRUE,
                  save_plots = TRUE,
+				 path = "./",
                  parallel_param = SerialParam()){
 
   
@@ -81,14 +82,14 @@ doQC <- function(sce,
 
   if (subset_malat1){
     if (sum(grepl("^MALAT1|^Malat1", rowData(sce)$Symbol, ignore.case = TRUE)) == 0) {
-      warning("   No MALAT1 gene found.")
+      warning("   No MALAT1 gene found.\n")
       Malat1 <- FALSE
     } else Malat1 = rownames(sce)[grepl("^MALAT1|^Malat1", rowData(sce)$Symbol, ignore.case = TRUE)]
   } else Malat1 <- FALSE
 
   if (subset_ribo){
     if (sum(grepl("^MRPL|^MRPS|^RPL|^RPS|^Mrpl|^Mrps|^Rpl|^Rps", rowData(sce)$Symbol, ignore.case = TRUE)) == 0) {
-      warning("   No ribo genes found.")
+      warning("   No ribo genes found.\n")
       Ribo <- FALSE
     } else Ribo <- rownames(sce)[grepl("^MRPL|^MRPS|^RPL|^RPS|^Mrpl|^Mrps|^Rpl|^Rps", rowData(sce)$Symbol, ignore.case = TRUE)]
   } else Ribo <- FALSE
@@ -143,7 +144,7 @@ doQC <- function(sce,
     # Save plots  
     if (save_plots){
       if (verbose) message(.bluem("[QC]"),"   Saving QC plots.")
-      savepath <- paste0(getwd(), "/", name)
+      savepath <- paste0(path, "/", name)
       dir.create(paste0(savepath, "/plots"))
       savepath <- paste0(savepath, "/plots")
       if (!is.null(batch)) {
