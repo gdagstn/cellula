@@ -108,12 +108,12 @@ cellula <- function(sce,
   
   # Begin
     if(verbose) {
-    message("Working on object ", name)
+    message("\nWorking on object ", name, "\n")
     ncells <- ncol(sce)
-    message("Input cells: ", ncells)
+    message("Input cells: ", ncells, "\n")
       clog$qc$input_cells <- ncells
     if(!is.null(batch)) {
-      message("By batch: ")
+      message("By batch: \n")
       print(table(colData(sce)[,batch]))
       clog$qc$input_by_batch <- table(colData(sce)[,batch])
     }

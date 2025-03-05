@@ -25,6 +25,7 @@ cellula(
   verbose = FALSE,
   save_plots = TRUE,
   save_temp = FALSE,
+  path = "./",
   parallel_param = SerialParam()
 )
 }
@@ -83,6 +84,9 @@ embedding for downstream applications. Default is 20.}
 
 \item{save_temp}{logical, should temporary files be saved as the pipeline progresses?
 Default is \code{FALSE}}
+
+\item{path}{character, the path where the files will be saved. Default is the current
+working directory.}
 
 \item{parallel_param}{a \code{BiocParallel} object specifying the parallelization backend
 to be used in some steps of the pipeline. Default is \code{SerialParam()}
