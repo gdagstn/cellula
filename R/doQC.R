@@ -71,7 +71,7 @@ doQC <- function(sce,
                         verbose = verbose,
                         parallel_param = parallel_param)
   }
-  if (verbose) message(.bluem("[QC]"),"Calculating QC metrics.")
+  if (verbose) message(.bluem("[QC]")," Calculating QC metrics.")
   # Generate QC
   if (subset_mito){
     if (sum(grepl("^MT-|^Mt-", rowData(sce)$Symbol, ignore.case = TRUE)) == 0) {

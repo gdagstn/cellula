@@ -132,6 +132,7 @@ cellula <- function(sce,
                 emptydrops_alpha = emptydrops_alpha,
                 verbose = verbose,
                 save_plots = save_plots,
+				path = path,
                 parallel_param = parallel_param)
     
     clog$qc$do_qc <- do_qc

@@ -18,6 +18,7 @@ doQC(
   emptydrops_alpha = 0.01,
   verbose = TRUE,
   save_plots = TRUE,
+  path = "./",
   parallel_param = SerialParam()
 )
 }
@@ -55,6 +56,8 @@ ambient RNA profiles and are removed.}
 \item{verbose}{logical, display messages on progress? Default is \code{FALSE}}
 
 \item{save_plots}{logical, should plots be drawn and saved? Default is \code{TRUE}}
+
+\item{path}{character, the path to save the plots. Default is the local working directory ("./")}
 
 \item{parallel_param}{a \code{BiocParallel} object specifying the parallelization backend
 to be used in some steps of the pipeline. Default is \code{SerialParam()}
