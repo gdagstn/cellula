@@ -137,9 +137,11 @@ assignIdentities <- function(sce, genesets = NULL, method, ref = NULL,
     # Checks
     ep <- .redm("{cellula::.assignIdentities_AUC()} - ")
     
-if (!requireNamespace("AUCell", quietly = TRUE))
-      stop(ep, "the `AUCell` package must be installed first.\n
-                Run `BiocManager::install(\"AUCell\") to use this function.")
+	dependencies = data.frame("package" = c("AUCell"),
+                              "repo" = c("BioC"))
+    if(checkFunctionDependencies(dependencies)) stop(paste0(ep, "Missing required packages."))
+
+
     if (is.null(name)) labelname <- "labels_AUC" else labelname <- name
     if (verbose) message(.bluem("[ANNO/AUC]"), "Assigning cell labels.")
   
@@ -178,9 +180,11 @@ if (!requireNamespace("AUCell", quietly = TRUE))
                                      ...){
   # Checks
   ep <- .redm("{cellula::.assignIdentities_Seurat()} - ")
-if (!requireNamespace("Seurat", quietly = TRUE))
-    stop(ep, "the `Seurat` package must be installed first.\n
-                Run `BiocManager::install(\"Seurat\") to use this function.")
+
+	dependencies = data.frame("package" = c("Seurat"),
+                              "repo" = c("CRAN"))
+    if(checkFunctionDependencies(dependencies)) stop(paste0(ep, "Missing required packages."))
+
   
   if (is.null(name)) labelname <- "labels_Seurat" else labelname <- name
 
@@ -226,9 +230,13 @@ if (!requireNamespace("Seurat", quietly = TRUE))
   
   # Checks
   ep <- .redm("{cellula::.assignIdentities_ssGSEA()} - ")
-if (!requireNamespace("GSVA", quietly = TRUE))   
-stop(ep, "the `GSVA` package must be installed first.\n
-                Run `BiocManager::install(\"GSVA\") to use this function.")
+
+
+	dependencies = data.frame("package" = c("GSVA"),
+                              "repo" = c("BioC"))
+    if(checkFunctionDependencies(dependencies)) stop(paste0(ep, "Missing required packages."))
+
+
   if (is.null(name)) labelname <- "labels_ssGSEA" else labelname <- name
   if (is.null(assay))
     stop(ep, "You must specify the assay argument (typically \"logcounts\"")
@@ -268,9 +276,10 @@ stop(ep, "the `GSVA` package must be installed first.\n
   
   ep <- .redm("{cellula::.assignIdentities_UCell()} - ")
   
-  if (!requireNamespace("UCell", quietly = TRUE))
-    stop(ep, "the `UCell` package must be installed first.\n
-                Run `BiocManager::install(\"UCell\") to use this function.")
+	dependencies = data.frame("package" = c("UCell"),
+                              "repo" = c("BioC"))
+    if(checkFunctionDependencies(dependencies)) stop(paste0(ep, "Missing required packages."))
+
   if (is.null(name)) 
     labelname <- "labels_UCell" else labelname <- name
     

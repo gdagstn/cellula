@@ -158,6 +158,7 @@ cellula <- function(sce,
 
   # Normalization and dimensionality reduction module
     if(do_norm) {
+		if(verbose) message(.bluem("[NOR] "), "Normalization and dimensionality reduction.")
     sce <- doNormAndReduce(sce, batch = batch, name = name,
                            ndims = ndims,
                            hvg_ntop = hvg_ntop,

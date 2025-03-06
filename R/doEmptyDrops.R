@@ -32,10 +32,10 @@ doEmptyDrops <- function(sce,
 
   ep <- .redm("{cellula::doEmptyDrops()} - ")
   
-  if (!"DropletUtils" %in% rownames(installed.packages())){
-    stop(ep, "The `DropletUtils` package must be installed first. \n
-              Run `BiocManager::install(\"DropletUtils\") to use this function.")
-  }
+	dependencies = data.frame("package" = c("DropletUtils"),
+                              "repo" = c("BioC"))
+    if(checkFunctionDependencies(dependencies)) stop(paste0(ep, "Missing required packages."))
+
   
   if (verbose) message(.bluem("[QC/EMPTY]"),"Running emptyDrops.")
 

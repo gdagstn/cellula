@@ -44,6 +44,35 @@
   }
 }
 
+
+#' Check functional dependencies
+#' @noRd
+checkFunctionDependencies <- function(depdf) {
+  
+  dependency_check = sapply(depdf$package, function(package) 
+    !requireNamespace(package, quietly = TRUE))
+  
+  depdf$command = apply(depdf, 1, function(x) {
+    if(x[2] == "BioC") {
+      paste0("BiocManager::install(", "\"", x[1], "\")" )
+    } else if(x[2] == "CRAN") {
+      paste0("install.packages(\"", x[1], "\")" )
+    } else if(grepl("github", x[2])) {
+      repo = unlist(strsplit(x[2], split = ":"))[2]
+      paste0("remotes::install_github(\"", repo, "/", x[1], "\")" )
+    }
+    })
+  
+  if(any(dependency_check)){
+    message("Required packages not installed: ", .redm(sum(dependency_check)))
+    message("Install the missing packages as follows:")
+    invisible(sapply(depdf$command[dependency_check], function(x) {
+      message(.bluem(paste0("`", x, "`")))
+    }))
+  }
+  return(any(dependency_check))
+}
+
 #' Rescale
 #'
 #' Lifted from the \code{scales} package
@@ -106,7 +135,7 @@
 #' @author Matthew Strimas-Mackey, modified by Giuseppe D'Agostino
 #'
 #' @importFrom stats ksmooth
-#' 
+#'
 #' @noRd
 
 .smoothPolyline <- function(poly, smoothness = 3, min_points = 8, n_dense = 10) {

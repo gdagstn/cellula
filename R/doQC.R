@@ -58,10 +58,10 @@ doQC <- function(sce,
   ep <- .redm("{cellula::doQC()} - ")
   
   if (detect_doublets){
-    if (!requireNamespace("scDblFinder", quietly = TRUE)){
-      stop(ep, "[DBL] The `scDblFinder` package must be installed first. \n
-               Run `BiocManager::install(\"scDblFinder\") to use this function.")
-    }
+    dependencies = data.frame("package" = c("scDblFinder"),
+                              "repo" = c("BioC"))
+    if(checkFunctionDependencies(dependencies)) stop(paste0(ep, "Missing required packages."))
+
   }
   
   if (run_emptydrops){

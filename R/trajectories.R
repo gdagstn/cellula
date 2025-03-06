@@ -249,10 +249,12 @@ findTrajectories <- function(sce, dr = "PCA", clusters, method = "slingshot",
                                     verbose = TRUE){
   
     ep <- .redm("{cellula::.getMonocleTrajectories()} - ")
-    if (!requireNamespace("monocle3", quietly = TRUE))
-      stop(paste0(.redm(ep), "the `monocle3` package must be installed first.\n
-                  Run `BiocManager::install(\"cole-trapnell-lab/monocle3\") to use this function."))
-    rd <- rowData(sce)
+
+		dependencies = data.frame("package" = c("monocle3"),
+                              	  "repo" = c("github:cole-trapnell-lab" ))
+        if(checkFunctionDependencies(dependencies)) stop("Missing required packages.")
+
+	rd <- rowData(sce)
     if(!("Symbol" %in% colnames(rd))) rd$Symbol <- rownames(rd)
     rd$gene_short_name <- rd$Symbol
     if(verbose) message(paste0(.bluem("[TRAJ/Monocle3] "),"Creating CDS object"))
@@ -431,9 +433,10 @@ findTrajectories <- function(sce, dr = "PCA", clusters, method = "slingshot",
   
     ep <- .redm("{cellula::.getSlingshotTrajectories()} - ")
     
-    if (!requireNamespace("slingshot", quietly = TRUE))
-      stop(paste0(ep, "the `slingshot` package must be installed first.\n
-                  Run `BiocManager::install(\"slingshot\") to use this function."))
+	    dependencies = data.frame("package" = c("slingshot"),
+                              	  "repo" = c("BioC" ))
+        if(checkFunctionDependencies(dependencies)) stop("Missing required packages.")
+
     
     if(verbose) message(paste0(.bluem("[TRAJ/Slingshot] "),"Finding trajectories"))
     
@@ -506,10 +509,10 @@ findTrajectories <- function(sce, dr = "PCA", clusters, method = "slingshot",
   
     ep <- .redm("{cellula::.getDPTtrajectories()} - ")
     
-   if (!requireNamespace("destiny", quietly = TRUE))
-      stop(paste0(.redm(ep), "the `destiny` package must be installed first.\n
-                  Run `BiocManager::install(\"destiny\") to use this function."))
-    
+	dependencies = data.frame("package" = c("destiny"),
+                              "repo" = c("BioC" ))
+	if(checkFunctionDependencies(dependencies)) stop("Missing required packages.")
+
     if(verbose) message(paste0(.bluem("[TRAJ/MOD-DPT] "),"Building MST on modularity graph"))
     
     modslot <- paste0("modularity_", clusters)

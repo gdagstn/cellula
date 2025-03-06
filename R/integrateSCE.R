@@ -220,9 +220,9 @@ integrateSCE <- function(sce,
 
   ep <- .redm("{cellula::integrateSCE() / method = \"Harmony\"} - ")
 
-if (!requireNamespace("harmony", quietly = TRUE)) 
-   stop(paste0(ep, "the `harmony` package must be installed first.\n
-                  Run `BiocManager::install(\"harmony\") to use this function."))
+  dependencies = data.frame("package" = c("harmony"),
+                              	  "repo" = c("BioC" ))
+    if(checkFunctionDependencies(dependencies)) stop(paste0(ep, "Missing required packages."))
   if(!dr %in% reducedDimNames(sce))
     stop(paste0(ep, "there is no reducedDim slot named ", dr, " in the object."))
 
@@ -251,9 +251,9 @@ if (!requireNamespace("harmony", quietly = TRUE))
 
   ep <- .redm("{cellula::integrateSCE() / method = \"Seurat\"} - ")
 
-  if (!requireNamespace("Seurat", quietly = TRUE))
-    stop(paste0(ep, "the `Seurat` package must be installed first.\n
-                Run `BiocManager::install(\"Seurat\") to use this function."))
+  dependencies = data.frame("package" = c("Seurat"),
+                              	  "repo" = c("CRAN" ))
+    if(checkFunctionDependencies(dependencies)) stop(paste0(ep, "Missing required packages."))
 
   if (verbose) message(.bluem("[INT/Seurat]"), " Converting to Seurat object.")
   old_colnames <- colnames(sce)
@@ -338,10 +338,9 @@ if (!requireNamespace("harmony", quietly = TRUE))
 
   ep <- .redm("{cellula::integrateSCE() / method = \"LIGER\"} - ")
 
-  if (!requireNamespace("rliger", quietly = TRUE))
-    stop(paste0(ep, "the `rliger` and `RcppPlanc` packages must be installed first.\n
-                Run `BiocManager::install(c(\"rliger\", \"welch-lab/RcppPlanc\")
-                to use this function."))
+  dependencies = data.frame("package" = c("rliger", "RcppPlanc"),
+                              	  "repo" = c("BioC", "github:welch-lab"))
+    if(checkFunctionDependencies(dependencies)) stop(paste0(ep, "Missing required packages."))
 
   old_colnames <- colnames(sce)
 
@@ -446,9 +445,9 @@ if (!requireNamespace("harmony", quietly = TRUE))
 
   ep <- .redm("{cellula::integrateSCE() / method = \"scMerge2\"} - ")
 
-  if (!requireNamespace("scMerge", quietly = TRUE))
-    stop(paste0(ep, "the `scMerge` package must be installed first.\n
-                Run `BiocManager::install(\"scMerge\") to use this function."))
+ dependencies = data.frame("package" = c("scMerge"),
+                           "repo" = c("BioC"))
+  if(checkFunctionDependencies(dependencies)) stop(paste0(ep, "Missing required packages."))
 
   if (verbose) message(.bluem("[INT/scMerge]"), " Correcting batch effect using scMerge2.")
 
@@ -487,9 +486,9 @@ if (!requireNamespace("harmony", quietly = TRUE))
 
   ep <- .redm("{cellula::integrateSCE() / method = \"STACAS\"} - ")
 
-  if (!requireNamespace("STACAS", quietly = TRUE))
-    stop(paste0(ep, "the `STACAS` package must be installed first.\n
-                Run `BiocManager::install(\"carmonalab/STACAS\") to use this function."))
+  dependencies = data.frame("package" = c("STACAS"),
+                            "repo" = c("github:carmonalab"))
+  if(checkFunctionDependencies(dependencies)) stop(paste0(ep, "Missing required packages."))
 
   if (verbose) message(.bluem("[INT/STACAS]"), " Converting to Seurat object.")
   old_colnames <- colnames(sce)
@@ -653,6 +652,7 @@ diagnoseIntegration <- function(sce,
 
 #' @importFrom SummarizedExperiment colData
 #' @importFrom SingleCellExperiment reducedDimNames
+#' @noRd
 
 .diagnoseInt_iLISI <- function(sce, batch, dr, ndims, verbose, ...) {
 	
@@ -660,9 +660,9 @@ diagnoseIntegration <- function(sce,
   # Error prefix
   ep <- .redm("{cellula::diagnoseIntegration() / method = \"iLISI\"} - ")
 
- if (!requireNamespace("lisi", quietly = TRUE)) 
-   		stop(paste0(ep, "the `lisi` package must be installed first.\n
-                  Run `BiocManager::install(\"immunogenomics/lisi\") to use this function."))
+	dependencies = data.frame("package" = c("lisi"),
+                              	  "repo" = c("github:immunogenomics"))
+    if(checkFunctionDependencies(dependencies)) stop(paste0(ep, "Missing required packages."))
 
 	lisil = lapply(dr, 
                 function(r) {
@@ -687,6 +687,7 @@ diagnoseIntegration <- function(sce,
 #' @importFrom SingleCellExperiment reducedDimNames
 #' @importFrom stats kmeans
 #' @importFrom utils combn
+#' @noRd
 
 .diagnoseInt_Gini <- function(sce, batch, dr, ndims, verbose, centers = 200) {
 
@@ -716,17 +717,20 @@ if(length(dr) > 1) {
 
 #' @importFrom SummarizedExperiment colData
 #' @importFrom SingleCellExperiment reducedDimNames
+#' @noRd
 
-.diagnoseInt_Jaccard <- function(sce, batch, dr, ndims, verbose, labels, neighbors = 30, k = c(0.1, 0.3, 0.5, 0.7, 0.9)) {
+.diagnoseInt_Jaccard <- function(sce, batch, dr, ndims, 
+								 verbose, labels, neighbors = 30, 
+								k = c(0.1, 0.3, 0.5, 0.7, 0.9)) {
 	
 	## Sanity checks
 	# Error prefix
 	ep <- .redm("{cellula::diagnoseIntegration() / method = \"Jaccard\"} - ")
 
 	if (!(labels %in% colnames(colData(sce))))
-		stop(ep, "labels must be a column of the colData")
-		if(length(k) < 1)
-		stop(ep, "specify at least 1 value of k")
+        stop(ep, "The 'labels' parameter must be a column in the colData of the SCE object.")
+    if (length(k) < 1)
+        stop(ep, "Please specify at least one value for 'k'.")
 
 	jacl = lapply(dr,
 		function(r) {
@@ -737,7 +741,7 @@ if(length(dr) > 1) {
 			jac = lapply(sce_overcl, function(x) {
 				pairs = as.data.frame(expand.grid(unique(x), unique(colData(sce)[,labels])))
 				pairs$intersect = apply(pairs, 1, function(y)
-				length(intersect(which(x == y[1]), which(colData(sce)[,labels] == y[2]))))
+					length(intersect(which(x == y[1]), which(colData(sce)[,labels] == y[2]))))
 				pairs$union = apply(pairs, 1, function(y) {
 					length(union(which(x == y[1]), which(colData(sce)[,labels] == y[2])))
 				})
@@ -768,13 +772,10 @@ if(length(dr) > 1) {
 	# Error prefix
 	ep <- .redm("{cellula::diagnoseIntegration() / method = \"HDB\"} - ")
 
-	if (!requireNamespace("HDB", quietly = TRUE)) 
-			stop(paste0(ep, "the `HDB` package must be installed first.\n
-					Run `BiocManager::install(\"gdagstn/HDB\") to use this function."))
-	
-	if (!requireNamespace("BiocNeighbors", quietly = TRUE)) 
-			stop(paste0(ep, "the `HDB` package must be installed first.\n
-					Run `BiocManager::install(\"BiocNeighbors\") to use this function."))
+	dependencies = data.frame("package" = c("HDB"),
+                              "repo" = c("github:gdagstn"))
+    if(checkFunctionDependencies(dependencies)) stop(paste0(ep, "Missing required packages."))
+
 	hdl = lapply(dr, function(r) {
 	    	if(verbose) message(paste0(.bluem("[INT/Diagnosis - HDB]"), " Calculating HDB for reduction ", r))
 
