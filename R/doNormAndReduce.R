@@ -83,10 +83,6 @@ doNormAndReduce <- function(sce, batch = NULL, name = NULL,
     clog$norm_reduce$norm_strategy = "logNormCounts"
   }
   
-  if (!is.null(name)) {
-    if (verbose) message("Saving temporary file.")
-    saveRDS(sce, file = paste0("./", name, "/", name, "_tempSCE.RDS"))
-  }  
   # HVGs
   if (verbose) message(.bluem("[DR] "), "Selecting HVGs.")
 
