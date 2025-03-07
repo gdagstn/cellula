@@ -12,7 +12,7 @@
 #'
 #' @importFrom igraph graph_from_adjacency_matrix E layout_with_lgl
 #' @importFrom ggplot2 scale_x_discrete geom_tile element_blank element_text
-#' @importFrom ggplot2 ggplot .data theme_classic
+#' @importFrom ggplot2 ggplot .data theme_minimal
 #' @importFrom S4Vectors metadata metadata<-
 #'
 #' @export
@@ -31,7 +31,7 @@ plotModularity <- function(sce, name, type = "heatmap") {
     p <- ggplot(m, aes(x = .data[["x"]], y = .data[["y"]])) + 
     	geom_tile(aes(fill = .data[["value"]], color = NA)) +
         scale_x_discrete(position = "top")
-    p <- p + theme_classic() +
+    p <- p + theme_minimal() +
       theme(plot.margin = margin(1, 1, 1, 1, "cm"),
         	panel.grid.major = element_blank(),
             panel.grid.minor = element_blank(),
@@ -63,7 +63,7 @@ plotModularity <- function(sce, name, type = "heatmap") {
 #'
 #' @return a beeswarm plot of silhouette widths
 #'
-#' @importFrom ggplot2 ggplot aes_string theme_classic
+#' @importFrom ggplot2 ggplot aes_string theme_minimal
 #' @importFrom ggbeeswarm geom_quasirandom
 #' @importFrom S4Vectors metadata metadata<-
 #'
@@ -76,7 +76,7 @@ plotSilhouette <- function(sce, name) {
   name <- paste0("silhouette_", name)
   ggplot(metadata(sce)[[name]], aes_string(x="cluster", y="width", colour="closest")) +
     geom_quasirandom(method="smiley") +
-    theme_classic()
+    theme_minimal()
 }
 
 #' Plot Dimensionality Reduction
@@ -127,7 +127,7 @@ plotSilhouette <- function(sce, name) {
 #' @return a ggplot object showing the dimensionality reduction coordinates colored, shaped and/or
 #'     faceted as set by the arguments.
 #' 
-#' @details This plotting function is heavily inspired by the \code{plotReducedDim()} 
+#' @details This plotting function is heavily inspired by the \code{\link[scater](plotReducedDim)} 
 #' function from the \code{{scater}} package.
 #' 
 #'
@@ -529,7 +529,7 @@ plot_dots <- function(sce,
                ) +
       geom_point(shape = 16, na.rm = TRUE) +
       cscale +
-      theme_classic() +
+      theme_minimal() +
       theme(axis.text.x = element_text(angle = 45, hjust = 1, face = "italic"),
             panel.border = element_blank(),
             panel.grid.major = element_blank(),
@@ -704,7 +704,7 @@ plot_Coldata <- function(sce,
 #'     to be overlaid. 
 #' 
 #'     Since the idea is to make different groupings and features comparable
-#'     the \code{geom_violin} geom is set with \code{scale = "width"}, which can show the
+#'     the \code{\link[ggplot2](geom_violin)} geom is set with \code{scale = "width"}, which can show the
 #'     distribution of the data but does not scale with the number of data points (cells).
 #'
 #' @importFrom SummarizedExperiment colData rowData assay
@@ -855,7 +855,7 @@ stacked_Violin <- function(sce, features, cluster, split_by = NULL, stack = TRUE
 #' @return a ggplot object showing a multi-panel plot of different features - one feature per panel -
 #'    where there is either a common scale or an individual scale per panel.
 #' 
-#' @details This function is inspired by Seurat's \code{FeaturePlot}. 
+#' @details This function is inspired by Seurat's \code{\link[Seurat](FeaturePlot)}. 
 #'     This function has two possible outcomes, controlled by the \code{common_scale} argument: 
 #'     1) \code{common_scale = TRUE} returns a faceted plot where there is a single scale for color.
 #'     This can be useful to compare gene expression across genes using color. 
@@ -1046,7 +1046,7 @@ multipanel_DR <- function(sce, dr = "UMAP", dims = c(1,2),
                         col = "black",
                         position = dodge,
                         show.legend = FALSE) +
-    theme_classic() +
+    theme_minimal() +
     theme(axis.text.x = element_text(angle = 45, hjust = 1, face = "italic"),
           plot.margin = margin(1, 1, 1, 1, "cm"),
           panel.grid.major = element_blank(),
@@ -1108,7 +1108,7 @@ multipanel_DR <- function(sce, dr = "UMAP", dims = c(1,2),
                     linewidth = 0.2) +
       scale_fill_gradientn(colours = .cpal_seq_heat2())
   }
-    p <- p + theme_classic() +
+    p <- p + theme_minimal() +
              theme(plot.margin = margin(1, 1, 1, 1, "cm"),
                panel.grid.major = element_blank(),
                panel.grid.minor = element_blank(),
@@ -1174,7 +1174,7 @@ multipanel_DR <- function(sce, dr = "UMAP", dims = c(1,2),
            geom_tile(aes(fill = .data[["Jaccard index"]])) +
            scale_x_discrete(position = "top")
 
-  p <- p + theme_classic() +
+  p <- p + theme_minimal() +
     theme(plot.margin = margin(1, 1, 1, 1, "cm"),
           panel.grid.major = element_blank(),
           panel.grid.minor = element_blank(),
@@ -1195,4 +1195,16 @@ multipanel_DR <- function(sce, dr = "UMAP", dims = c(1,2),
   p
 }
 
-#feature_Heatmap <- function() {}
+#' Plot UMAP
+#' 
+#' Alias for plot_DR for consistency with previous iterations
+#' 
+#' @param ... see \code{\link{plot_DR}}
+#' 
+#' @return see \code{\link{plot_DR}}
+#' 
+#' @export 
+#' 
+ plot_UMAP <- function(...){
+	plot_DR(...)
+ }

@@ -35,18 +35,20 @@ See Details for how it is formatted.}
 Default is NULL, meaning the design matrix will be created automatically
 with an intercept term set to 0, e.g. \code{~0 + condition}.}
 
-\item{verbose}{logical, display messages on progress? Default is \code{TRUE}.}
+\item{verbose}{logical, display messages on progress? 
+Default is \code{TRUE}.}
 
 \item{parallel_param}{a \code{BiocParallel} object specifying
 the parallelization backend}
 }
 \value{
 a data frame with the differential expression results
-    through the \code{pseudoBulkDGE()} function from \code{{scran}}.
+    through the \code{\ink[scran](pseudoBulkDGE)} function from \code{{scran}}.
 }
 \description{
 This function performs differential expression
-    analysis on a single-cell experiment aggregated into pseudobulk.
+    analysis on a single-cell experiment with different replicates, 
+	   aggregated into pseudobulk on a per-cluster basis.
 }
 \details{
 This function is a wrapper around the \code{pseudoBulkDGE()}
@@ -62,7 +64,7 @@ This function is a wrapper around the \code{pseudoBulkDGE()}
 
    The contrast to be tested can be specified as well. If not, the default
    is the second level of the condition minus the first level. The format
-   of the contrast is the one accepted by \code{pseudoBulkDGE()}, i.e.
+   of the contrast is the one accepted by \code{\link[scran](pseudoBulkDGE)}, i.e.
    \code{"conditionLevel1-conditionLevel2"} where condition is the name of
    the column containing the condition, and Level1 and Level2 are the two
    levels to compare.

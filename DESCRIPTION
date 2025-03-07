@@ -1,7 +1,7 @@
 Package: cellula
 Type: Package
 Title: Simple scRNAseq pipeline
-Version: 1.0.000
+Version: 1.1.000
 Author: Giuseppe D'Agostino
 Maintainer: Giuseppe D'Agostino <g.a.dagostino@gmail.com>
 Description: Wrapper around a simple integration pipeline for scRNAseq with some

@@ -1,7 +1,8 @@
 #' Pseudo-bulk differential expression analysis
 #' 
 #' @description This function performs differential expression
-#'     analysis on a single-cell experiment aggregated into pseudobulk.
+#'     analysis on a single-cell experiment with different replicates, 
+#' 	   aggregated into pseudobulk on a per-cluster basis.
 #' 
 #' @param sce a SingleCellExperiment object
 #' @param replicates character, column in \code{colData(sce)}
@@ -16,12 +17,13 @@
 #' @param design a design matrix for the differential expression analysis.
 #' 	   Default is NULL, meaning the design matrix will be created automatically
 #' 	   with an intercept term set to 0, e.g. \code{~0 + condition}.
-#' @param verbose logical, display messages on progress? Default is \code{TRUE}.
+#' @param verbose logical, display messages on progress? 
+#'     Default is \code{TRUE}.
 #' @param parallel_param a \code{BiocParallel} object specifying
 #'     the parallelization backend
 #' 
 #' @return a data frame with the differential expression results
-#'     through the \code{pseudoBulkDGE()} function from \code{{scran}}.
+#'     through the \code{\ink[scran](pseudoBulkDGE)} function from \code{{scran}}.
 #' 
 #' @details This function is a wrapper around the \code{pseudoBulkDGE()}
 #'    function from \code{{scran}}. It requires the user to specify the
@@ -36,7 +38,7 @@
 #' 
 #'    The contrast to be tested can be specified as well. If not, the default
 #'    is the second level of the condition minus the first level. The format
-#'    of the contrast is the one accepted by \code{pseudoBulkDGE()}, i.e.
+#'    of the contrast is the one accepted by \code{\link[scran](pseudoBulkDGE)}, i.e.
 #'    \code{"conditionLevel1-conditionLevel2"} where condition is the name of
 #'    the column containing the condition, and Level1 and Level2 are the two
 #'    levels to compare.
@@ -54,6 +56,7 @@
 #' @importFrom scran pseudoBulkDGE
 #' @importFrom scuttle computeLibraryFactors logNormCounts aggregateAcrossCells
 #' @importFrom BiocParallel SerialParam
+#' @importFrom stats formula
 #' 
 #' @export
 
@@ -145,7 +148,8 @@ doPBDGE <- function(sce,
 			if(verbose) message(.bluem("[DE] "),"Done.")
 
 			for(i in seq_along(dge)) dge[[i]]$label = names(dge)[i]
-			des = do.call(rbind, dge)
+
+			#des = do.call(rbind, dge)
 
 			des
 }

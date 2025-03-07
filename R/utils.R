@@ -86,7 +86,7 @@ checkFunctionDependencies <- function(depdf) {
 }
 
 #' Zero range
-#' 
+#'
 #' Lifted from the \code{scales} package
 #' @noRd
 
@@ -127,9 +127,9 @@ checkFunctionDependencies <- function(depdf) {
 #'
 #' @return A data frame containing ordered coordinates for polyline vertices.
 #'
-#' @details This is a refactoring of \code{smoothr::smooth_ksmooth()} to isolate 
+#' @details This is a refactoring of \code{\link[smoothr](smooth_ksmooth)} to isolate 
 #'    the necessary code and avoid heavy GDAL-based dependencies. The code has 
-#'    been simplified as well. Internal use only
+#'    been simplified as well. Internal use only.
 #'
 #'
 #' @author Matthew Strimas-Mackey, modified by Giuseppe D'Agostino
@@ -177,7 +177,6 @@ checkFunctionDependencies <- function(depdf) {
 #' 
 #' @noRd
 
-
 .addPoints <- function(poly, steps = 5) {
   colnames(poly) <- NULL
   polygon_coords <- as.matrix(poly[,c(1,2)])
@@ -196,4 +195,3 @@ checkFunctionDependencies <- function(depdf) {
   colnames(new_coords) <- c("x", "y")
   new_coords
 }
-

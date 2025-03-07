@@ -32,7 +32,7 @@ integrateSCE(
 and \code{"STACAS"}. Default is \code{"fastMNN"}.}
 
 \item{ndims}{numeric, the number of dimensions to use for integration. Default
-is 20. For LIGER, it is the value of the k parameter in \code{rliger::optimizeALS()}}
+is 20. For LIGER, it is the value of the k parameter in \code{\link[rliger](optimizeALS)}}
 
 \item{neighbor_n}{the number of neighbors used to compute UMAP. Default is
 NULL, which results in the rounded squared root of the number of cells.}
@@ -69,13 +69,13 @@ parameters that can be tuned will only apply to *one* function within any
 integration pipeline. In particular, the following functions are affected:
 
 \itemize{
- \item{method = "fastMNN":}{ \code{batchelor::fastMNN()}}
- \item{method = "Harmony":}{ \code{harmony::RunHarmony()}}
- \item{method = "Seurat":}{  \code{Seurat::FindIntegrationAnchors()}}
- \item{method = "LIGER":}{ \code{RcppPlanc::inmf}}
- \item{method = "regression":}{ \code{batchelor::regressBatches()}}
- \item{method = "scMerge2"}{ \code{scMerge::scMerge2()}}
- \item{method = "STACAS"}{ \code{STACAS::RunStacas()}}
+ \item{method = "fastMNN":}{ \code{\link[batchelor](fastMNN)}}
+ \item{method = "Harmony":}{ \code{\link[harmony](RunHarmony)}}
+ \item{method = "Seurat":}{  \code{\link[Seurat](FindIntegrationAnchors)}}
+ \item{method = "LIGER":}{ \code{\link[RcppPlanc](inmf)}}
+ \item{method = "regression":}{\code{\link[batchelor](regressBatches)}}
+ \item{method = "scMerge2"}{ \code{\link[scMerge](scMerge2)}}
+ \item{method = "STACAS"}{ \code{\link[STACAS](RunStacas)}}
 }
 
 Users who desire further control/customization should apply the functions

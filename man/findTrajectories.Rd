@@ -55,10 +55,10 @@ See \code{?monocle3::learn_graph}
 for more information. Only used when \code{method = "monocle"}.}
 
 \item{omega}{logical, should the \code{omega} method for MST calculation be used?
-Default is TRUE. See \code{?slingshot::getLineages} for more information.}
+Default is TRUE. See \code{\link[slingshot](getLineages)} for more information.}
 
 \item{omega_scale}{numeric, the value of the \code{omega_scale} parameter. 
-Default is 1.5. See \code{?slingshot::getLineages} for more information.}
+Default is 1.5. See \code{\link[slingshot](getLineages)} for more information.}
 
 \item{invert}{logical. Should the pseuodtime vector be inverted? Only valid
 for monocle3. Default is FALSE.}
@@ -138,18 +138,26 @@ neighbors in PCA to the "waypoints" calculated by the algorithm. This can
 result in slightly more convoluted trajectories when visualized in UMAP, which
 is attributable to the distortion.
 
-To overcome this, an alternative embedding 
-is available through \code{dr_embed = "FR"}. In this embedding the principal graph
+To overcome this, an alternative embedding is available through 
+\code{dr_embed = "FR"}. 
+
+In this embedding the principal graph
 of the trajectory is laid out using the Fruchterman-Reingold layout (hence
 the name) and cells are randomly placed around their closest vertex (as 
 calculated in PCA space) according to a 2D Gaussian distribution in which the
 standard deviation is proportional to the square root of the number of cells
-close to the vertex. Then, cell identities are ordered according to their
-pseudotime value. Finally, this 2D embedding is given as an input to UMAP to 
+close to the vertex. 
+
+Then, cell identities are ordered according to their
+pseudotime value. 
+
+Finally, this 2D embedding is given as an input to UMAP to 
 optimize non-overlapping distribution of points. This results in a more pleasing
 embedding in which cells are distributed along trajectories that were still
 derived in high-dimensional space. This implementation was inspired by the
-PAGA initialization for UMAP by Wolf and colleagues (2019).
+PAGA initialization for UMAP by Wolf and colleagues (2019). 
+
+It should be noted that this does not work for large graphs/large datasets.
 
 The final result is a \code{SingleCellExperiment} object with 
 some additional fields:
@@ -168,15 +176,16 @@ some additional fields:
 
 The \code{MODDPT} method uses a hybrid approach that takes inspiration from PAGA
 and \code{slingshot}. This approach uses the pairwise modularity graph for the
-SNN graph and the clusters. A minimum spanning tree is built on the modularity
-graph using the inverse of pairwise modularity as edge weight. Then, all
-shortest paths on the tree are calculated from the starting cluster. Diffusion
-maps are built independently on each path and diffusion pseudotimes are computed,
-and eventually reordered to be consistent with the path ordering. A simple
-path embedding is calculated in 2D by dividing the pseudotime values along
-a path in an equal number of intervals, and then taking the median coordinate
-for all cells in each pseudotime interval. Embedded curves are smoothed using
-Gaussian kernel smoothing.
+SNN graph and the clusters. 
+
+A minimum spanning tree is built on the modularity  graph using the inverse 
+of pairwise modularity as edge weight. Then, all shortest paths on the tree 
+are calculated from the starting cluster. Diffusion maps are built independently 
+on each path and diffusion pseudotimes are computed, and eventually reordered 
+to be consistent with the path ordering. A simple path embedding is calculated 
+in 2D by dividing the pseudotime values along a path in an equal number of 
+intervals, and then taking the median coordinate for all cells in each 
+pseudotime interval. Embedded curves are smoothed using Gaussian kernel smoothing.
 
 The final result is a \code{SingleCellExperiment} object with 
 some additional fields:

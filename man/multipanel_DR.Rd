@@ -53,7 +53,7 @@ Plots a multi-panel dimensionality reduction where points are colored
 by different features (one per panel)
 }
 \details{
-This function is inspired by Seurat's \code{FeaturePlot}. 
+This function is inspired by Seurat's \code{\link[Seurat](FeaturePlot)}. 
     This function has two possible outcomes, controlled by the \code{common_scale} argument: 
     1) \code{common_scale = TRUE} returns a faceted plot where there is a single scale for color.
     This can be useful to compare gene expression across genes using color. 

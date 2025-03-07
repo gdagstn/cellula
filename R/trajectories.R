@@ -25,9 +25,9 @@
 #'     See \code{?monocle3::learn_graph}
 #'     for more information. Only used when \code{method = "monocle"}.     
 #' @param omega logical, should the \code{omega} method for MST calculation be used?
-#'     Default is TRUE. See \code{?slingshot::getLineages} for more information.
+#'     Default is TRUE. See \code{\link[slingshot](getLineages)} for more information.
 #' @param omega_scale numeric, the value of the \code{omega_scale} parameter. 
-#'     Default is 1.5. See \code{?slingshot::getLineages} for more information.  
+#'     Default is 1.5. See \code{\link[slingshot](getLineages)} for more information.  
 #' @param invert logical. Should the pseuodtime vector be inverted? Only valid
 #'     for monocle3. Default is FALSE.            
 #' @param do_de logical. Should differential expression across trajectories be
@@ -100,18 +100,26 @@
 #' result in slightly more convoluted trajectories when visualized in UMAP, which
 #' is attributable to the distortion.
 #' 
-#' To overcome this, an alternative embedding 
-#' is available through \code{dr_embed = "FR"}. In this embedding the principal graph
+#' To overcome this, an alternative embedding is available through 
+#' \code{dr_embed = "FR"}. 
+#' 
+#' In this embedding the principal graph
 #' of the trajectory is laid out using the Fruchterman-Reingold layout (hence
 #' the name) and cells are randomly placed around their closest vertex (as 
 #' calculated in PCA space) according to a 2D Gaussian distribution in which the
 #' standard deviation is proportional to the square root of the number of cells
-#' close to the vertex. Then, cell identities are ordered according to their
-#' pseudotime value. Finally, this 2D embedding is given as an input to UMAP to 
+#' close to the vertex. 
+#' 
+#' Then, cell identities are ordered according to their
+#' pseudotime value. 
+#' 
+#' Finally, this 2D embedding is given as an input to UMAP to 
 #' optimize non-overlapping distribution of points. This results in a more pleasing
 #' embedding in which cells are distributed along trajectories that were still
 #' derived in high-dimensional space. This implementation was inspired by the
-#' PAGA initialization for UMAP by Wolf and colleagues (2019).
+#' PAGA initialization for UMAP by Wolf and colleagues (2019). 
+#' 
+#' It should be noted that this does not work for large graphs/large datasets.
 #' 
 #' The final result is a \code{SingleCellExperiment} object with 
 #' some additional fields:
@@ -130,15 +138,16 @@
 #' 
 #' The \code{MODDPT} method uses a hybrid approach that takes inspiration from PAGA
 #' and \code{slingshot}. This approach uses the pairwise modularity graph for the
-#' SNN graph and the clusters. A minimum spanning tree is built on the modularity
-#' graph using the inverse of pairwise modularity as edge weight. Then, all
-#' shortest paths on the tree are calculated from the starting cluster. Diffusion
-#' maps are built independently on each path and diffusion pseudotimes are computed,
-#' and eventually reordered to be consistent with the path ordering. A simple
-#' path embedding is calculated in 2D by dividing the pseudotime values along
-#' a path in an equal number of intervals, and then taking the median coordinate
-#' for all cells in each pseudotime interval. Embedded curves are smoothed using
-#' Gaussian kernel smoothing.
+#' SNN graph and the clusters. 
+#' 
+#' A minimum spanning tree is built on the modularity  graph using the inverse 
+#' of pairwise modularity as edge weight. Then, all shortest paths on the tree 
+#' are calculated from the starting cluster. Diffusion maps are built independently 
+#' on each path and diffusion pseudotimes are computed, and eventually reordered 
+#' to be consistent with the path ordering. A simple path embedding is calculated 
+#' in 2D by dividing the pseudotime values along a path in an equal number of 
+#' intervals, and then taking the median coordinate for all cells in each 
+#' pseudotime interval. Embedded curves are smoothed using Gaussian kernel smoothing.
 #' 
 #' The final result is a \code{SingleCellExperiment} object with 
 #' some additional fields:
@@ -161,11 +170,22 @@
 #' 
 #' @export
 
-findTrajectories <- function(sce, dr = "PCA", clusters, method = "slingshot",
-                             ndims = 20, dr_embed = NULL, start = "auto", 
-                             Monocle_lg_control = NULL, omega = TRUE,
-                             omega_scale = 1.5, invert = FALSE, do_de = FALSE, batch_de = NULL,
-                             add_metadata = TRUE, return_sds = FALSE, verbose = FALSE) {
+findTrajectories <- function(sce, 
+							 dr = "PCA", 
+							 clusters, 
+							 method = "slingshot",
+                             ndims = 20, 
+							 dr_embed = NULL, 
+							 start = "auto", 
+                             Monocle_lg_control = NULL, 
+							 omega = TRUE,
+                             omega_scale = 1.5, 
+							 invert = FALSE, 
+							 do_de = FALSE, 
+							 batch_de = NULL,
+                             add_metadata = TRUE, 
+							 return_sds = FALSE, 
+							 verbose = FALSE) {
     
     ## Sanity checks
     # Error prefix
@@ -252,7 +272,7 @@ findTrajectories <- function(sce, dr = "PCA", clusters, method = "slingshot",
 
 		dependencies = data.frame("package" = c("monocle3"),
                               	  "repo" = c("github:cole-trapnell-lab" ))
-        if(checkFunctionDependencies(dependencies)) stop("Missing required packages.")
+        if(checkFunctionDependencies(dependencies)) stop(paste0(ep, "Missing required packages."))
 
 	rd <- rowData(sce)
     if(!("Symbol" %in% colnames(rd))) rd$Symbol <- rownames(rd)
@@ -435,7 +455,7 @@ findTrajectories <- function(sce, dr = "PCA", clusters, method = "slingshot",
     
 	    dependencies = data.frame("package" = c("slingshot"),
                               	  "repo" = c("BioC" ))
-        if(checkFunctionDependencies(dependencies)) stop("Missing required packages.")
+        if(checkFunctionDependencies(dependencies)) stop(paste0(ep, "Missing required packages."))
 
     
     if(verbose) message(paste0(.bluem("[TRAJ/Slingshot] "),"Finding trajectories"))
@@ -511,7 +531,7 @@ findTrajectories <- function(sce, dr = "PCA", clusters, method = "slingshot",
     
 	dependencies = data.frame("package" = c("destiny"),
                               "repo" = c("BioC" ))
-	if(checkFunctionDependencies(dependencies)) stop("Missing required packages.")
+	if(checkFunctionDependencies(dependencies)) stop(paste0(ep, "Missing required packages."))
 
     if(verbose) message(paste0(.bluem("[TRAJ/MOD-DPT] "),"Building MST on modularity graph"))
     
@@ -520,7 +540,7 @@ findTrajectories <- function(sce, dr = "PCA", clusters, method = "slingshot",
     if(!modslot %in% names(metadata(sce)))
       stop(ep, "Modularity matrix not found! Pairwise modularity should have been 
            calculated in the clustering step and saved to the metadata. \n
-           You can run rebuildModularity() for an approximate modularity matrix
+           You can run `rebuildModularity()` for an approximate modularity matrix
            construction.")
     
     modmat <- metadata(sce)[[modslot]]

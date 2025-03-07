@@ -5,13 +5,13 @@
 #' @param sce a SingleCellExperiment object
 #' @param recenter_method character, one of  \code{"optim"} (default),  \code{"chull"}, or  \code{"none"}
 #' @param species character, one of  \code{"human"} (default) or  \code{"mouse"}.
-#'    See \code{?tricycle::project_cycle_space()} for more information.
+#'    See \code{\link[tricycle](project_cycle_space)} for more information.
 #' @param gname.type character, one of  \code{"SYMBOL"} (default) or \code{"ENSEMBL"}.
 #'    Will be used to look up the genes in the  \code{rownames(sce)}.
-#'    See \code{?tricycle::project_cycle_space()} for more information.
+#'    See \code{\link[tricycle](project_cycle_space)} for more information.
 #' @param gname character, alternative \code{rowData(sce)} column with gene identifiers.
 #'    Default is NULL. 
-#'    see \code{?tricycle::project_cycle_space()} for more information.    
+#'    see \code{\link[tricycle](project_cycle_space)} for more information.    
 #' @param exprs_values character, name of the assay in \code{sce} to be used for
 #'    projection. Default is \code{"logcounts"}.  
 #' 
@@ -41,9 +41,11 @@ assignCellCycle <- function(sce, recenter_method = "optim", species = "human",
                             exprs_values = "logcounts") {
   # Checks
   ep <- .redm("{cellula::assignCellCycle()} - ")
-  if (!requireNamespace("tricycle", quietly = TRUE))
-    stop(ep, "the `tricycle` package must be installed first.\n
-                Run `BiocManager::install(\"tricycle\") to use this function.")
+  
+   dependencies = data.frame("package" = c("tricycle"),
+                              	  "repo" = c("BioC" ))
+    if(checkFunctionDependencies(dependencies)) stop(paste0(ep, "Missing required packages."))
+	
   if (!is(sce, "SingleCellExperiment"))
     stop(ep, "Must provide a SingleCellExperiment object")
   if (!species %in% c("human", "mouse")){

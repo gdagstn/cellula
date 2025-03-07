@@ -77,7 +77,7 @@ downsampleCounts <- function(sce,
                         i = which(x > 0))
       xs
     })
-    dsc <- as(do.call(cbind, lapply(dsch, as.matrix, sparse = TRUE)), "dgCMatrix")
+    dsc <- as(do.call(cbind, lapply(dsch, as.matrix, sparse = TRUE)), "CSparseMatrix")
     dimnames(dsc) <- dimnames(mat[,n])
     dsc
   },
