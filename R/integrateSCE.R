@@ -10,7 +10,7 @@
 #'     \code{"Seurat"}, \code{"LIGER"}, \code{"regression"}, \code{"scMerge2"},
 #'     and \code{"STACAS"}. Default is \code{"fastMNN"}.
 #' @param ndims numeric, the number of dimensions to use for integration. Default
-#'     is 20. For LIGER, it is the value of the k parameter in \code{\link[rliger](optimizeALS)}}
+#'     is 20. For LIGER, it is the value of the k parameter in \code{\link[rliger]{optimizeALS}}
 #' @param neighbor_n the number of neighbors used to compute UMAP. Default is
 #'     NULL, which results in the rounded squared root of the number of cells.
 #' @param parallel_param a \code{BiocParallel} object specifying the parallelization backend
@@ -38,13 +38,13 @@
 #' integration pipeline. In particular, the following functions are affected:
 #'
 #'\itemize{
-#'  \item{method = "fastMNN":}{ \code{\link[batchelor](fastMNN)}}}
-#'  \item{method = "Harmony":}{ \code{\link[harmony](RunHarmony)}}}
-#'  \item{method = "Seurat":}{  \code{\link[Seurat](FindIntegrationAnchors)}}}
-#'  \item{method = "LIGER":}{ \code{\link[RcppPlanc](inmf)}}}
-#'  \item{method = "regression":}{\code{\link[batchelor](regressBatches)}}}
-#'  \item{method = "scMerge2"}{ \code{\link[scMerge](scMerge2)}}}
-#'  \item{method = "STACAS"}{ \code{\link[STACAS](RunStacas)}}}
+#'  \item{method = "fastMNN":}{ \code{\link[batchelor]{fastMNN}}}
+#'  \item{method = "Harmony":}{ \code{\link[harmony]{RunHarmony}}}
+#'  \item{method = "Seurat":}{  \code{\link[Seurat]{FindIntegrationAnchors}}}
+#'  \item{method = "LIGER":}{ \code{\link[RcppPlanc]{inmf}}}
+#'  \item{method = "regression":}{ \code{\link[batchelor]{regressBatches}}}
+#'  \item{method = "scMerge2":}{ \code{\link[scMerge]{scMerge2}}}
+#'  \item{method = "STACAS":}{ \code{\link[STACAS]{RunStacas}}}
 #'}
 #'
 #' Users who desire further control/customization should apply the functions
@@ -55,14 +55,14 @@
 #'
 #'\itemize{
 #'  \item{method = "fastMNN":}{ FastMNN correction from \code{batchelor}}
-#'  \item{method = "Harmony":}{Integration on PCA embeddings from \code{harmony}}
+#'  \item{method = "Harmony":}{ Integration on PCA embeddings from \code{harmony}}
 #'  \item{method = "Seurat":}{\code{Seurat} CCA with de novo normalization
 #'      and feature selection, anchor finding and integration}
-#'  \item{method = "LIGER":}{LIGER iNMF using the \code{RcppPlanc} implementation,
+#'  \item{method = "LIGER":}{ LIGER iNMF using the \code{RcppPlanc} implementation,
 #'      with de novo normalization and feature selection through \code{rliger}}
-#'  \item{method = "regression":}{Linear regression from \code{batchelor}}
-#'  \item{method = "scMerge2"}{scMerge2 pseudobulking and RUV from \code{scMerge}}
-#'  \item{method = "STACAS"}{\code{Seurat} pre-processing and \code{STACAS} integration}
+#'  \item{method = "regression":}{ Linear regression from \code{batchelor}}
+#'  \item{method = "scMerge2":}{ scMerge2 pseudobulking and RUV from \code{scMerge}}
+#'  \item{method = "STACAS":}{ \code{Seurat} pre-processing and \code{STACAS} integration}
 #'}
 #'
 #' @importFrom SummarizedExperiment colData
