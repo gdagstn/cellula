@@ -404,7 +404,14 @@ if(arrows) {
                           inherit.aes = FALSE
     )
   }
-  p
+  p + 
+  	theme_minimal() +
+	theme(panel.grid.major = element_blank(),
+		  panel.grid.minor = element_blank(),
+		  axis.line = element_blank(),
+		  text = element_text(family = "sans"),
+		  title = element_blank()
+	)	
 }
 
 #' Plot a gene expression dot plot
