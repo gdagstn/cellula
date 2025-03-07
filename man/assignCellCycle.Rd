@@ -19,15 +19,15 @@ assignCellCycle(
 \item{recenter_method}{character, one of  \code{"optim"} (default),  \code{"chull"}, or  \code{"none"}}
 
 \item{species}{character, one of  \code{"human"} (default) or  \code{"mouse"}.
-See \code{?tricycle::project_cycle_space()} for more information.}
+See \code{\link[tricycle](project_cycle_space)} for more information.}
 
 \item{gname.type}{character, one of  \code{"SYMBOL"} (default) or \code{"ENSEMBL"}.
 Will be used to look up the genes in the  \code{rownames(sce)}.
-See \code{?tricycle::project_cycle_space()} for more information.}
+See \code{\link[tricycle](project_cycle_space)} for more information.}
 
 \item{gname}{character, alternative \code{rowData(sce)} column with gene identifiers.
 Default is NULL. 
-see \code{?tricycle::project_cycle_space()} for more information.}
+see \code{\link[tricycle](project_cycle_space)} for more information.}
 
 \item{exprs_values}{character, name of the assay in \code{sce} to be used for
 projection. Default is \code{"logcounts"}.}

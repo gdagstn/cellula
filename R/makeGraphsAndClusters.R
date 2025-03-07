@@ -189,7 +189,7 @@ makeGraphsAndClusters <- function(sce,
 #'    Default is 0.5, must be between 0 and 1.
 #' @param do_plot logical, should the metacluster plot be printed? Default is \code{TRUE}.
 #' @param denominator character, one of \code{"min"}, \code{"max"}, \code{"union"}. 
-#'    Default is \code{"union".} See \code{\link[bluster](linkClusters)} for details.
+#'    Default is \code{"union".} See \code{\link{[bluster](linkClusters)}} for details.
 #'
 #' @return a SingleCellExperiment object with three additional columns:
 #'    - metacluster_max indicating the most frequent metacluster assignment
@@ -269,11 +269,11 @@ metaCluster <- function(sce,
 #'     user-defined column name.
 #'
 #' @details This function can be used to approximate a pairwise modularity matrix
-#'     in case labels are not generated through the \code{\link(makeGraphsAndClusters)}
+#'     in case labels are not generated through the \code{\link{(makeGraphsAndClusters)}}
 #'     function. It is considered to be _approximate_ because it requires the 
 #'     user to define some parameters (neighbors, dimensions, weighting scheme)
 #'     to rebuild a Shared Nearest Neighbor graph. If the user has defined labels
-#'     without clustering (e.g. by running \code{\link(assignIdentities)}) there is no
+#'     without clustering (e.g. by running \code{\link{(assignIdentities)}}) there is no
 #'     guarantee that these parameters are the ones that result in a clustering
 #'     that easily translate to the same labels. This is a convenience function.
 #'     The output can be used by the \code{"MODDPT"} method in the trajectory

@@ -127,7 +127,7 @@ checkFunctionDependencies <- function(depdf) {
 #'
 #' @return A data frame containing ordered coordinates for polyline vertices.
 #'
-#' @details This is a refactoring of \code{\link[smoothr](smooth_ksmooth)} to isolate 
+#' @details This is a refactoring of \code{\link{[smoothr](smooth_ksmooth)}} to isolate 
 #'    the necessary code and avoid heavy GDAL-based dependencies. The code has 
 #'    been simplified as well. Internal use only.
 #'

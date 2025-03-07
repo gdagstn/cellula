@@ -43,7 +43,7 @@ the parallelization backend}
 }
 \value{
 a data frame with the differential expression results
-    through the \code{\ink[scran](pseudoBulkDGE)} function from \code{{scran}}.
+    through the \code{\link{[scran](pseudoBulkDGE)}} function from \code{{scran}}.
 }
 \description{
 This function performs differential expression
@@ -64,7 +64,7 @@ This function is a wrapper around the \code{pseudoBulkDGE()}
 
    The contrast to be tested can be specified as well. If not, the default
    is the second level of the condition minus the first level. The format
-   of the contrast is the one accepted by \code{\link[scran](pseudoBulkDGE)}, i.e.
+   of the contrast is the one accepted by \code{\link{[scran](pseudoBulkDGE)}}, i.e.
    \code{"conditionLevel1-conditionLevel2"} where condition is the name of
    the column containing the condition, and Level1 and Level2 are the two
    levels to compare.

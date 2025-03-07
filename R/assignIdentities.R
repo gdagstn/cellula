@@ -22,9 +22,9 @@
 #'     \code{"Gaussian"}. Only used when \code{method = "ssGSEA"}.
 #' @param BPPARAM a \code{BiocParallel} BPPARAM specifying the parallelization. 
 #'     Only used when \code{method = "AUC"}. Default is \code{SerialParam()}      
-#' @param ... other arguments passed internally to \code{\link[AUCell](AUCell_calcAUC)}
-#'     ("AUC" method), \code{\link[Seurat](AddModuleScore)} ("Seurat" method),
-#'     \code{\link[GSVA](gsva)}("ssGSEA" method), or \code{\link[UCell](ScoreSignatures_UCell)}
+#' @param ... other arguments passed internally to \code{\link{[AUCell](AUCell_calcAUC)}}
+#'     ("AUC" method), \code{\link{[Seurat](AddModuleScore)}} ("Seurat" method),
+#'     \code{\link{[GSVA](gsva)}}("ssGSEA" method), or \code{\link{[UCell](ScoreSignatures_UCell)}}
 #'     ("UCell" method).
 #'
 #' @return  a \code{SingleCellExperiment} object with a column named \code{"name"} containing
@@ -66,7 +66,7 @@
 #'    The resulting scores, optionally saved in the \code{metadata}, are the posterior
 #'    probabilities. 
 #'    
-#'    It is possible to use \code{\link(buildReference)} to create a reference matrix
+#'    It is possible to use \code{\link{(buildReference)}} to create a reference matrix
 #'    out of a \code{SingleCellExperiment} object to be used as an input.
 #'
 #'    Please note that scores are not comparable between themselves - AUC,
