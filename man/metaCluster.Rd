@@ -24,7 +24,7 @@ Default is 0.5, must be between 0 and 1.}
 \item{do_plot}{logical, should the metacluster plot be printed? Default is \code{TRUE}.}
 
 \item{denominator}{character, one of \code{"min"}, \code{"max"}, \code{"union"}. 
-Default is \code{"union".} See \code{\link{[bluster](linkClusters)}} for details.}
+Default is \code{"union".} See \code{\link[bluster]{linkClusters}} for details.}
 }
 \value{
 a SingleCellExperiment object with three additional columns:

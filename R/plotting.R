@@ -127,7 +127,7 @@ plotSilhouette <- function(sce, name) {
 #' @return a ggplot object showing the dimensionality reduction coordinates colored, shaped and/or
 #'     faceted as set by the arguments.
 #' 
-#' @details This plotting function is heavily inspired by the \code{\link{[scater](plotReducedDim)}} 
+#' @details This plotting function is heavily inspired by the \code{\link[scater]{plotReducedDim}} 
 #' function from the \code{{scater}} package.
 #' 
 #'
@@ -711,7 +711,7 @@ plot_Coldata <- function(sce,
 #'     to be overlaid. 
 #' 
 #'     Since the idea is to make different groupings and features comparable
-#'     the \code{\link{[ggplot2](geom_violin)}} geom is set with \code{scale = "width"}, which can show the
+#'     the \code{\link[ggplot2]{geom_violin}} geom is set with \code{scale = "width"}, which can show the
 #'     distribution of the data but does not scale with the number of data points (cells).
 #'
 #' @importFrom SummarizedExperiment colData rowData assay
@@ -862,7 +862,7 @@ stacked_Violin <- function(sce, features, cluster, split_by = NULL, stack = TRUE
 #' @return a ggplot object showing a multi-panel plot of different features - one feature per panel -
 #'    where there is either a common scale or an individual scale per panel.
 #' 
-#' @details This function is inspired by Seurat's \code{\link{[Seurat](FeaturePlot)}}. 
+#' @details This function is inspired by Seurat's \code{\link[Seurat]{FeaturePlot}}. 
 #'     This function has two possible outcomes, controlled by the \code{common_scale} argument: 
 #'     1) \code{common_scale = TRUE} returns a faceted plot where there is a single scale for color.
 #'     This can be useful to compare gene expression across genes using color. 

@@ -71,6 +71,6 @@ This function has two possible outcomes, controlled by the \code{stack} argument
     to be overlaid. 
 
     Since the idea is to make different groupings and features comparable
-    the \code{\link{[ggplot2](geom_violin)}} geom is set with \code{scale = "width"}, which can show the
+    the \code{\link[ggplot2]{geom_violin}} geom is set with \code{scale = "width"}, which can show the
     distribution of the data but does not scale with the number of data points (cells).
 }

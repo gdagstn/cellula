@@ -41,11 +41,11 @@ Rebuilds a pairwise modularity matrix using user-defined labels
 }
 \details{
 This function can be used to approximate a pairwise modularity matrix
-    in case labels are not generated through the \code{\link{(makeGraphsAndClusters)}}
+    in case labels are not generated through the \code{\link{makeGraphsAndClusters}}
     function. It is considered to be _approximate_ because it requires the 
     user to define some parameters (neighbors, dimensions, weighting scheme)
     to rebuild a Shared Nearest Neighbor graph. If the user has defined labels
-    without clustering (e.g. by running \code{\link{(assignIdentities)}}) there is no
+    without clustering (e.g. by running \code{\link{assignIdentities}}) there is no
     guarantee that these parameters are the ones that result in a clustering
     that easily translate to the same labels. This is a convenience function.
     The output can be used by the \code{"MODDPT"} method in the trajectory

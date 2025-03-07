@@ -88,6 +88,6 @@ Plots dimensionality reduction coordinates from a SingleCellExperiment object,
 coloured and grouped according to colData fields
 }
 \details{
-This plotting function is heavily inspired by the \code{\link{[scater](plotReducedDim)}} 
+This plotting function is heavily inspired by the \code{\link[scater]{plotReducedDim}} 
 function from the \code{{scater}} package.
 }

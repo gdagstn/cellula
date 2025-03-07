@@ -9,7 +9,7 @@ diagnoseIntegration(sce, batch, dr, ndims = 20, method = "iLISI", verbose, ...)
 \arguments{
 \item{sce}{a \code{SingleCellExperiment} object}
 
-\item{batch}{character, the name(s) of the column(s) in \code{colData(sce)} with batch labels.
+\item{batch}{character, the name(s) of the column(s) in \code{colData(sce} with batch labels.
 It can be more than one column.}
 
 \item{dr}{character, the name(s) of the dimensional reduction slot(s) to be tested for integration. 
@@ -44,7 +44,7 @@ The methods vary as follows:
  \item{"iLISI:"}{ integration Local Inverse Simpson's Index from \code{lisi}. 
     Provides a per-cell value of "good mixing" within a neighbourhood across one or more
     batch variables. It is a numeric index bound between 1 (bad mixing) and the total number
-	   of batches for each variable (perfect mixing)}
+	   of batches for each variable (perfect mixing}
 
  \item{"Gini:"}{ Gini index for inequality. Provides a coarser value of "good mixing"
     by over-clustering the space using k-means clustering and calculating the Gini index for
@@ -53,7 +53,7 @@ The methods vary as follows:
 
  \item{"Jaccard:"}{ Mean-maximum Jaccard index to compare unbiased clustering and 
     ground truth labels. Provides a coarse value of agreement between various clustering resolutions
-	   of a space and a previously known cell type annotation, such as one assigned by \code{assignIdentities()}.
+	   of a space and a previously known cell type annotation, such as one assigned by \code{assignIdentities(}.
     
     The value is calculated by clustering the data at various sensible resolutions and comparing the
     clustering results with ground truth labels, taking the maximum Jaccard index as a measure of 
@@ -69,19 +69,19 @@ The methods vary as follows:
  \item{"HDB:"}{ Hausdorff Distance of Batches. Provides an asymmetric and statistically
     tested pairwise measure of overlap between batches in any space. 
 
-   See the \code{{HDB}} package for more information and arguments to the \code{HDB()} function.}
+   See the \code{{HDB}} package for more information and arguments to the \code{HDB(} function.}
 }
 
  The argument placeholder \code{...} can be used to supply different extra arguments depending on 
  the method:
 \itemize{
    \item{"iLISI:"}{ Supply arguments to the
-    \code{compute_lisi()} function from the \code{{lisi}} package, e.g. \code{perplexity} or
+    \code{compute_lisi(} function from the \code{{lisi}} package, e.g. \code{perplexity} or
     \code{nn_eps}.}
    \item{"Gini":}{ Supply the number of k-means clusters using the \code{centers} argument.}
    \item{"Jaccard:"}{ Supply the colData column with ground truth labels (\code{labels}), the
     numeric vector of clustering resolutions (\code{k}, default = 0.1, 0.3, 0.5, 0.7, 0.9), 
-    and the number of neighbors for SNN graph construction (\code{neighbors}, default = 30)}
+    and the number of neighbors for SNN graph construction (\code{neighbors}, default = 30}
    \item{"HDB:"}{ Supply arguments to the \code{HDB} function from the \code{{HDB}} package.}
 }
 }

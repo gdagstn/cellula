@@ -49,9 +49,9 @@ be saved in the object metadata slot? Default is \code{FALSE}.}
 \item{BPPARAM}{a \code{BiocParallel} BPPARAM specifying the parallelization. 
 Only used when \code{method = "AUC"}. Default is \code{SerialParam()}}
 
-\item{...}{other arguments passed internally to \code{\link{[AUCell](AUCell_calcAUC)}}
-("AUC" method), \code{\link{[Seurat](AddModuleScore)}} ("Seurat" method),
-\code{\link{[GSVA](gsva)}}("ssGSEA" method), or \code{\link{[UCell](ScoreSignatures_UCell)}}
+\item{...}{other arguments passed internally to \code{\link[AUCell]{AUCell_calcAUC}}
+("AUC" method), \code{\link[Seurat]{AddModuleScore}} ("Seurat" method),
+\code{\link[GSVA]{gsva}}("ssGSEA" method), or \code{\link[UCell]{ScoreSignatures_UCell}}
 ("UCell" method).}
 }
 \value{
@@ -98,7 +98,7 @@ This is a wrapper around four methods for assigning to each cell a
    The resulting scores, optionally saved in the \code{metadata}, are the posterior
    probabilities. 
    
-   It is possible to use \code{\link{(buildReference)}} to create a reference matrix
+   It is possible to use \code{\link{buildReference}} to create a reference matrix
    out of a \code{SingleCellExperiment} object to be used as an input.
 
    Please note that scores are not comparable between themselves - AUC,

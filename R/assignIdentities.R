@@ -22,9 +22,9 @@
 #'     \code{"Gaussian"}. Only used when \code{method = "ssGSEA"}.
 #' @param BPPARAM a \code{BiocParallel} BPPARAM specifying the parallelization. 
 #'     Only used when \code{method = "AUC"}. Default is \code{SerialParam()}      
-#' @param ... other arguments passed internally to \code{\link{[AUCell](AUCell_calcAUC)}}
-#'     ("AUC" method), \code{\link{[Seurat](AddModuleScore)}} ("Seurat" method),
-#'     \code{\link{[GSVA](gsva)}}("ssGSEA" method), or \code{\link{[UCell](ScoreSignatures_UCell)}}
+#' @param ... other arguments passed internally to \code{\link[AUCell]{AUCell_calcAUC}}
+#'     ("AUC" method), \code{\link[Seurat]{AddModuleScore}} ("Seurat" method),
+#'     \code{\link[GSVA]{gsva}}("ssGSEA" method), or \code{\link[UCell]{ScoreSignatures_UCell}}
 #'     ("UCell" method).
 #'
 #' @return  a \code{SingleCellExperiment} object with a column named \code{"name"} containing
@@ -66,7 +66,7 @@
 #'    The resulting scores, optionally saved in the \code{metadata}, are the posterior
 #'    probabilities. 
 #'    
-#'    It is possible to use \code{\link{(buildReference)}} to create a reference matrix
+#'    It is possible to use \code{\link{buildReference}} to create a reference matrix
 #'    out of a \code{SingleCellExperiment} object to be used as an input.
 #'
 #'    Please note that scores are not comparable between themselves - AUC,
@@ -386,11 +386,11 @@ assignIdentities <- function(sce,
 #' 
 #' Summarizes an assay from a SingleCellExperiment object based on a character column
 #' 
-#' @param sce a SingleCellExperiment object containing the reference data
-#' @param agg_by character, the name of the \code{colData(sce)} column that the 
+#' @param sce a \link[SingleCellExperiment]{SingleCellExperiment} object containing the reference data
+#' @param agg_by character, the name of the \code{\link[SummarizedExperiment]{colData}} column that the 
 #'     aggregation should be done by, e.g. a column with labels or clustering
 #'     results
-#' @param agg_assay character, the name of the \code{assay(sce)} slot whose values
+#' @param agg_assay character, the name of the \code{\link[SummarizedExperiment]{assay}} slot whose values
 #'     will be aggregated. Default is "logcounts"
 #' @param agg_fun character, the aggregation function, one of "sum" or "mean". 
 #'     Default is "sum".
@@ -399,6 +399,7 @@ assignIdentities <- function(sce,
 #'     
 #' @importFrom SummarizedExperiment colData assay
 #' @importFrom Matrix rowMeans rowSums
+#' 
 #' @export
 
 buildReference <- function(sce, agg_by, agg_assay = "logcounts", agg_fun = "sum"){

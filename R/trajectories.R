@@ -25,9 +25,9 @@
 #'     See \code{?monocle3::learn_graph}
 #'     for more information. Only used when \code{method = "monocle"}.     
 #' @param omega logical, should the \code{omega} method for MST calculation be used?
-#'     Default is TRUE. See \code{\link{[slingshot](getLineages)}} for more information.
+#'     Default is TRUE. See \code{\link[slingshot]{getLineages}} for more information.
 #' @param omega_scale numeric, the value of the \code{omega_scale} parameter. 
-#'     Default is 1.5. See \code{\link{[slingshot](getLineages)}} for more information.  
+#'     Default is 1.5. See \code{\link[slingshot]{getLineages}} for more information.  
 #' @param invert logical. Should the pseuodtime vector be inverted? Only valid
 #'     for monocle3. Default is FALSE.            
 #' @param do_de logical. Should differential expression across trajectories be

@@ -7,13 +7,13 @@
 buildReference(sce, agg_by, agg_assay = "logcounts", agg_fun = "sum")
 }
 \arguments{
-\item{sce}{a SingleCellExperiment object containing the reference data}
+\item{sce}{a \link[SingleCellExperiment]{SingleCellExperiment} object containing the reference data}
 
-\item{agg_by}{character, the name of the \code{colData(sce)} column that the 
+\item{agg_by}{character, the name of the \code{\link[SummarizedExperiment]{colData}} column that the 
 aggregation should be done by, e.g. a column with labels or clustering
 results}
 
-\item{agg_assay}{character, the name of the \code{assay(sce)} slot whose values
+\item{agg_assay}{character, the name of the \code{\link[SummarizedExperiment]{assay}} slot whose values
 will be aggregated. Default is "logcounts"}
 
 \item{agg_fun}{character, the aggregation function, one of "sum" or "mean". 
