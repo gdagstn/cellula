@@ -180,7 +180,10 @@ doPBDGE <- function(sce,
 #' 
 #' @export
 
-plotDGEStripchart <- function(dge, alpha = 0.05, lfc = 1, title = NULL) {
+plotDGEStripchart <- function(dge, 
+							  alpha = 0.05, 
+							  lfc = 1, 
+							  title = NULL) {
 
 		conds = attr(dge, "conditions")
 
@@ -391,8 +394,80 @@ plotDEHeatmap <- function(sce,
 	ComplexHeatmap::draw(H, annotation_legend_list = list(lgd))
 }
 
+#' Per-label PCA plot
+#' 
+#' Plot a PCA plot of the aggregated data per label using
+#' the first 2 components and top 1000 HVGs
+#' 
+#' @param sce a SingleCellExperiment object
+#' @param replicates character, column in \code{colData(sce)}
+#'     that contains the replicate information
+#' @param labels character, column in \code{colData(sce)}
+#'     that contains the label information
+#' @param condition character, column in \code{colData(sce)}
+#'     that contains the condition information
+#' 
+#' @return a PC1 vs PC2 faceted plot for pseudobulk profiles 
+#'     where each panel corresponds to a label
+#' 
+#' @importFrom scuttle aggregateAcrossCells computeLibraryFactors logNormCounts 
+#' @importFrom scran modelGeneVar getTopHVGs
+#' @importFrom ggplot2 ggplot aes geom_point facet_wrap theme_bw
+#' @importFrom stats prcomp
+#' 
+#' @export 
 
-plotLabelMD <- function(dge, ntop = 5, alpha = 0.05, lfc = 1) {
+plotLabelPCA <- function(sce, 
+						replicates,
+						labels,
+						condition){
+
+			conditions_vector = colData(sce)[,condition]
+			replicates_vector = colData(sce)[,replicates]
+			labels_vector = colData(sce)[,labels]
+
+			agg = aggregateAcrossCells(sce,
+									ids = paste0(conditions_vector, "__",
+												 replicates_vector, "__",
+												 labels_vector),
+									statistics = "sum", 
+									use.assay.type = "counts")
+
+			agg = computeLibraryFactors(agg)
+			agg = logNormCounts(agg)
+
+			agg$label = colData(agg)[,labels]
+			agg$condition = colData(agg)[,condition]
+			agg$replicate = colData(agg)[,replicates]
+			
+			vargenes = modelGeneVar(agg, block = agg$label)
+
+			hvglist = lapply(vargenes$per.block, getTopHVGs, n = 1000)
+			names(hvglist) = names(vargenes$per.block)
+
+			pcalist = lapply(names(hvglist), function(x) {
+				prcomp(t(assay(agg, "logcounts")[hvglist[[x]], agg$label == x]), scale = TRUE)
+			})
+
+			pcalist = lapply(pcalist, function(x) as.data.frame(x$x[,1:2]))
+			names(pcalist) = names(hvglist)
+			for(i in seq_along(pcalist)) {
+				pcalist[[i]]$label = names(pcalist)[i]
+				pcalist[[i]]$condition = agg$condition[agg$label == names(pcalist)[i]]
+				pcalist[[i]]$replicate = agg$replicate[agg$label == names(pcalist)[i]]
+			}
+			pcadf = do.call(rbind, pcalist)
+
+	 ggplot(pcadf, aes(x = .data[["PC1"]], y = .data[["PC2"]])) +
+			geom_point(aes(color = .data[["condition"]])) +
+			facet_wrap("label")+
+			theme_bw()
+}
+
+plotLabelMD <- function(dge, 
+						ntop = 5, 
+						alpha = 0.05, 
+						lfc = 1) {
 
 	for(i in seq_along(dge)) {
 		dge[[i]] = dge[[i]][!is.na(dge[[i]]$logFC),]
@@ -413,8 +488,8 @@ plotLabelMD <- function(dge, ntop = 5, alpha = 0.05, lfc = 1) {
 	
 	 ggplot(des, aes(x = .data[["logCPM"]], y = .data[["logFC"]])) +
 			geom_point(aes(color = -log10(.data[["FDR"]]))) +
-			geom_hline(yintercept = 0, linetype = 2) +
-			geom_vline(xintercept = 0, linetype = 2) +
+			geom_hline(yintercept = 0, linetype = 2, linewidth = 0.2) +
+			geom_vline(xintercept = 0, linetype = 2, linewidth = 0.2) +
 			geom_text_repel(data = top_genes, 
 							aes(label = .data[["gene"]]), 
 							box.padding = 0.5,

@@ -8,6 +8,9 @@ You can read all about it on the companion [website](https://gdagstn.github.io/c
 
 ## Changelog
 
+-   8/3/2025:\
+	Added pseudobulk DE functions for analysis and plotting 
+	
 -   4/3/2025:\
     Added integration diagnostics
 
