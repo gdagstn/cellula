@@ -323,7 +323,6 @@ plotDEHeatmap <- function(sce,
   agg$replicates =  as.character(colData(agg)[,attr(dge, "inputs")[1]])
 
   names(delist) = names(dge)
-  dedf = do.call(rbind, delist)
   
   dat = assay(agg, exprs)[selected_ok,]
   dat = dat[,order(agg$label, agg$condition)]
@@ -412,7 +411,7 @@ plotDEHeatmap <- function(sce,
 #' 
 #' @importFrom scuttle aggregateAcrossCells computeLibraryFactors logNormCounts 
 #' @importFrom scran modelGeneVar getTopHVGs
-#' @importFrom ggplot2 ggplot aes geom_point facet_wrap theme_bw
+#' @importFrom ggplot2 ggplot aes geom_point facet_wrap theme_bw geom_hline geom_vline
 #' @importFrom stats prcomp
 #' 
 #' @export 
@@ -464,6 +463,24 @@ plotLabelPCA <- function(sce,
 			theme_bw()
 }
 
+#' Per-label Mean-Difference plot
+#' 
+#' Plot a Mean-Difference plot of the DE results per label
+#' 
+#' @param dge a data frame with the differential expression results
+#'    from the \code{doPBDGE} function
+#' @param ntop numeric, the number of top genes to show in the plot
+#' @param alpha numeric, the FDR threshold to use for filtering
+#' @param lfc numeric, the log-fold change threshold to use for filtering
+#' 
+#' @return a faceted plot where each panel shows the mean (log(CPM)) vs logFC 
+#'    for all genes in a label that do not have NA DE test results.
+#' 
+#' @importFrom ggplot2 ggplot aes geom_point facet_wrap theme_bw geom_hline geom_vline
+#' @importFrom ggrepel geom_text_repel
+#' 
+#' @export 
+
 plotLabelMD <- function(dge, 
 						ntop = 5, 
 						alpha = 0.05, 
@@ -485,7 +502,6 @@ plotLabelMD <- function(dge,
 	des = do.call(rbind, dge)
 	des = des[order(des$FDR, decreasing = TRUE),]
 
-	
 	 ggplot(des, aes(x = .data[["logCPM"]], y = .data[["logFC"]])) +
 			geom_point(aes(color = -log10(.data[["FDR"]]))) +
 			geom_hline(yintercept = 0, linetype = 2, linewidth = 0.2) +
@@ -500,26 +516,55 @@ plotLabelMD <- function(dge,
 			theme_bw()
 }
 
+#' Per-label GSEA
+#'
+#' Perform GSEA on a list of per-label DE results
+#' 
+#' @param dge a list of data frames with the differential expression results
+#'    from the \code{doPBDGE} function.
+#' @param pathways a named list of genesets/pathways to use in the GSEA
+#' @param alpha numeric, the FDR threshold to use for filtering
+#' 
+#' @return a named list with GSEA results (\code{gsea}), and a matrix (\code{nesmat}) 
+#' 	   where each column represents a label DE for which GSEA was performed, and each 
+#'     row a geneset/pathway that is significant in at least one of the labels.
+#' 
+#' @importFrom fgsea fgsea
+#' 
+#' @export
 
-# GSEA
+doLabelGSEA <- function(dge, 
+					    pathways, 
+					    alpha = 0.05) {
 
-GSEAmatrix <- function(dge, pathways, alpha = 0.05) {
+	### Sanity checks
+		# error prefix
+		ep <- .redm("{cellula::GSEAMatrix()} - ")
+  
+	dependencies = data.frame("package" = c("fgsea"),
+                              "repo" = c("BioC"))
+    if(checkFunctionDependencies(dependencies)) stop(paste0(ep, "Missing required packages."))
 
-  gsea_list = list()
-  des = split(dge, dge$label)
-  for(i in seq_along(des)) {
-    des[[i]] = des[[i]][!is.na(des[[i]]$logFC),]
-    stats = des[[i]]$logFC
-    names(stats) = rownames(des[[i]])
-    message("GSEA for ", names(des)[i], " using ", length(stats), " genes...\n")
-    gsea_list[[i]] = fgsea::fgsea(pathways = pathways, stats = stats, )
-  }
-  names(gsea_list) = names(des)
-  nesmat_ok = makeNESmatrix(gsea_list, alpha = alpha)
-  list("gsea" = gsea_list, "nesmat" = nesmat_ok)
+	if(is.null(names(pathways))) stop(paste0(ep, "pathways must be a named list"))
+	if(!is(dge, "list")) stop(paste0(ep, "dge must be a list"))
+
+	gsea_list = lapply(dge, function(x) {
+		x = x[!is.na(x$logFC),]
+		stats = x$logFC
+		names(stats) = rownames(x)
+		message("GSEA for ", unique(x$label), " using ", length(stats), " genes...\n")
+		fgsea::fgsea(pathways = pathways, stats = stats)
+	})
+	
+	names(gsea_list) = names(dge)
+	nesmat_ok = .makeNESmatrix(gsea_list, alpha = alpha)
+	
+	list("gsea" = gsea_list, 
+		"nesmat" = nesmat_ok)
 }
 
-makeNESmatrix <- function(gsea_list, alpha = 0.05) {
+#' @noRd 
+.makeNESmatrix <- function(gsea_list, alpha = 0.05) {
   
   sig_path_union = Reduce(union, lapply(gsea_list, function(x) 
     x$pathway[which(x$padj < alpha)]))
@@ -538,3 +583,4 @@ makeNESmatrix <- function(gsea_list, alpha = 0.05) {
   
   nesmat[,apply(nesmat, 2, function(x) !all(is.na(x)))]
 }
+
