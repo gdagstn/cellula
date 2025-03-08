@@ -409,8 +409,9 @@ if(arrows) {
 	theme(panel.grid.major = element_blank(),
 		  panel.grid.minor = element_blank(),
 		  axis.line = element_blank(),
-		  text = element_text(family = "sans"),
-		  title = element_blank()
+		  axis.title = element_blank(),
+		  axis.ticks = element_blank(),
+		  axis.text = element_blank()
 	)	
 }
 

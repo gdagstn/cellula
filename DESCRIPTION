@@ -40,6 +40,8 @@ Imports:
 Suggests: 
     AUCell,
     destiny,
+	circlize,
+	ComplexHeatmap,
     DropletUtils,
     harmony,
 	HDB,

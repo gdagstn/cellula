@@ -9,6 +9,7 @@ doPBDGE(
   replicates,
   labels,
   condition,
+  subset_conditions = FALSE,
   contrast = NULL,
   design = NULL,
   verbose = TRUE,
@@ -26,6 +27,10 @@ that contains the label information}
 
 \item{condition}{character, column in \code{colData(sce)}
 that contains the condition information}
+
+\item{subset_conditions}{logical, should the object be subset to contain 
+only the conditions specified in the contrast? 
+ Default is \code{FALSE}.}
 
 \item{contrast}{character, the contrast to be tested.
 Default is the second level of the condition minus the first level.
@@ -62,6 +67,14 @@ This function is a wrapper around the \code{pseudoBulkDGE()}
    assuming \code{condition} is the categorical variable to use for DE.
    Any number of covariates can be included in the \code{design} argument.
 
+	  An option is given to subset the object to only contain the two conditions
+   included in the contrast. The difference between subsetting and not 
+	  lies in the fact that dispersion estimates will only be calculated for
+   the samples included in the subset object, and not in the whole object.
+   This can result in different results (e.g. fewer or more DE genes). 
+   According to current best practices it is NOT recommended to subset
+   the object, but the option is given.
+
    The contrast to be tested can be specified as well. If not, the default
    is the second level of the condition minus the first level. The format
    of the contrast is the one accepted by \code{\link[scran]{pseudoBulkDGE}}, i.e.
@@ -69,7 +82,7 @@ This function is a wrapper around the \code{pseudoBulkDGE()}
    the column containing the condition, and Level1 and Level2 are the two
    levels to compare.
 
-   Default design is a formula with an intercept term set to 0, e.g.
+   The default design is a formula with an intercept term set to 0, e.g.
    \code{~0 + condition} as it forces the user to explicitly declare in the
    contrast which is the reference level. However, if design is provided,
    the user can specify a design without intercept (e.g. \code{~condition})

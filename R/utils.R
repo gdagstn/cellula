@@ -6,12 +6,14 @@
                  "brazen", "affine", "empyrean", "adjoining", "trustworthy",
                  "paralogous", "draconian", "obsequious", "nondescript", 
                  "diophantine", "hypogean", "preterintentional", "tawdry",
-                 "auspicious", "emphatic", "sardonic", "continental")
+                 "auspicious", "emphatic", "sardonic", "continental", "sacrosanct",
+				 "platitudinous", "shambolic", "sycophantic", "impervious")
   
   birds <- c("parakeet", "greylag", "eagle", "stork", "hornbill", "pelican", 
             "kestrel", "flamingo", "magpie", "raven", "kingfisher", "owl", 
             "pigeon", "moorhen", "grebe", "mallard", "hummingbird", "nightingale",
-            "gadwall", "goose", "swan", "sparrow", "finch", "vulture", "albatros")
+            "gadwall", "goose", "swan", "sparrow", "finch", "vulture", "albatros",
+			"tit", "jay", "woodpecker", "quetzal")
   
   paste0(sample(adjectives, 1), "_", sample(birds, 1))
 }
