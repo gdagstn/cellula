@@ -39,10 +39,11 @@ Imports:
     patchwork
 Suggests: 
     AUCell,
-    destiny,
 	circlize,
 	ComplexHeatmap,
+	destiny,
     DropletUtils,
+	fgsea,
     harmony,
 	HDB,
 	lisi,

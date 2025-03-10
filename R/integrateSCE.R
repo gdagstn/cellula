@@ -44,7 +44,7 @@
 #'  \item{method = "LIGER":}{ \code{\link[RcppPlanc]{inmf}}}
 #'  \item{method = "regression":}{ \code{\link[batchelor]{regressBatches}}}
 #'  \item{method = "scMerge2":}{ \code{\link[scMerge]{scMerge2}}}
-#'  \item{method = "STACAS":}{ \code{\link[STACAS]{RunStacas}}}
+#'  \item{method = "STACAS":}{ \code{\link[STACAS]{Run.Stacas}}}
 #'}
 #'
 #' Users who desire further control/customization should apply the functions
