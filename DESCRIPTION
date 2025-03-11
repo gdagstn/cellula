@@ -10,6 +10,17 @@ License: MIT + file LICENSE
 Encoding: UTF-8
 LazyData: true
 RoxygenNote: 7.3.2
+biocViews:
+Remotes::
+	bioc::SingleCellExperiment
+	bioc::SummarizedExperiment
+	bioc::BiocNeighbors
+	bioc::scran
+	bioc::scater
+	bioc::scuttle
+	bioc::bluster
+	bioc::batchelor
+	bioc::BiocParallel
 Depends:
 	SingleCellExperiment
 Imports: 

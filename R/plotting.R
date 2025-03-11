@@ -1361,7 +1361,12 @@ plotHeatmap <- function(sce,
   if(scale) mat = t(scale(t(mat)))
 
   if(!is.null(coldata_cols) & !is.null(order_by)) {
-    ordered_cols = do.call(order, cd[,order_by])
+	if(length(order_by) > 1) {
+    	ordered_cols = do.call(order, cd[,order_by])
+	} else {
+		ordered_cols = order(cd[,order_by])
+	}
+
     cd = cd[ordered_cols,]
     mat = mat[,ordered_cols]
 
@@ -1387,6 +1392,7 @@ plotHeatmap <- function(sce,
         names(pal) = unique(as.character(cd[,names(categorical_cols)[i]]))
         pal
       })
+		message(names(categorical_cols))
       names(col_list) = names(categorical_cols)
       column_ha = ComplexHeatmap::HeatmapAnnotation(df = cd[,names(categorical_cols)],
                                                     col = col_list)

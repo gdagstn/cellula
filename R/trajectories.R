@@ -263,7 +263,7 @@ findTrajectories <- function(sce,
                                     clusters, 
                                     start,
                                     Monocle_lg_control = NULL,
-                                    dr_embed = "UMAP",
+                                    dr_embed = NULL,
                                     invert = FALSE,
                                     add_metadata = TRUE,
                                     verbose = TRUE){
@@ -323,35 +323,37 @@ findTrajectories <- function(sce,
     # Embedding waypoint curves in 2D. We do this because we allow users to run 
     # Monocle3 in an arbitrary space that is not UMAP
     
-    if (dr_embed == "FR") {
-      if (verbose) message(paste0(.bluem("[TRAJ/Monocle3] "),"Embedding in 2D"))
-      frembed <- .embedFR(cds = cds, sce = sce, dr = dr, ndims = ndims)
-      metadata(sce)[["Monocle_embedded_curves"]] <- frembed$segs
-      #reducedDim(sce, "FR") <- frembed$init
-      reducedDim(sce, "UMAP_FR") <- frembed$dr_embed
-    } else if (!is.null(dr_embed) & (dr_embed != "FR")) {
-      if (verbose) message(paste0(.bluem("[TRAJ/Monocle3] "),"Embedding in 2D"))
-      wp_coords <- t(cds@principal_graph_aux$UMAP$dp_mst)
-      sp_coords <- reducedDim(sce, dr)[,seq_len(ndims)]
-      nns <- queryKNN(query = wp_coords,
-                     X =  sp_coords,
-                     k = 1)$index[,1]
-      matched <- data.frame("wp" = rownames(wp_coords), 
-                           "sp" = rownames(sp_coords)[nns],
-                           row.names = rownames(wp_coords))
-      names(nns) <- matched$sp
-      wpsp_coords <- reducedDim(sce, dr_embed)[nns,c(1,2)]
-      rownames(wpsp_coords) <- rownames(wp_coords)
-      segs <- as_data_frame(cds@principal_graph$UMAP)
-      segs$x0 <- wpsp_coords[segs$from,1]
-      segs$y0 <- wpsp_coords[segs$from,2]
-      segs$x1 <- wpsp_coords[segs$to,1]
-      segs$y1 <- wpsp_coords[segs$to,2]
-      segs$from <- matched[segs$from, "sp"]
-      segs$to <- matched[segs$to, "sp"]
-      metadata(sce)[["Monocle_embedded_curves"]] <- segs
-    }
-    
+    if (!is.null(dr_embed)){
+		if(dr_embed == "FR") {
+      		if (verbose) message(paste0(.bluem("[TRAJ/Monocle3] "), "Embedding in 2D"))
+				frembed <- .embedFR(cds = cds, sce = sce, dr = dr, ndims = ndims)
+				metadata(sce)[["Monocle_embedded_curves"]] <- frembed$segs
+				#reducedDim(sce, "FR") <- frembed$init
+				reducedDim(sce, "UMAP_FR") <- frembed$dr_embed
+				} else if(dr_embed != "FR") {
+					if (verbose) message(paste0(.bluem("[TRAJ/Monocle3] "), "Embedding in 2D"))
+					wp_coords <- t(cds@principal_graph_aux$UMAP$dp_mst)
+					sp_coords <- reducedDim(sce, dr)[,seq_len(ndims)]
+					nns <- queryKNN(query = wp_coords,
+									X =  sp_coords,
+									k = 1)$index[,1]
+					matched <- data.frame("wp" = rownames(wp_coords), 
+										"sp" = rownames(sp_coords)[nns],
+										row.names = rownames(wp_coords))
+					names(nns) <- matched$sp
+					wpsp_coords <- reducedDim(sce, dr_embed)[nns,c(1,2)]
+					rownames(wpsp_coords) <- rownames(wp_coords)
+					segs <- as_data_frame(cds@principal_graph$UMAP)
+					segs$x0 <- wpsp_coords[segs$from,1]
+					segs$y0 <- wpsp_coords[segs$from,2]
+					segs$x1 <- wpsp_coords[segs$to,1]
+					segs$y1 <- wpsp_coords[segs$to,2]
+					segs$from <- matched[segs$from, "sp"]
+					segs$to <- matched[segs$to, "sp"]
+					metadata(sce)[["Monocle_embedded_curves"]] <- segs
+    	}
+	}
+	
     if(add_metadata) {
       if(verbose) message(paste0(.bluem("[TRAJ/Monocle3] "), "Adding metadata"))
       metadata(sce)[["Monocle_principal_graph"]] <- cds@principal_graph$UMAP
