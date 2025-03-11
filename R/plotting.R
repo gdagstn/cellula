@@ -1297,7 +1297,6 @@ plotHeatmap <- function(sce,
   ep = .redm("cellula::drawDEHeatmap() - ")
   dependencies = data.frame("package" = c("ComplexHeatmap", "circlize"),
                             "repo" = c("BioC", "CRAN"))
-  
   if(checkFunctionDependencies(dependencies)) stop(paste0(ep, "Missing required packages."))
   
   if(!is(sce, "SingleCellExperiment"))
@@ -1332,14 +1331,14 @@ plotHeatmap <- function(sce,
     if(!all(aggregate_by %in% colnames(colData(sce))))
       stop(paste0(ep, "Some columns for aggregation were not found in the colData"))
     
-    agg_vector = apply(colData(sce)[,aggregate_by], 1, function(x) paste(x, collapse = "__"))
+    agg_vector = apply(colData(sce)[,aggregate_by,drop=FALSE], 1, function(x) paste(x, collapse = "__"))
     agg = aggregateAcrossCells(sce,
                                ids = agg_vector,
                                statistics = aggregate_fun, 
                                use.assay.type = "counts")
 		if(exprs == "logcounts") {
-		agg = computeLibraryFactors(agg)
-		agg = logNormCounts(agg)
+			agg = computeLibraryFactors(agg)
+			agg = logNormCounts(agg)
 		}
 		mat = assay(agg, exprs)[feat_index,]
 		cd = as.data.frame(colData(agg))
@@ -1353,6 +1352,7 @@ plotHeatmap <- function(sce,
 
 	mat[is.na(mat)] = 0
 	remove = which(rowSums(mat) == 0)
+
 	if(length(remove) > 0) {
 		mat = mat[-remove,]
 		message("Removed ", length(remove), " genes with no expression")
@@ -1370,42 +1370,50 @@ plotHeatmap <- function(sce,
     cd = cd[ordered_cols,]
     mat = mat[,ordered_cols]
 
-    if(is.null(annotation_pal)){
-      categorical_cols = unlist(lapply(cd[,coldata_cols], function(x) 
-        inherits(x, "character")|inherits(x, "factor")|inherits(x,"logical")))      
-      categorical_cols = categorical_cols[categorical_cols]
-      
-      cols_cat = lapply(names(categorical_cols), function(x) {
-        if(inherits(cd[,x], "factor")) {
-          length(levels(cd[,x]))
-        } else if(inherits(cd[,x], "character")|inherits(cd[,x], "logical")) {
-          length(unique(cd[,x]))
-        }
+      if(is.null(annotation_pal)){
+    categorical_cols = unlist(lapply(cd[,coldata_cols,drop=FALSE], function(x) 
+      inherits(x, "character")|inherits(x, "factor")|inherits(x,"logical")))      
+    categorical_cols = categorical_cols[categorical_cols]
+    
+    cols_cat = lapply(names(categorical_cols), function(x) {
+        length(unique(as.character(cd[,x])))
       })
-      
-      cols_cat = cols_cat[!unlist(lapply(cols_cat, is.null))]
-      total_cols = sum(unlist(cols_cat))
+    names(cols_cat) = names(categorical_cols)
+    cols_cat = cols_cat[!unlist(lapply(cols_cat, is.null))]
+    total_cols = sum(unlist(cols_cat))
+    if(total_cols <= 30) {
       pal_auto = .cpal_qual(n = total_cols) 
+    } else {
+      pal_auto = colors()[sample(seq_len(657), size = total_cols)]
+    }
+    if(length(cols_cat) > 1) {
       indices = c(0, cumsum(unlist(cols_cat)))
       col_list = lapply(seq_len(length(indices)-1), function(i) {
         pal = pal_auto[(indices[i]+1):(indices[i+1])]
         names(pal) = unique(as.character(cd[,names(categorical_cols)[i]]))
         pal
       })
-		message(names(categorical_cols))
-      names(col_list) = names(categorical_cols)
-      column_ha = ComplexHeatmap::HeatmapAnnotation(df = cd[,names(categorical_cols)],
-                                                    col = col_list)
     } else {
-      col_list = annotation_pal
-      column_ha = ComplexHeatmap::HeatmapAnnotation(df = cd[,coldata_cols],
-                                                    col = col_list)
+      pal = pal_auto
+      names(pal) = unique(as.character(cd[,names(categorical_cols)]))
+      col_list <- list(pal)
     }
+    
+    message(names(categorical_cols))
+    names(col_list) = names(categorical_cols)
+    column_ha = ComplexHeatmap::HeatmapAnnotation(df = cd[,names(categorical_cols),drop=FALSE],
+                                                  col = col_list)
+  } else {
+    col_list = annotation_pal
+    column_ha = ComplexHeatmap::HeatmapAnnotation(df = cd[,coldata_cols,drop=FALSE],
+                                                  col = col_list)
   }
+}
   
-  if(!raster | raster == "force")
-    if(nrow(mat) > 2000 | ncol(mat) > 2000) raster = TRUE
-  
+  if(!raster | raster != "force")
+    if(nrow(mat) > 20000 | ncol(mat) > 20000) raster = TRUE
+  if(raster == "force") raster = FALSE
+
   if(!is.null(gaps)) {
     gaps = cd[,gaps]
   }
@@ -1446,7 +1454,12 @@ plotHeatmap <- function(sce,
   
   transf_name = ifelse(scale, "Z score", exprs)
 
-  name_scale = paste0(transf_name, "\n(", exprs, "(", aggregate_fun, "))")
+  if(aggregate) {
+	name_scale = paste0(transf_name, "\n(", exprs, "(", aggregate_fun, "))")
+  } else {
+	name_scale = transf_name
+  }
+
   if(!is.null(coldata_cols)){
     H = ComplexHeatmap::Heatmap(mat, 
                                 row_names_gp = grid::gpar(cex = 1), 
