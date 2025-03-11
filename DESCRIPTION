@@ -12,14 +12,14 @@ LazyData: true
 RoxygenNote: 7.3.2
 biocViews: SingleCell, Clustering, DimensionReduction, GeneExpression, RNASeq, Transcriptomics, Visualization
 Remotes::
-	bioc::SingleCellExperiment
-	bioc::SummarizedExperiment
-	bioc::BiocNeighbors
-	bioc::scran
-	bioc::scater
-	bioc::scuttle
-	bioc::bluster
-	bioc::batchelor
+	bioc::SingleCellExperiment,
+	bioc::SummarizedExperiment,
+	bioc::BiocNeighbors,
+	bioc::scran,
+	bioc::scater,
+	bioc::scuttle,
+	bioc::bluster,
+	bioc::batchelor,
 	bioc::BiocParallel
 Depends:
 	SingleCellExperiment
