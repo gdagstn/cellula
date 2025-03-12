@@ -1616,6 +1616,7 @@ plotPseudotimeHeatmap <- function(sce,
   }
 
   ComplexHeatmap::Heatmap(genemat,
+						  col = .cpal_seq_parula(),
                           show_column_names = FALSE,
                           top_annotation = column_ha,
                           cluster_rows = cluster_genes,
