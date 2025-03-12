@@ -1545,7 +1545,7 @@ plotPseudotimeHeatmap <- function(sce,
     stop(paste0(ep, "Must provide genes to plot"))
   if(length(genes) < 2)
     stop(paste0(ep, "Must provide at least two genes to plot"))
-  if(!all(pseuodtime %in% colnames(colData(sce))))
+  if(!all(pseudotime %in% colnames(colData(sce))))
     stop(paste0(ep, "The pseudotime column was not found in the colData"))
   if(!is(character, pseudotime))
     stop(paste0(ep, "The pseudotime column must be a character (column of colData)"))
