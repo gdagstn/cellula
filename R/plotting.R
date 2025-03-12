@@ -1294,9 +1294,9 @@ plotHeatmap <- function(sce,
 						...){
   
   ### Sanity checks
-  # error prefix
-  
-  ep = .redm("cellula::plotHeatmap() - ")
+	# error prefix
+	ep = .redm("cellula::plotHeatmap() - ")
+	
   dependencies = data.frame("package" = c("ComplexHeatmap", "circlize"),
                             "repo" = c("BioC", "CRAN"))
   if(checkFunctionDependencies(dependencies)) stop(paste0(ep, "Missing required packages."))
@@ -1364,60 +1364,76 @@ plotHeatmap <- function(sce,
 
   if(!is.null(coldata_cols) & !is.null(order_by)) {
 	if(length(order_by) > 1) {
-    	ordered_cols = do.call(order, cd[,order_by])
+    	ordered_cols = do.call(order, cd[,order_by], na.last = TRUE)
 	} else {
-		ordered_cols = order(cd[,order_by])
+		ordered_cols = order(cd[,order_by], na.last = TRUE)
 	}
-
     cd = cd[ordered_cols,]
     mat = mat[,ordered_cols]
 
-    if(is.null(annotation_pal)){
-    	categorical_cols = unlist(lapply(cd[,coldata_cols,drop=FALSE], function(x) 
+    if(is.null(annotation_pal)){	
+
+    	categorical_cols_test = unlist(lapply(cd[,coldata_cols,drop=FALSE], function(x) 
       		inherits(x, "character")|inherits(x, "factor")|inherits(x,"logical")))      
-    	categorical_cols = categorical_cols[categorical_cols]
-		if(length(categorical_cols) > 1) {
-			cols_cat = lapply(names(categorical_cols), function(x) {
-				length(unique(as.character(cd[,x])))
-		})
+    	categorical_cols = categorical_cols_test[categorical_cols_test]
+		
+		numeric_cols_test = unlist(lapply(cd[,coldata_cols,drop=FALSE], function(x) 
+      		inherits(x, "numeric")|inherits(x, "integer")))
+		numeric_cols = numeric_cols_test[numeric_cols_test]
+
+		# Palette for categorical cols
+		if(length(categorical_cols) > 0) {
+
+			num_cat_cols = lapply(names(categorical_cols), function(x) {
+								length(unique(as.character(cd[,x,drop=TRUE])))
+								})
+			
+			names(num_cat_cols) = names(categorical_cols)
+			total_cols = sum(unlist(num_cat_cols))
+			
+			if(total_cols <= 30) {
+				pal_auto = .cpal_qual(n = total_cols) 
+			} else {
+				pal_auto = colors()[sample(seq_len(657), size = total_cols)]
+			}
+			if(length(num_cat_cols) > 1) {
+				indices = c(0, cumsum(unlist(num_cat_cols)))
+				col_list_categorical = lapply(seq_len(length(indices)-1), function(i) {
+						pal = pal_auto[(indices[i]+1):(indices[i+1])]
+						names(pal) = unique(as.character(cd[,names(categorical_cols)[i]]))
+						pal
+					})
+			} else {
+				names(pal_auto) = unique(as.character(cd[,names(categorical_cols)]))
+				col_list_categorical <- list(pal_auto)
+				
+			}
+				names(col_list_categorical) = names(categorical_cols)
 		} else {
-			cols_cat = length(unique(as.character(cd[,categorical_cols])))
-		}
-		names(cols_cat) = names(categorical_cols)
-		cols_cat = cols_cat[!unlist(lapply(cols_cat, is.null))]
-		total_cols = sum(unlist(cols_cat))
-		if(total_cols <= 30) {
-		pal_auto = .cpal_qual(n = total_cols) 
-		} else {
-		pal_auto = colors()[sample(seq_len(657), size = total_cols)]
-		}
-		if(length(cols_cat) > 1) {
-		indices = c(0, cumsum(unlist(cols_cat)))
-		col_list = lapply(seq_len(length(indices)-1), function(i) {
-			pal = pal_auto[(indices[i]+1):(indices[i+1])]
-			names(pal) = unique(as.character(cd[,names(categorical_cols)[i]]))
-			pal
-		})
-		} else {
-		pal = pal_auto
-		names(pal) = unique(as.character(cd[,names(categorical_cols)]))
-		col_list <- list(pal)
+			col_list_categorical = NULL
 		}
 		
-		message(names(categorical_cols))
-		names(col_list) = names(categorical_cols)
-		if(length(setdiff(categorical_cols, coldata_cols)) > 0) {
-			numeric_cols = coldata_cols[!coldata_cols %in% categorical_cols]
-			
+		# Palette for numeric cols
+
+		if(length(numeric_cols) > 0) {
+			cols_choose = .cpal_qual_pear(length(numeric_cols))
+			col_list_numeric = lapply(seq_len(length(numeric_cols)), function(i) {
+				circlize::colorRamp2(breaks = c(0, max(cd[,names(numeric_cols)[i]], na.rm = TRUE)), 
+				colors = c("white", cols_choose[i]))
+			})
+			names(col_list_numeric) = names(numeric_cols)
+		} else {
+			col_list_numeric = NULL
 		}
-		column_ha = ComplexHeatmap::HeatmapAnnotation(df = cd[,names(categorical_cols),drop=FALSE],
+		col_list = c(col_list_categorical, col_list_numeric)
+		col_list = col_list[!unlist(lapply(col_list, is.null))]
+  	} else {
+    	col_list = annotation_pal
+  	}
+
+	column_ha = ComplexHeatmap::HeatmapAnnotation(df = cd[,names(col_list), drop=FALSE],
 													  col = col_list)
-  } else {
-    col_list = annotation_pal
-    column_ha = ComplexHeatmap::HeatmapAnnotation(df = cd[,coldata_cols,drop=FALSE],
-                                                  col = col_list)
-  }
-}
+ }
   
   if(!raster | raster != "force")
     if(nrow(mat) > 20000 | ncol(mat) > 20000) raster = TRUE
