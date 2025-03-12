@@ -1557,7 +1557,7 @@ plotPseudotimeHeatmap <- function(sce,
   cells_ok = which(!is.na(colData(sce)[,pseudotime]))
   sce = sce[,cells_ok]
 
-  genemat = assay(sce, exprs)[genes, order(colData(sce)[,pseudotime]])]
+  genemat = assay(sce, exprs)[genes, order(colData(sce)[,pseudotime])]
   
   genemat = t(apply(genemat, 1, function(x) 
     .rescalen(.mav(x, window = smoothing_window), 
