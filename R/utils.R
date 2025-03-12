@@ -197,3 +197,17 @@ checkFunctionDependencies <- function(depdf) {
   colnames(new_coords) <- c("x", "y")
   new_coords
 }
+
+#' @noRd
+.mav <- function (x, window = 50) 
+{
+    xp = c(rep(NA, floor((window - 1)/2)), x, rep(NA, ceiling((window - 
+        1)/2)))
+    n = window
+    cx <- c(0, cumsum(ifelse(is.na(xp), 0, xp)))
+    cn <- c(0, cumsum(ifelse(is.na(xp), 0, 1)))
+    rx <- cx[(n + 1):length(cx)] - cx[1:(length(cx) - n)]
+    rn <- cn[(n + 1):length(cx)] - cn[1:(length(cx) - n)]
+    rsum <- rx/rn
+    rsum
+}
