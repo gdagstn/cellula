@@ -1376,10 +1376,13 @@ plotHeatmap <- function(sce,
     	categorical_cols = unlist(lapply(cd[,coldata_cols,drop=FALSE], function(x) 
       		inherits(x, "character")|inherits(x, "factor")|inherits(x,"logical")))      
     	categorical_cols = categorical_cols[categorical_cols]
-    
-		cols_cat = lapply(names(categorical_cols), function(x) {
-			length(unique(as.character(cd[,x])))
+		if(length(categorical_cols) > 1) {
+			cols_cat = lapply(names(categorical_cols), function(x) {
+				length(unique(as.character(cd[,x])))
 		})
+		} else {
+			cols_cat = length(unique(as.character(cd[,categorical_cols])))
+		}
 		names(cols_cat) = names(categorical_cols)
 		cols_cat = cols_cat[!unlist(lapply(cols_cat, is.null))]
 		total_cols = sum(unlist(cols_cat))
@@ -1517,7 +1520,9 @@ plotHeatmap <- function(sce,
 #'     Default is \code{200}
 #'
 #' @return a heatmap of the gene expression data ordered by pseudotime with,
-#' 		optionally, the labels of each cells as annotation on top of the heatmap
+#' 	   optionally, the labels of each cells as annotation on top of the heatmap.
+#' 	   Each gene is scaled between 0 and 1 and smoothed using a zero-padded moving 
+#' 	   average with the specified window size.
 #' 
 #' @importFrom circlize colorRamp2
 #' @importFrom ComplexHeatmap Heatmap HeatmapAnnotation
