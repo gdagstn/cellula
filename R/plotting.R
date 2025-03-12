@@ -1553,6 +1553,10 @@ plotPseudotimeHeatmap <- function(sce,
     stop(paste0(ep, "The pseudotime column must be a character (column of colData)"))
   if(!is(smoothing_window, "numeric"))
     stop(paste0(ep, "The smoothing window must be a numeric"))
+  if(!is.null(labels) & !is.null(labels_pal)) {
+  	if(!all(names(labels_pal) %in% colData(sce)[,labels]))
+   		stop(paste0(ep, "Not all levels in the labels_pal were found in the labels column"))
+  }
   if(smoothing_window > length(colData(sce)[!is.na(colData(sce)[,pseudotime]),pseudotime]))
     stop(paste0(ep, "The smoothing window cannot be bigger than the number of non-NA pseudotime values"))
 
