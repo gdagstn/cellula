@@ -79,6 +79,86 @@ plotSilhouette <- function(sce, name) {
     theme_minimal()
 }
 
+
+#' Plot proportions
+#' 
+#' Plots the proportion of cells in each label and grouping
+#' 
+#' @param sce a SingleCellExperiment object
+#' @param label character, the column name in the 
+#'    colData of the SingleCellExperiment used for
+#'    colouring the plot
+#' @param group_by character, the column name in the
+#'    colData of the SingleCellExperiment used for
+#'    grouping the bars
+#' @param color_palette named character, the name of the color
+#'    palette to be used. Default is \code{NULL}, 
+#'    meaning an automatic palette will be generated.
+#' 
+#' @return a stacked bar plot of proportions of cells in each
+#'    label, grouped according to the \code{group_by} variable.	
+#' 
+#' @importFrom SummarizedExperiment colData
+#' @importFrom ggplot2 ggplot aes geom_bar scale_fill_manual theme_bw
+#' @importFrom ggplot2 scale_y_continuous theme element_text element_blank
+#' @importFrom ggplot2 geom_hline .data ylab
+#' @importFrom grDevices colors
+#' 
+#' @export
+
+plotProportions <- function(sce, 
+							label, 
+							group_by, 
+							color_palette = NULL) {
+
+  ## Sanity checks
+  # Error prefix
+  ep <- .redm("{cellula::plotProportions()} - ")
+
+  # Checks
+  if(!is(sce, "SingleCellExperiment"))
+    stop(paste0(ep, "Must provide a SingleCellExperiment object"))
+  if(!label %in% colnames(colData(sce)))
+	stop(paste0(ep, "label was not found in the colData of the object"))
+  if(!group_by %in% colnames(colData(sce)))
+	stop(paste0(ep, "group_by was not found in the colData of the object"))
+	if(!is.null(color_palette)) {
+		if(length(names(color_palette)) == 0)
+			stop(paste0(ep, "color_palette must be a named vector"))
+		if(!all(unique(colData(sce)[,label]) %in% names(color_palette)))
+			stop(paste0(ep, "color_palette does not contain names for all the levels of label"))		
+	}
+
+	if(is.null(color_palette)) {
+		total_cols = length(unique(colData(sce)[,label]))
+		if(total_cols <= 30) {
+				color_palette = .cpal_qual(n = total_cols) 
+			} else {
+				color_palette = colors()[sample(seq_len(657), size = total_cols)]
+			}
+			names(color_palette) = unique(as.character(colData(sce)[,label]))
+	}
+
+	cd = as.data.frame(colData(sce)[,c(label, group_by), drop = FALSE])
+
+	tab = as.data.frame(table(cd))
+	tab = do.call(rbind, split(tab, tab[,group_by]))
+	tab$prop = unlist(lapply(split(tab, tab[,group_by]), function(x) x$Freq/sum(x$Freq)))
+
+	ggplot(tab, aes(x = .data[[group_by]], y = .data[["prop"]]*100, fill = .data[[label]])) +
+	geom_bar(stat = "identity", color = "black") + 
+	geom_hline(yintercept = 0, linewidth = 0.5) +
+	scale_fill_manual(values = color_palette) +
+	theme_bw() + 
+	ylab("Proportion") +
+	scale_y_continuous(expand = c(0, 0), limits = c(0, 100)) +
+	theme(axis.text.x = element_text(angle = 45, hjust = 1), 
+			axis.text.y = element_text(size = 10),
+			panel.grid = element_blank(),
+			panel.border = element_blank(),
+			axis.line.y = element_line())
+}
+
 #' Plot Dimensionality Reduction
 #'
 #' Plots dimensionality reduction coordinates from a SingleCellExperiment object,
@@ -457,7 +537,7 @@ plot_dots <- function(sce,
 
   ## Sanity checks
   # Error prefix
-  ep <- .redm("{cellula::plot_Dots()} - ")
+  ep <- .redm("{cellula::plot_dots()} - ")
 
   # Checks
   if(!is(sce, "SingleCellExperiment"))
@@ -1203,8 +1283,6 @@ multipanel_DR <- function(sce, dr = "UMAP", dims = c(1,2),
   p
 }
 
-
-
 #' Gene expression heatmap
 #' 
 #' Draws a heatmap of gene expression from a SingleCellExperiment object
@@ -1217,26 +1295,28 @@ multipanel_DR <- function(sce, dr = "UMAP", dims = c(1,2),
 #'     to include in the heatmap as annotations. Their order influences column ordering
 #' 	   when \code{cluster_cols = FALSE}. Default is \code{NULL}.
 #' @param order_by character, the columns in the \code{colData} slot of the \code{sce} object
-#'   to order the heatmap by. Default is \code{coldata_cols}.
+#'     to order the heatmap by. Default is \code{coldata_cols}. Overrides \code{cluster_cols} if
+#'     not \code{NULL}.
 #' @param scale logical, should the expression data be scaled by row? Default is \code{TRUE}
 #' @param exprs character, the expression values to use. Default is \code{"logcounts"}
 #' @param aggregate logical, should the data be aggregated? If \code{TRUE}, the data will be
-#'    aggregated by the variables indicdated in \code{aggregate_by}. Default is \code{FALSE}
+#'     aggregated by the variables indicdated in \code{aggregate_by}. Default is \code{FALSE}
 #' @param aggregate_by character, the columns in the \code{colData} slot of the \code{sce} object
-#'    to aggregate by. Default is \code{NULL}
+#'     to aggregate by. Default is \code{NULL}
 #' @param aggregate_fun character, the function to use for aggregation. Default is \code{"sum"}
 #' @param color_pal character, the color palette to use for the heatmap. Default is \code{NULL}
 #' @param annotation_pal named list of named character vectors, the color palette 
-#' 		to use for the annotations. Default is \code{NULL}. See Details
+#' 	   to use for the annotations. Default is \code{NULL}. See Details
 #' @param cluster_cells logical, should the columns (cells) be clustered? 
-#'     Default is \code{TRUE}
+#'     Default is \code{TRUE}. It is automatically set to \code{FALSE} if \code{order_by} is 
+#'     not \code{NULL}.
 #' @param cluster_genes logical, should the rows (genes) be clustered? Default is \code{TRUE}
 #' @param gaps character, the columns in \code{coldata_cols} to leave gaps between. See Details
-#'    Default is \code{NULL}.
+#'     Default is \code{NULL}.
 #' @param clip_values numeric, the percentile to clip the values at. Default is \code{99.5}
 #' @param raster logical, should the heatmap be rasterized? Default is \code{FALSE}, but 
-#'    it is changed to \code{TRUE} automatically if the number of cells or genes is 
-#' 	  greater than 2000. This behaviour can be overriden by setting \code{raster = "force"}.
+#'     it is changed to \code{TRUE} automatically if the number of cells or genes is 
+#' 	   greater than 2000. This behaviour can be overriden by setting \code{raster = "force"}.
 #' @param ... additional arguments to pass to \code{\link[ComplexHeatmap]{Heatmap}}
 #'
 #' @return a heatmap of the gene expression data, optionally with annotations 
@@ -1258,9 +1338,10 @@ multipanel_DR <- function(sce, dr = "UMAP", dims = c(1,2),
 #' 	  the second element the minor order, etc, e.g. if \code{order_by = c("condition", "label")}
 #'    columns will be first ordered by condition and then, within each condition, by label.
 #' 	  If \code{cluster_cols = TRUE}, the columns will be ordered according to the clustering 
-#' 	  of the columns.
+#' 	  of the columns. Two numeric columns cannot be properly used for ordering since they will
+#' 	  have an individual level for each cell.
 #' 
-#' 	  The aggregation arguments \{code{aggregate}, \code{aggregate_by}, \code{aggregate_fun}} 
+#' 	  The aggregation arguments \{code{aggregate}, \code{aggregate_by}, \code{aggregate_fun} 
 #'    are used to control if and how the data is aggregated. If \code{aggregate = TRUE}, the data
 #'    will be aggregated by the variables in \code{aggregate_by} using the function specified by 
 #'    \code{aggregate_fun}. 
@@ -1269,7 +1350,7 @@ multipanel_DR <- function(sce, dr = "UMAP", dims = c(1,2),
 #' @importFrom SummarizedExperiment colData
 #' @importFrom scuttle aggregateAcrossCells
 #' @importFrom stats quantile
-#' @importFrom grDevices colorRampPalette
+#' @importFrom grDevices colorRampPalette colors
 #' 
 #' @export
  
@@ -1292,9 +1373,9 @@ plotHeatmap <- function(sce,
 						...){
   
   ### Sanity checks
-  # error prefix
-  
-  ep = .redm("cellula::drawDEHeatmap() - ")
+	# error prefix
+	ep = .redm("cellula::plotHeatmap() - ")
+	
   dependencies = data.frame("package" = c("ComplexHeatmap", "circlize"),
                             "repo" = c("BioC", "CRAN"))
   if(checkFunctionDependencies(dependencies)) stop(paste0(ep, "Missing required packages."))
@@ -1318,6 +1399,10 @@ plotHeatmap <- function(sce,
       if(!gaps %in% coldata_cols)
         stop(paste0(ep, "the gaps column must be included in coldata_cols"))
     }
+	if(!is(clip_values, "numeric"))
+		stop(paste0(ep, "clip_values must be a numeric value"))
+	if(clip_values <= 0 | clip_values > 100)
+		stop(paste0(ep, "clip_values must be between 0 excluded and 100 included"))	
   }
   
   feat_index <- which(rowData(sce)$Symbol %in% genes | rowData(sce)$ID %in% genes | rownames(sce) %in% genes)
@@ -1366,50 +1451,71 @@ plotHeatmap <- function(sce,
 	} else {
 		ordered_cols = order(cd[,order_by])
 	}
-
     cd = cd[ordered_cols,]
     mat = mat[,ordered_cols]
 
-      if(is.null(annotation_pal)){
-    categorical_cols = unlist(lapply(cd[,coldata_cols,drop=FALSE], function(x) 
-      inherits(x, "character")|inherits(x, "factor")|inherits(x,"logical")))      
-    categorical_cols = categorical_cols[categorical_cols]
-    
-    cols_cat = lapply(names(categorical_cols), function(x) {
-        length(unique(as.character(cd[,x])))
-      })
-    names(cols_cat) = names(categorical_cols)
-    cols_cat = cols_cat[!unlist(lapply(cols_cat, is.null))]
-    total_cols = sum(unlist(cols_cat))
-    if(total_cols <= 30) {
-      pal_auto = .cpal_qual(n = total_cols) 
-    } else {
-      pal_auto = colors()[sample(seq_len(657), size = total_cols)]
-    }
-    if(length(cols_cat) > 1) {
-      indices = c(0, cumsum(unlist(cols_cat)))
-      col_list = lapply(seq_len(length(indices)-1), function(i) {
-        pal = pal_auto[(indices[i]+1):(indices[i+1])]
-        names(pal) = unique(as.character(cd[,names(categorical_cols)[i]]))
-        pal
-      })
-    } else {
-      pal = pal_auto
-      names(pal) = unique(as.character(cd[,names(categorical_cols)]))
-      col_list <- list(pal)
-    }
-    
-    message(names(categorical_cols))
-    names(col_list) = names(categorical_cols)
-    column_ha = ComplexHeatmap::HeatmapAnnotation(df = cd[,names(categorical_cols),drop=FALSE],
-                                                  col = col_list)
-  } else {
-    col_list = annotation_pal
-    column_ha = ComplexHeatmap::HeatmapAnnotation(df = cd[,coldata_cols,drop=FALSE],
-                                                  col = col_list)
-  }
-}
-  
+    if(is.null(annotation_pal)){	
+
+    	categorical_cols_test = unlist(lapply(cd[,coldata_cols,drop=FALSE], function(x) 
+      		inherits(x, "character")|inherits(x, "factor")|inherits(x,"logical")))      
+    	categorical_cols = categorical_cols_test[categorical_cols_test]
+		
+		numeric_cols_test = unlist(lapply(cd[,coldata_cols,drop=FALSE], function(x) 
+      		inherits(x, "numeric")|inherits(x, "integer")))
+		numeric_cols = numeric_cols_test[numeric_cols_test]
+
+		# Palette for categorical columns
+		if(length(categorical_cols) > 0) {
+
+			num_cat_cols = lapply(names(categorical_cols), function(x) {
+								length(unique(as.character(cd[,x,drop=TRUE])))
+								})
+			
+			names(num_cat_cols) = names(categorical_cols)
+			total_cols = sum(unlist(num_cat_cols))
+			
+			if(total_cols <= 30) {
+				pal_auto = .cpal_qual(n = total_cols) 
+			} else {
+				pal_auto = colors()[sample(seq_len(657), size = total_cols)]
+			}
+			if(length(num_cat_cols) > 1) {
+				indices = c(0, cumsum(unlist(num_cat_cols)))
+				col_list_categorical = lapply(seq_len(length(indices)-1), function(i) {
+						pal = pal_auto[(indices[i]+1):(indices[i+1])]
+						names(pal) = unique(as.character(cd[,names(categorical_cols)[i]]))
+						pal
+					})
+			} else {
+				names(pal_auto) = unique(as.character(cd[,names(categorical_cols)]))
+				col_list_categorical <- list(pal_auto)
+				
+			}
+				names(col_list_categorical) = names(categorical_cols)
+		} else {
+			col_list_categorical = NULL
+		}
+		
+		# Palette for numeric columns
+		if(length(numeric_cols) > 0) {
+			cols_choose = .cpal_qual_pear(length(numeric_cols))
+			col_list_numeric = lapply(seq_len(length(numeric_cols)), function(i) {
+				circlize::colorRamp2(breaks = c(0, max(cd[,names(numeric_cols)[i]], na.rm = TRUE)), 
+				colors = c("white", cols_choose[i]))
+			})
+			names(col_list_numeric) = names(numeric_cols)
+		} else {
+			col_list_numeric = NULL
+		}
+		col_list = c(col_list_categorical, col_list_numeric)
+		col_list = col_list[!unlist(lapply(col_list, is.null))]
+  	} else {
+    	col_list = annotation_pal
+  	}
+	# Final annotation
+	column_ha = ComplexHeatmap::HeatmapAnnotation(df = cd[,names(col_list), drop=FALSE],
+													  col = col_list)
+  }  
   if(!raster | raster != "force")
     if(nrow(mat) > 20000 | ncol(mat) > 20000) raster = TRUE
   if(raster == "force") raster = FALSE
@@ -1417,7 +1523,7 @@ plotHeatmap <- function(sce,
   if(!is.null(gaps)) {
     gaps = cd[,gaps]
   }
-  
+	# Color mapping and clipping for the heatmap
   if(scale) {
     if(!is.null(clip_values)) {
       clip_values = clip_values*10
@@ -1429,8 +1535,11 @@ plotHeatmap <- function(sce,
     color_range = c(-cr, 0, cr)
   } else {
     if(!is.null(clip_values)){
-      clip_values = clip_values*10
-      cr = quantile(mat, seq(0,1,length.out=1001), na.rm = TRUE)[clip_values]
+	# Clip to percentiles with variable decimal digit precision
+	  decimal_places = nchar(strsplit(as.character(clip_values), "\\.")[[1]][2])
+      if(is.na(decimal_places)) decimal_places = 0
+	  clip_values = clip_values * 10^(decimal_places)
+      cr = quantile(mat, seq(0, 1, length.out = (10^(decimal_places+2)+1)), na.rm = TRUE)[clip_values]
       color_range = range(mat[!is.na(mat)])
       color_range[which.max(color_range)] = cr
     } else {
@@ -1490,6 +1599,132 @@ plotHeatmap <- function(sce,
   ComplexHeatmap::draw(H)
 }
 
+#' Pseudotime heatmap
+#' 
+#' Draws a heatmap of pseudotime-ordered gene expression 
+#' 
+#' @param sce a SingleCellExperiment object
+#' @param genes character, the genes to include in the heatmap.
+#' @param pseudotime character, the column in the \code{colData} 
+#'     slot of the \code{sce} object with pseudotime values.
+#' @param exprs character, the name of the assay with expression values to use. 
+#'     Default is \code{"logcounts"}
+#' @param cluster_genes logical, should the genes be clustered? 
+#'     Default is \code{FALSE}
+#' @param labels character, the column in the \code{colData} slot of the \code{sce} object
+#'    to use as labels for heatmap annotation. Default is \code{NULL}
+#' @param labels_pal named list of named character vectors, the color palette
+#'    to use for the labels. Default is \code{NULL}
+#' @param smoothing_window numeric, the window size for smoothing the expression values.
+#'     Default is \code{200}
+#'
+#' @return a heatmap of the gene expression data ordered by pseudotime with,
+#' 	   optionally, the labels of each cells as annotation on top of the heatmap.
+#' 	   Each gene is scaled between 0 and 1 and smoothed using a zero-padded moving 
+#' 	   average with the specified window size.
+#' 
+#' @importFrom SummarizedExperiment colData
+#' @importFrom stats median
+#' 
+#' @export 
+plotPseudotimeHeatmap <- function(sce, 
+							  genes, 
+							  pseudotime, 
+							  exprs = "logcounts", 
+							  cluster_genes = FALSE,
+                              labels = NULL, 
+							  labels_pal = NULL, 
+							  smoothing_window = 200) {
+
+  ep = .redm("cellula::plotPseudotimeHeatmap() - ")
+  dependencies = data.frame("package" = c("ComplexHeatmap", "circlize"),
+                            "repo" = c("BioC", "CRAN"))
+  if(checkFunctionDependencies(dependencies)) stop(paste0(ep, "Missing required packages."))
+  
+  if(!is(sce, "SingleCellExperiment"))
+    stop(paste0(ep, "Must provide a SingleCellExperiment object"))
+  if(is.null(genes))
+    stop(paste0(ep, "Must provide genes to plot"))
+  if(length(genes) < 2)
+    stop(paste0(ep, "Must provide at least two genes to plot"))
+  if(!all(pseudotime %in% colnames(colData(sce))))
+    stop(paste0(ep, "The pseudotime column was not found in the colData"))
+  if(!all(labels %in% colnames(colData(sce))))
+    stop(paste0(ep, "The labels column was not found in the colData"))
+  if(!is(pseudotime, "character"))
+    stop(paste0(ep, "The pseudotime column must be a character (column of colData)"))
+  if(!is(smoothing_window, "numeric"))
+    stop(paste0(ep, "The smoothing window must be a numeric"))
+  if(!is.null(labels) & !is.null(labels_pal)) {
+  	if(!all(names(labels_pal) %in% colData(sce)[,labels]))
+   		stop(paste0(ep, "Not all levels in the labels_pal were found in the labels column"))
+  }
+  if(smoothing_window > length(colData(sce)[!is.na(colData(sce)[,pseudotime]),pseudotime]))
+    stop(paste0(ep, "The smoothing window cannot be bigger than the number of non-NA pseudotime values"))
+
+  cells_ok = which(!is.na(colData(sce)[,pseudotime]))
+  sce = sce[,cells_ok]
+
+  genemat = assay(sce, exprs)[genes, order(colData(sce)[,pseudotime])]
+  
+  genemat = t(apply(genemat, 1, function(x) 
+    .rescalen(.mav(x, window = smoothing_window), 
+                    to = c(0,1))))
+  
+  colors_pt = circlize::colorRamp2(colors = c("gray70", "purple"), 
+                                   breaks = c(0, max(colData(sce)[,pseudotime])))
+  
+  if(!is.null(labels)) {
+    labs = unique(colData(sce)[,labels])
+    pt_means = lapply(labs, function(x) median(colData(sce)[colData(sce)[,labels] == x, pseudotime]))
+    names(pt_means) = labs
+    pt_means = sort(unlist(pt_means))
+    
+    if(is.null(labels_pal)) {
+      labels_pal = .cpal_qual(length(labs))
+      names(labels_pal) = sort(labs)
+    }
+    
+    coldf = as.data.frame(colData(sce))
+    coldf[,labels] = factor(coldf[,labels], 
+                         levels = names(pt_means))
+    
+    lab_ord = colData(sce)[,labels][order(colData(sce)[,pseudotime])]
+    lab_ord_mat = sapply(names(pt_means), function(x) as.numeric(lab_ord == x) + 1)
+    
+    df = as.data.frame(cbind(pseudotime = sort(colData(sce)[,pseudotime]), as.data.frame(lab_ord_mat)))
+    
+    col_list_group = lapply(names(pt_means), function(x) {
+      cols = c("white", labels_pal[x])
+      names(cols) = c("1", "2")
+      cols
+    })
+    
+    names(col_list_group) = names(pt_means)
+    
+    col_list = c(list(pseudotime = colors_pt), 
+                 col_list_group) 
+    
+    column_ha = ComplexHeatmap::HeatmapAnnotation(df = df,
+                                  col = col_list,
+                                  show_legend = c(TRUE, rep(FALSE, length(unique(colData(sce)[,labels])))))
+    
+  } else {
+    
+    col_list = list(pseudotime = colors_pt)
+    df = data.frame(pseudotime = sort(colData(sce)[,pseudotime]))
+    column_ha = ComplexHeatmap::HeatmapAnnotation(df = df,
+                                  				  col = col_list)
+  }
+
+  ComplexHeatmap::Heatmap(genemat,
+						  col = .cpal_seq_parula(),
+                          show_column_names = FALSE,
+                          top_annotation = column_ha,
+                          cluster_rows = cluster_genes,
+                          cluster_columns = FALSE,
+                          name = "Scaled expression")
+} 
 
 #' Differential gene expression stripchart
 #' 
@@ -1548,7 +1783,6 @@ plotDGEStripchart <- function(dge,
 }
 
 
-
 #' Differential gene expression heatmap
 #' 
 #' Draws a heatmap of aggregated genes together with their DE results
@@ -1603,7 +1837,7 @@ plotDEHeatmap <- function(sce,
 
 	### Sanity checks
 		# error prefix
-			ep = .redm("cellula::drawDEHeatmap() - ")
+			ep = .redm("cellula::plotDEHeatmap() - ")
 	if(!is(sce, "SingleCellExperiment")) 
 		stop(paste0(ep, "Must provide a SingleCellExperiment object."))
 	if(!is(genes, "character")) 
@@ -1880,4 +2114,3 @@ plotLabelMD <- function(dge,
  plot_UMAP <- function(...){
 	plot_DR(...)
  }
-
