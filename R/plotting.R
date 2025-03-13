@@ -1203,8 +1203,6 @@ multipanel_DR <- function(sce, dr = "UMAP", dims = c(1,2),
   p
 }
 
-
-
 #' Gene expression heatmap
 #' 
 #' Draws a heatmap of gene expression from a SingleCellExperiment object
@@ -1260,7 +1258,8 @@ multipanel_DR <- function(sce, dr = "UMAP", dims = c(1,2),
 #' 	  the second element the minor order, etc, e.g. if \code{order_by = c("condition", "label")}
 #'    columns will be first ordered by condition and then, within each condition, by label.
 #' 	  If \code{cluster_cols = TRUE}, the columns will be ordered according to the clustering 
-#' 	  of the columns.
+#' 	  of the columns. Two numeric columns cannot be properly used for ordering since they will
+#' 	  have an individual level for each cell.
 #' 
 #' 	  The aggregation arguments \{code{aggregate}, \code{aggregate_by}, \code{aggregate_fun}} 
 #'    are used to control if and how the data is aggregated. If \code{aggregate = TRUE}, the data
@@ -1320,6 +1319,10 @@ plotHeatmap <- function(sce,
       if(!gaps %in% coldata_cols)
         stop(paste0(ep, "the gaps column must be included in coldata_cols"))
     }
+	if(!is(clip_values, "numeric"))
+		stop(paste0(ep, "clip_values must be a numeric value"))
+	if(clip_values <= 0 | clip_values > 100)
+		stop(paste0(ep, "clip_values must be between 0 excluded and 100 included"))	
   }
   
   feat_index <- which(rowData(sce)$Symbol %in% genes | rowData(sce)$ID %in% genes | rownames(sce) %in% genes)
@@ -1381,7 +1384,7 @@ plotHeatmap <- function(sce,
       		inherits(x, "numeric")|inherits(x, "integer")))
 		numeric_cols = numeric_cols_test[numeric_cols_test]
 
-		# Palette for categorical cols
+		# Palette for categorical columns
 		if(length(categorical_cols) > 0) {
 
 			num_cat_cols = lapply(names(categorical_cols), function(x) {
@@ -1413,8 +1416,7 @@ plotHeatmap <- function(sce,
 			col_list_categorical = NULL
 		}
 		
-		# Palette for numeric cols
-
+		# Palette for numeric columns
 		if(length(numeric_cols) > 0) {
 			cols_choose = .cpal_qual_pear(length(numeric_cols))
 			col_list_numeric = lapply(seq_len(length(numeric_cols)), function(i) {
@@ -1430,11 +1432,10 @@ plotHeatmap <- function(sce,
   	} else {
     	col_list = annotation_pal
   	}
-
+	# Final annotation
 	column_ha = ComplexHeatmap::HeatmapAnnotation(df = cd[,names(col_list), drop=FALSE],
 													  col = col_list)
- }
-  
+  }  
   if(!raster | raster != "force")
     if(nrow(mat) > 20000 | ncol(mat) > 20000) raster = TRUE
   if(raster == "force") raster = FALSE
@@ -1442,7 +1443,7 @@ plotHeatmap <- function(sce,
   if(!is.null(gaps)) {
     gaps = cd[,gaps]
   }
-  
+	# Color mapping and clipping for the heatmap
   if(scale) {
     if(!is.null(clip_values)) {
       clip_values = clip_values*10
@@ -1454,8 +1455,11 @@ plotHeatmap <- function(sce,
     color_range = c(-cr, 0, cr)
   } else {
     if(!is.null(clip_values)){
-      clip_values = clip_values*10
-      cr = quantile(mat, seq(0,1,length.out=1001), na.rm = TRUE)[clip_values]
+	# Clip to percentiles with variable decimal digit precision
+	  decimal_places = nchar(strsplit(as.character(clip_values), "\\.")[[1]][2])
+      if(is.na(decimal_places)) decimal_places = 0
+	  clip_values = clip_values * 10^(decimal_places)
+      cr = quantile(mat, seq(0, 1, length.out = (10^(decimal_places+2)+1)), na.rm = TRUE)[clip_values]
       color_range = range(mat[!is.na(mat)])
       color_range[which.max(color_range)] = cr
     } else {
@@ -1514,7 +1518,6 @@ plotHeatmap <- function(sce,
   }
   ComplexHeatmap::draw(H)
 }
-
 
 #' Pseudotime heatmap
 #' 
