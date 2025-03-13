@@ -79,6 +79,85 @@ plotSilhouette <- function(sce, name) {
     theme_minimal()
 }
 
+
+#' Plot proportions
+#' 
+#' Plots the proportion of cells in each label and grouping
+#' 
+#' @param sce a SingleCellExperiment object
+#' @param label character, the column name in the 
+#'    colData of the SingleCellExperiment used for
+#'    colouring the plot
+#' @param group_by character, the column name in the
+#'    colData of the SingleCellExperiment used for
+#'    grouping the bars
+#' @param color_palette named character, the name of the color
+#'    palette to be used. Default is \code{NULL}, 
+#'    meaning an automatic palette will be generated.
+#' 
+#' @return a stacked bar plot of proportions of cells in each
+#'    label, grouped according to the \code{group_by} variable.	
+#' 
+#' @importFrom SummarizedExperiment colData
+#' @importFrom ggplot2 ggplot aes geom_bar scale_fill_manual theme_bw
+#' @importFrom ggplot2 scale_y_continuous theme element_text element_blank
+#' @importFrom ggplot2 geom_hline .data ylab
+#' 
+#' @export
+
+plotProportions <- function(sce, 
+							label, 
+							group_by, 
+							color_palette = NULL) {
+
+  ## Sanity checks
+  # Error prefix
+  ep <- .redm("{cellula::plotProportions()} - ")
+
+  # Checks
+  if(!is(sce, "SingleCellExperiment"))
+    stop(paste0(ep, "Must provide a SingleCellExperiment object"))
+  if(!label %in% colnames(colData(sce)))
+	stop(paste0(ep, "label was not found in the colData of the object"))
+  if(!group_by %in% colnames(colData(sce)))
+	stop(paste0(ep, "group_by was not found in the colData of the object"))
+	if(!is.null(color_palette)) {
+		if(length(names(color_palette)) == 0)
+			stop(paste0(ep, "color_palette must be a named vector"))
+		if(!all(unique(colData(sce)[,label]) %in% names(color_palette)))
+			stop(paste0(ep, "color_palette does not contain names for all the levels of label"))		
+	}
+
+	if(is.null(color_palette)) {
+		total_cols = length(unique(colData(sce)[,label]))
+		if(total_cols <= 30) {
+				color_palette = .cpal_qual(n = total_cols) 
+			} else {
+				color_palette = colors()[sample(seq_len(657), size = total_cols)]
+			}
+			names(color_palette) = unique(as.character(colData(sce)[,label]))
+	}
+
+	cd = as.data.frame(colData(sce)[,c(label, group_by), drop = FALSE])
+
+	tab = as.data.frame(table(cd))
+	tab = do.call(rbind, split(tab, tab[,group_by]))
+	tab$prop = unlist(lapply(split(tab, tab[,group_by]), function(x) x$Freq/sum(x$Freq)))
+
+	ggplot(tab, aes(x = .data[[group_by]], y = .data[["prop"]]*100, fill = .data[[label]])) +
+	geom_bar(stat = "identity", color = "black") + 
+	geom_hline(yintercept = 0, linewidth = 0.5) +
+	scale_fill_manual(values = color_palette) +
+	theme_bw() + 
+	ylab("Proportion") +
+	scale_y_continuous(expand = c(0, 0), limits = c(0, 100)) +
+	theme(axis.text.x = element_text(angle = 45, hjust = 1), 
+			axis.text.y = element_text(size = 10),
+			panel.grid = element_blank(),
+			panel.border = element_blank(),
+			axis.line.y = element_line())
+}
+
 #' Plot Dimensionality Reduction
 #'
 #' Plots dimensionality reduction coordinates from a SingleCellExperiment object,
@@ -457,7 +536,7 @@ plot_dots <- function(sce,
 
   ## Sanity checks
   # Error prefix
-  ep <- .redm("{cellula::plot_Dots()} - ")
+  ep <- .redm("{cellula::plot_dots()} - ")
 
   # Checks
   if(!is(sce, "SingleCellExperiment"))
@@ -1705,7 +1784,6 @@ plotDGEStripchart <- function(dge,
 }
 
 
-
 #' Differential gene expression heatmap
 #' 
 #' Draws a heatmap of aggregated genes together with their DE results
@@ -2037,4 +2115,3 @@ plotLabelMD <- function(dge,
  plot_UMAP <- function(...){
 	plot_DR(...)
  }
-
