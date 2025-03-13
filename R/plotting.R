@@ -102,6 +102,7 @@ plotSilhouette <- function(sce, name) {
 #' @importFrom ggplot2 ggplot aes geom_bar scale_fill_manual theme_bw
 #' @importFrom ggplot2 scale_y_continuous theme element_text element_blank
 #' @importFrom ggplot2 geom_hline .data ylab
+#' @importFrom grDevices colors
 #' 
 #' @export
 
@@ -1340,7 +1341,7 @@ multipanel_DR <- function(sce, dr = "UMAP", dims = c(1,2),
 #' 	  of the columns. Two numeric columns cannot be properly used for ordering since they will
 #' 	  have an individual level for each cell.
 #' 
-#' 	  The aggregation arguments \{code{aggregate}, \code{aggregate_by}, \code{aggregate_fun}} 
+#' 	  The aggregation arguments \{code{aggregate}, \code{aggregate_by}, \code{aggregate_fun} 
 #'    are used to control if and how the data is aggregated. If \code{aggregate = TRUE}, the data
 #'    will be aggregated by the variables in \code{aggregate_by} using the function specified by 
 #'    \code{aggregate_fun}. 
@@ -1349,7 +1350,7 @@ multipanel_DR <- function(sce, dr = "UMAP", dims = c(1,2),
 #' @importFrom SummarizedExperiment colData
 #' @importFrom scuttle aggregateAcrossCells
 #' @importFrom stats quantile
-#' @importFrom grDevices colorRampPalette
+#' @importFrom grDevices colorRampPalette colors
 #' 
 #' @export
  
@@ -1446,9 +1447,9 @@ plotHeatmap <- function(sce,
 
   if(!is.null(coldata_cols) & !is.null(order_by)) {
 	if(length(order_by) > 1) {
-    	ordered_cols = do.call(order, cd[,order_by], na.last = TRUE)
+    	ordered_cols = do.call(order, cd[,order_by])
 	} else {
-		ordered_cols = order(cd[,order_by], na.last = TRUE)
+		ordered_cols = order(cd[,order_by])
 	}
     cd = cd[ordered_cols,]
     mat = mat[,ordered_cols]
@@ -1622,8 +1623,6 @@ plotHeatmap <- function(sce,
 #' 	   Each gene is scaled between 0 and 1 and smoothed using a zero-padded moving 
 #' 	   average with the specified window size.
 #' 
-#' @importFrom circlize colorRamp2
-#' @importFrom ComplexHeatmap Heatmap HeatmapAnnotation
 #' @importFrom SummarizedExperiment colData
 #' @importFrom stats median
 #' 

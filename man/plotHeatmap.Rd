@@ -8,10 +8,12 @@ plotHeatmap(
   sce,
   genes,
   coldata_cols = NULL,
+  order_by = coldata_cols,
   scale = TRUE,
   exprs = "logcounts",
   aggregate = FALSE,
   aggregate_by = NULL,
+  aggregate_fun = "sum",
   color_pal = NULL,
   annotation_pal = NULL,
   cluster_cells = TRUE,
@@ -33,6 +35,10 @@ These will be looked up in the rownames of the object, which are also the
 to include in the heatmap as annotations. Their order influences column ordering
    when \code{cluster_cols = FALSE}. Default is \code{NULL}.}
 
+\item{order_by}{character, the columns in the \code{colData} slot of the \code{sce} object
+to order the heatmap by. Default is \code{coldata_cols}. Overrides \code{cluster_cols} if
+not \code{NULL}.}
+
 \item{scale}{logical, should the expression data be scaled by row? Default is \code{TRUE}}
 
 \item{exprs}{character, the expression values to use. Default is \code{"logcounts"}}
@@ -43,13 +49,16 @@ aggregated by the variables indicdated in \code{aggregate_by}. Default is \code{
 \item{aggregate_by}{character, the columns in the \code{colData} slot of the \code{sce} object
 to aggregate by. Default is \code{NULL}}
 
+\item{aggregate_fun}{character, the function to use for aggregation. Default is \code{"sum"}}
+
 \item{color_pal}{character, the color palette to use for the heatmap. Default is \code{NULL}}
 
 \item{annotation_pal}{named list of named character vectors, the color palette 
 to use for the annotations. Default is \code{NULL}. See Details}
 
 \item{cluster_cells}{logical, should the columns (cells) be clustered? 
-Default is \code{TRUE}}
+Default is \code{TRUE}. It is automatically set to \code{FALSE} if \code{order_by} is 
+not \code{NULL}.}
 
 \item{cluster_genes}{logical, should the rows (genes) be clustered? Default is \code{TRUE}}
 
@@ -82,10 +91,17 @@ this function generates a heatmap of genes using expression data from the \code{
 	  The named character vectors should have the same length as the number of unique values 
    in the column, and the names should be the unique values. 
 	
-	  The order of colData columns in \code{coldata_cols} influences the order of the columns in the
+	  The order of colData columns in \code{order_by} influences the order of the columns in the
 	  heatmap. If \code{cluster_cols = FALSE}, the columns will be ordered according to the order
-	  of the columns in \code{coldata_cols}, where the first element dictates the major order, then
-	  the second element the minor order, etc, e.g. if \code{coldata_cols = c("condition", "label")}
+	  of the columns in \code{order_by}, where the first element dictates the major order, then
+	  the second element the minor order, etc, e.g. if \code{order_by = c("condition", "label")}
    columns will be first ordered by condition and then, within each condition, by label.
-	  If \code{cluster_cols = TRUE}, the columns will be ordered according to the clustering of the columns.
+	  If \code{cluster_cols = TRUE}, the columns will be ordered according to the clustering 
+	  of the columns. Two numeric columns cannot be properly used for ordering since they will
+	  have an individual level for each cell.
+
+	  The aggregation arguments \{code{aggregate}, \code{aggregate_by}, \code{aggregate_fun} 
+   are used to control if and how the data is aggregated. If \code{aggregate = TRUE}, the data
+   will be aggregated by the variables in \code{aggregate_by} using the function specified by 
+   \code{aggregate_fun}.
 }
