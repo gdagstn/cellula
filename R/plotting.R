@@ -1,6 +1,6 @@
 #' Plot cluster modularity
 #'
-#' Plots a heatmap showing pairwise cluster modularity from a SCE object
+#' Plots a heatmap showing pairwise cluster modularity 
 #'
 #' @param sce a \code{SingleCellExperiment} object
 #' @param name character, the name in the \code{metadata slot} of the
@@ -18,38 +18,43 @@
 #' @export
 
 plotModularity <- function(sce, name, type = "heatmap") {
+    name <- paste0("modularity_", name)
+    modmat <- log2(metadata(sce)[[name]] + 1)
 
-  name <- paste0("modularity_", name)
-  modmat <- log2(metadata(sce)[[name]] + 1)
-
-  if(type == "heatmap"){
-    m <- as.data.frame(expand.grid(seq_along(rownames(modmat)), 
-                                   seq_along(rownames(modmat))))
-    colnames(m) <- c("x", "y")
-    m$value <- vapply(seq_len(nrow(m)), 
-                     function(x) modmat[m[x,1], m[x,2]])
-    p <- ggplot(m, aes(x = .data[["x"]], y = .data[["y"]])) + 
-    	geom_tile(aes(fill = .data[["value"]], color = NA)) +
-        scale_x_discrete(position = "top")
-    p <- p + theme_minimal() +
-      theme(plot.margin = margin(1, 1, 1, 1, "cm"),
-        	panel.grid.major = element_blank(),
-            panel.grid.minor = element_blank(),
-            axis.line = element_blank(),
-            text = element_text(family = "sans"),
-            title = "log2(modularity ratio + 1)"
-      )
-    
-  } else if(type == "graph") {
-    cgr <- graph_from_adjacency_matrix(modmat,
-                                       mode="upper",
-                                       weighted=TRUE,
-                                       diag=FALSE)
-    plot(cgr,
-         edge.width=E(cgr)$weight*5,
-         layout=igraph::layout_with_lgl,
-         main = name)
-  }
+    if (type == "heatmap") {
+        m <- as.data.frame(expand.grid(
+            seq_along(rownames(modmat)),
+            seq_along(rownames(modmat))
+        ))
+        colnames(m) <- c("x", "y")
+        m$value <- vapply(
+            seq_len(nrow(m)),
+            function(x) modmat[m[x, 1], m[x, 2]], numeric(1)
+        )
+        p <- ggplot(m, aes(x = .data[["x"]], y = .data[["y"]])) +
+            geom_tile(aes(fill = .data[["value"]], color = NA)) +
+            scale_x_discrete(position = "top")
+        p <- p + theme_minimal() +
+            theme(
+                plot.margin = margin(1, 1, 1, 1, "cm"),
+                panel.grid.major = element_blank(),
+                panel.grid.minor = element_blank(),
+                axis.line = element_blank(),
+                text = element_text(family = "sans"),
+                title = "log2(modularity ratio + 1)"
+            )
+    } else if (type == "graph") {
+        cgr <- graph_from_adjacency_matrix(modmat,
+            mode = "upper",
+            weighted = TRUE,
+            diag = FALSE
+        )
+        plot(cgr,
+            edge.width = E(cgr)$weight * 5,
+            layout = igraph::layout_with_lgl,
+            main = name
+        )
+    }
 }
 
 #' Plot approximate silhouette widths
@@ -73,90 +78,95 @@ plotModularity <- function(sce, name, type = "heatmap") {
 #' @export
 
 plotSilhouette <- function(sce, name) {
-  name <- paste0("silhouette_", name)
-  ggplot(metadata(sce)[[name]], aes_string(x="cluster", y="width", colour="closest")) +
-    geom_quasirandom(method="smiley") +
-    theme_minimal()
+    name <- paste0("silhouette_", name)
+    ggplot(metadata(sce)[[name]], aes_string(x = "cluster", y = "width", colour = "closest")) +
+        geom_quasirandom(method = "smiley") +
+        theme_minimal()
 }
 
-
 #' Plot proportions
-#' 
+#'
 #' Plots the proportion of cells in each label and grouping
-#' 
+#'
 #' @param sce a SingleCellExperiment object
-#' @param label character, the column name in the 
+#' @param label character, the column name in the
 #'    colData of the SingleCellExperiment used for
 #'    colouring the plot
 #' @param group_by character, the column name in the
 #'    colData of the SingleCellExperiment used for
 #'    grouping the bars
 #' @param color_palette named character, the name of the color
-#'    palette to be used. Default is \code{NULL}, 
+#'    palette to be used. Default is \code{NULL},
 #'    meaning an automatic palette will be generated.
-#' 
+#'
 #' @return a stacked bar plot of proportions of cells in each
-#'    label, grouped according to the \code{group_by} variable.	
-#' 
+#'    label, grouped according to the \code{group_by} variable.
+#'
 #' @importFrom SummarizedExperiment colData
 #' @importFrom ggplot2 ggplot aes geom_bar scale_fill_manual theme_bw
 #' @importFrom ggplot2 scale_y_continuous theme element_text element_blank
 #' @importFrom ggplot2 geom_hline .data ylab
 #' @importFrom grDevices colors
-#' 
+#'
 #' @export
 
-plotProportions <- function(sce, 
-							label, 
-							group_by, 
-							color_palette = NULL) {
+plotProportions <- function(sce,
+                            label,
+                            group_by,
+                            color_palette = NULL) {
+    ## Sanity checks
+    # Error prefix
+    ep <- .redm("{cellula::plotProportions()} - ")
 
-  ## Sanity checks
-  # Error prefix
-  ep <- .redm("{cellula::plotProportions()} - ")
+    # Checks
+    if (!is(sce, "SingleCellExperiment")) {
+        stop(paste0(ep, "Must provide a SingleCellExperiment object"))
+    }
+    if (!label %in% colnames(colData(sce))) {
+        stop(paste0(ep, "label was not found in the colData of the object"))
+    }
+    if (!group_by %in% colnames(colData(sce))) {
+        stop(paste0(ep, "group_by was not found in the colData of the object"))
+    }
+    if (!is.null(color_palette)) {
+        if (length(names(color_palette)) == 0) {
+            stop(paste0(ep, "color_palette must be a named vector"))
+        }
+        if (!all(unique(colData(sce)[, label]) %in% names(color_palette))) {
+            stop(paste0(ep, "color_palette does not contain names for all the levels of label"))
+        }
+    }
 
-  # Checks
-  if(!is(sce, "SingleCellExperiment"))
-    stop(paste0(ep, "Must provide a SingleCellExperiment object"))
-  if(!label %in% colnames(colData(sce)))
-	stop(paste0(ep, "label was not found in the colData of the object"))
-  if(!group_by %in% colnames(colData(sce)))
-	stop(paste0(ep, "group_by was not found in the colData of the object"))
-	if(!is.null(color_palette)) {
-		if(length(names(color_palette)) == 0)
-			stop(paste0(ep, "color_palette must be a named vector"))
-		if(!all(unique(colData(sce)[,label]) %in% names(color_palette)))
-			stop(paste0(ep, "color_palette does not contain names for all the levels of label"))		
-	}
+    if (is.null(color_palette)) {
+        total_cols <- length(unique(colData(sce)[, label]))
+        if (total_cols <= 30) {
+            color_palette <- .cpal_qual(n = total_cols)
+        } else {
+            color_palette <- colors()[sample(seq_len(657), size = total_cols)]
+        }
+        names(color_palette) <- unique(as.character(colData(sce)[, label]))
+    }
 
-	if(is.null(color_palette)) {
-		total_cols = length(unique(colData(sce)[,label]))
-		if(total_cols <= 30) {
-				color_palette = .cpal_qual(n = total_cols) 
-			} else {
-				color_palette = colors()[sample(seq_len(657), size = total_cols)]
-			}
-			names(color_palette) = unique(as.character(colData(sce)[,label]))
-	}
+    cd <- as.data.frame(colData(sce)[, c(label, group_by), drop = FALSE])
 
-	cd = as.data.frame(colData(sce)[,c(label, group_by), drop = FALSE])
+    tab <- as.data.frame(table(cd))
+    tab <- do.call(rbind, split(tab, tab[, group_by]))
+    tab$prop <- unlist(lapply(split(tab, tab[, group_by]), function(x) x$Freq / sum(x$Freq)))
 
-	tab = as.data.frame(table(cd))
-	tab = do.call(rbind, split(tab, tab[,group_by]))
-	tab$prop = unlist(lapply(split(tab, tab[,group_by]), function(x) x$Freq/sum(x$Freq)))
-
-	ggplot(tab, aes(x = .data[[group_by]], y = .data[["prop"]]*100, fill = .data[[label]])) +
-	geom_bar(stat = "identity", color = "black") + 
-	geom_hline(yintercept = 0, linewidth = 0.5) +
-	scale_fill_manual(values = color_palette) +
-	theme_bw() + 
-	ylab("Proportion") +
-	scale_y_continuous(expand = c(0, 0), limits = c(0, 100)) +
-	theme(axis.text.x = element_text(angle = 45, hjust = 1), 
-			axis.text.y = element_text(size = 10),
-			panel.grid = element_blank(),
-			panel.border = element_blank(),
-			axis.line.y = element_line())
+    ggplot(tab, aes(x = .data[[group_by]], y = .data[["prop"]] * 100, fill = .data[[label]])) +
+        geom_bar(stat = "identity", color = "black") +
+        geom_hline(yintercept = 0, linewidth = 0.5) +
+        scale_fill_manual(values = color_palette) +
+        theme_bw() +
+        ylab("Proportion") +
+        scale_y_continuous(expand = c(0, 0), limits = c(0, 100)) +
+        theme(
+            axis.text.x = element_text(angle = 45, hjust = 1),
+            axis.text.y = element_text(size = 10),
+            panel.grid = element_blank(),
+            panel.border = element_blank(),
+            axis.line.y = element_line()
+        )
 }
 
 #' Plot Dimensionality Reduction
@@ -193,45 +203,45 @@ plotProportions <- function(sce,
 #' @param outline logical, should a black outline be painted around the point cloud?
 #'     Default is FALSE
 #' @param outline_size numeric, the thickness of the outline, expressed as a fraction
-#'     of the dot size. Default is 1.3, meaning the outline will be point size * 1.3.  
-#' @param arrows logical, should two perpendicular arrows be drawn on the bottom left 
-#'     corner of the plot be drawn? Default is TRUE. 
-#' @param exprs_use character, the name of the assay to be used when plotting a 
+#'     of the dot size. Default is 1.3, meaning the outline will be point size * 1.3.
+#' @param arrows logical, should two perpendicular arrows be drawn on the bottom left
+#'     corner of the plot be drawn? Default is TRUE.
+#' @param exprs_use character, the name of the assay to be used when plotting a
 #'     feature. Default is \code{"logcounts"}.
 #' @param num_scale numeric or character, either "auto" (default), which computes
-#'     color scale numbers automatically, or a numeric vector of length 2 with 
-#'     lower and upper limits for the scale.  
+#'     color scale numbers automatically, or a numeric vector of length 2 with
+#'     lower and upper limits for the scale.
 #' @param color_palette a character string containing colors to be used. Default
-#'     is \code{NULL}, meaning an automatic palette will be generated based on 
+#'     is \code{NULL}, meaning an automatic palette will be generated based on
 #'     the type of datum supplied in \code{color_by}. Some palettes can be named:
 #'     "Sunset", "Parula", "Turbo", "YlGnBU" for quantitative data, and "Qualpal",
-#'     "Tritan", "Protan", "Tableau", "Pear", "Polychrome" and "Polylight" for 
+#'     "Tritan", "Protan", "Tableau", "Pear", "Polychrome" and "Polylight" for
 #'     categorical data. The "Protan" and "Tritan" palettes are adapted for CVD
 #'     (Color Vision Deficiency) caused by protanopia and tritanopia respectively.
 #' @param trajectory a character string indicating the `metadata` slot containing
-#'     segment trajectories to be plotted. Usually either 
-#'     \code{"Slingshot_embedded_curves"} or \code{"Monocle_embedded_curves"}.  
+#'     segment trajectories to be plotted. Usually either
+#'     \code{"Slingshot_embedded_curves"} or \code{"Monocle_embedded_curves"}.
 #' @param rescale logical, should coordinates be rescaled between 0 and 1? Default is TRUE.
 #'
 #' @return a ggplot object showing the dimensionality reduction coordinates colored, shaped and/or
 #'     faceted as set by the arguments.
-#' 
-#' @details This plotting function is heavily inspired by the \code{\link[scater]{plotReducedDim}} 
+#'
+#' @details This plotting function is heavily inspired by the \code{\link[scater]{plotReducedDim}}
 #' function from the \code{{scater}} package.
-#' 
-#' 	   The function can be used to plot 2D dimensionality reduction coordinates, coloured by 
+#'
+#' 	   The function can be used to plot 2D dimensionality reduction coordinates, coloured by
 #'     a continuous or categorical variable, shaped by a categorical variable, and facetted
-#'     by a categorical variable. It can also add labels to the plot, and draw arrows in the 
-#'     bottom left corner with coordinate names. 
-#' 
-#'     The function also allows to plot a feature/gene from the \code{assay} slot of 
+#'     by a categorical variable. It can also add labels to the plot, and draw arrows in the
+#'     bottom left corner with coordinate names.
+#'
+#'     The function also allows to plot a feature/gene from the \code{assay} slot of
 #'     the \code{SingleCellExperiment} object by looking up the character in the columns
-#' 	   of the \code{rowData} slot. 
-#' 
-#'     To avoid overplotting the \code{knn_smooth} argument can be set to TRUE, 
-#'     which will smooth numeric values using k-nearest neighbors taking, for 
+#' 	   of the \code{rowData} slot.
+#'
+#'     To avoid overplotting the \code{knn_smooth} argument can be set to TRUE,
+#'     which will smooth numeric values using k-nearest neighbors taking, for
 #'     each cell, the mean of the values of its neighbourhood. The size of the
-#' 	   neighborhood can be set with the \code{smoothing_k} argument. 	
+#' 	   neighborhood can be set with the \code{smoothing_k} argument.
 #'
 #' @importFrom SingleCellExperiment reducedDimNames reducedDim
 #' @importFrom SummarizedExperiment colData
@@ -246,290 +256,339 @@ plotProportions <- function(sce,
 #' @export
 
 plot_DR <- function(sce,
-                      dr = "UMAP",
-                      color_by = NULL,
-                      shape_by = NULL,
-                      group_by = NULL,
-                      label_by = NULL,
-					  knn_smooth = FALSE,
-					  smoothing_k = 10,
-                      point_size = 0.7,
-                      label_size = 2,
-					  plotting_order = "max",
-                      outline = FALSE,
-                      outline_size = 1.3,
-                      arrows = TRUE,
-                      exprs_use = "logcounts",
-                      num_scale = "auto",
-                      color_palette = NULL,
-                      trajectory = NULL,
-                      rescale = TRUE) {
+                    dr = "UMAP",
+                    color_by = NULL,
+                    shape_by = NULL,
+                    group_by = NULL,
+                    label_by = NULL,
+                    knn_smooth = FALSE,
+                    smoothing_k = 10,
+                    point_size = 0.7,
+                    label_size = 2,
+                    plotting_order = "max",
+                    outline = FALSE,
+                    outline_size = 1.3,
+                    arrows = TRUE,
+                    exprs_use = "logcounts",
+                    num_scale = "auto",
+                    color_palette = NULL,
+                    trajectory = NULL,
+                    rescale = TRUE) {
+    ## Sanity checks
+    # Error prefix
+    ep <- .redm("{cellula::plot_DR()} - ")
 
-  ## Sanity checks
-  # Error prefix
-  ep <- .redm("{cellula::plot_DR()} - ")
-
-  # Checks
-  if(!is(sce, "SingleCellExperiment"))
-    stop(paste0(ep, "Must provide a SingleCellExperiment object"))
-  if(!dr %in% reducedDimNames(sce))
-    stop(paste0(ep, "Could not find a slot named \"", dr, "\" in the SingleCellExperiment object"))
-  if(!is.null(color_by)){
-    if(!color_by %in% colnames(colData(sce)) & !color_by %in% rowData(sce)$Symbol & !color_by %in% rowData(sce)$ID)
-      stop(paste0(ep, color_by, " is not a column or a rowData element of the SingleCellExperiment object"))
-  }
-  if(!is.null(shape_by)){
-    if(!shape_by %in% colnames(colData(sce)))
-      stop(paste0(ep,shape_by, " column not found in the colData of the SingleCellExperiment object"))
-  }
-  if(!is.null(label_by)){
-    if(!label_by %in% colnames(colData(sce)))
-      stop(paste0(label_by, " column not found in the colData of the SingleCellExperiment object"))
-    if(!is(colData(sce)[,label_by], "character") & !is(colData(sce)[,label_by], "factor"))
-      stop(paste0(ep, "Cannot label by a numeric value, convert it to factor first."))
-  }
-  if(!is.null(group_by)){
-    if(!group_by %in% colnames(colData(sce)))
-      stop(paste0(ep, group_by, " column not found in the colData of the SingleCellExperiment object"))
-    if(!is(colData(sce)[,group_by], "character") & !is(colData(sce)[,group_by], "factor"))
-      stop(paste0(ep, "Cannot group by a numeric value, convert it to factor first."))
-  }
-  if(num_scale != "auto" & !is(num_scale, "numeric")) 
-      stop(paste0(ep, " `num_scale` must be either a numeric vector or \"auto\""))
-  
-  if(is(num_scale, "numeric") & length(num_scale) != 2) 
-      stop(paste0(ep, " if specified, `num_scale` must contain exactly 2 numbers"))
-
-  udf <- as.data.frame(reducedDim(sce, dr)[,c(1,2)])
-  udf <- udf[complete.cases(udf),]
-
-  # Rescaling
-  if(rescale) {
-    orig_range <- lapply(udf, range)
-    names(orig_range) <- c("x", "y")
-    udf[,c(1,2)] <- apply(udf[,c(1,2)], 2, function(x) (x-min(x))/diff(range(x)))
-  }
-
-  colnames(udf) <- c("x", "y")
-
-  if(!is.null(color_by) & (color_by %in% rowData(sce)$Symbol | color_by %in% rowData(sce)$ID | color_by %in% rownames(sce)) & 
-     !color_by %in% colnames(colData(sce))) {
-    feature <- which(rowData(sce)$Symbol == color_by | rowData(sce)$ID == color_by | rownames(sce) == color_by)
-    colData(sce)[,color_by] <- as.numeric(assay(sce[feature,], exprs_use))
-  }
-
-  # Check which mappings to include
-  include <- list(color_by, shape_by, group_by, label_by)
-  include <- unique(unlist(include[!is.null(include)]))
-
-  for(i in include) udf[[i]] <- colData(sce)[rownames(udf),i]
-
-  colnames(udf)[seq_len(length(include)) + 2] <- include
-
-  classes <- unlist(lapply(udf[,include,drop=FALSE], class))
-
-  names(classes) <- include
-  aes_umap <- aes(x = .data[["x"]], y = .data[["y"]])
-
-  # Add color aesthetic if needed and decide what type of scale
-  if(!is.null(color_by)) {
-    aes_umap$colour <- aes(colour = .data[[color_by]])$colour
-
-    if(classes[color_by] == "numeric") {
-
-	if(knn_smooth) {
-		udf[,color_by] <- .smoothValues(udf[,color_by], k = smoothing_k)
-	}
-
-	if(plotting_order == "max") {
-		udf <- udf[order(udf[,color_by]),]
-	} else if(plotting_order == "min"){
-		udf <- udf[order(-udf[,color_by]),]
-	} else if(plotting_order == "random"){
-		udf <- udf[sample(seq_len(nrow(udf)), nrow(udf)),]
-	}
-
-      udf <- rbind(udf[is.na(udf[,color_by]),], 
-                  udf[!is.na(udf[,color_by]),])
-
-      pal <- .choosePalette(cpal = color_palette, default = "Sunset")
-
-      if(num_scale != "auto") {
-        lims <- num_scale
-        cscale <- scale_colour_gradientn(colours = pal, na.value = "lightgray", 
-                                         limits = lims)
-      } else {
-        cscale <- scale_colour_gradientn(colours = pal, na.value = "lightgray")
-      }
-      cguides <- NULL
-    } else if(classes[color_by] %in% c("character", "logical")) {
-      udf[,color_by] <- factor(udf[,color_by])
-        if(length(levels(udf[,color_by])) == 1) {
-          pal <- .choosePalette(cpal = NA)
-        } else {
-          pal <- .choosePalette(cpal = color_palette, default = "qualpal", 
-                               n = length(unique(udf[,color_by])))
+    # Checks
+    if (!is(sce, "SingleCellExperiment")) {
+        stop(paste0(ep, "Must provide a SingleCellExperiment object"))
+    }
+    if (!dr %in% reducedDimNames(sce)) {
+        stop(paste0(ep, "Could not find a slot named \"", dr, "\" in the SingleCellExperiment object"))
+    }
+    if (!is.null(color_by)) {
+        if (!color_by %in% colnames(colData(sce)) & !color_by %in% rowData(sce)$Symbol & !color_by %in% rowData(sce)$ID) {
+            stop(paste0(ep, color_by, " is not a column or a rowData element of the SingleCellExperiment object"))
         }
-        if(!is.null(names(pal)) & all(names(pal) %in% levels(udf[,color_by]))) {
-          pal <- pal[levels(udf[,color_by])]
+    }
+    if (!is.null(shape_by)) {
+        if (!shape_by %in% colnames(colData(sce))) {
+            stop(paste0(ep, shape_by, " column not found in the colData of the SingleCellExperiment object"))
         }
-      cscale <- scale_colour_manual(values = pal, na.value = "lightgray")
-      cguides <- guides(color = guide_legend(override.aes = list(size=2)))
-    } else if(classes[color_by] == "factor") {
-        pal <- .choosePalette(cpal = color_palette, default = "qualpal", 
-                             n = length(unique(udf[,color_by])))
-     
-        if(!is.null(names(pal)) & all(names(pal) %in% levels(udf[,color_by]))) {
-          pal <- pal[levels(udf[,color_by])]
+    }
+    if (!is.null(label_by)) {
+        if (!label_by %in% colnames(colData(sce))) {
+            stop(paste0(label_by, " column not found in the colData of the SingleCellExperiment object"))
         }
-      cscale <- scale_colour_manual(values = pal, na.value = "lightgray")
-      cguides <- guides(color = guide_legend(override.aes = list(size=2)))
+        if (!is(colData(sce)[, label_by], "character") & !is(colData(sce)[, label_by], "factor")) {
+            stop(paste0(ep, "Cannot label by a numeric value, convert it to factor first."))
+        }
     }
-  }
-
-  # Add shape aesthetic if needed
-  if(!is.null(shape_by)) {
-    if(classes[shape_by] == "numeric") {
-      stop("Cannot map `shape` aesthetic to a numeric value")
-    } else if(classes[shape_by] == "character"){
-      udf[,shape_by] <- factor(udf[,shape_by])
+    if (!is.null(group_by)) {
+        if (!group_by %in% colnames(colData(sce))) {
+            stop(paste0(ep, group_by, " column not found in the colData of the SingleCellExperiment object"))
+        }
+        if (!is(colData(sce)[, group_by], "character") & !is(colData(sce)[, group_by], "factor")) {
+            stop(paste0(ep, "Cannot group by a numeric value, convert it to factor first."))
+        }
     }
-    aes_umap$shape <- aes(shape = .data[[shape_by]])$shape
-  }
-
-  if(!is.null(label_by)) {
-    labels <- unique(udf[,label_by])
-    medoids <- lapply(labels, function(x) {
-      t(apply(udf[udf[,label_by] == x, c("x", "y")], 2, median))
-    })
-    label_df <- as.data.frame(do.call(rbind, medoids))
-    label_df[,label_by] <- labels
-    colnames(label_df) <- c("x", "y", "label")
-
-  }
-
-  if(!is.null(group_by)) {
-    if(is(udf[,group_by], "character"))
-      udf[,group_by] <- factor(udf[,group_by])
-  }
-
-  # Plot construction
-  p <- ggplot(udf, mapping = aes_umap) 
-  
-    if(outline) {
-      p <- p + geom_point(size = point_size*outline_size, 
-                         color = "black")
+    if (num_scale != "auto" & !is(num_scale, "numeric")) {
+        stop(paste0(ep, " `num_scale` must be either a numeric vector or \"auto\""))
     }
 
-   p <- p + geom_point(size = point_size) + 
-   theme(plot.margin = margin(2, 2, 2, 2, "cm")) 
-
-  # Coordinate arrows (bottom left corner)
-
-if(arrows) {
-
-   arrow_1 <- data.frame(x = 0, xend = 0.15, y = 0, yend = 0)
-   arrow_2 <- data.frame(x = 0, xend = 0, y = 0, yend = 0.15)
-   text_1 <- data.frame(x = -0.03, y = 0.02)
-   text_2 <- data.frame(x = 0.02, y = -0.03)  
-
-   p <- p +
-    geom_segment(data = arrow_1,
-                 mapping = aes(x = .data[["x"]],
-                               y = .data[["y"]],
-                               xend = .data[["xend"]],
-                               yend = .data[["yend"]]),
-                 inherit.aes = FALSE,
-                 color = "black",
-                 linewidth = 0.3,
-                 arrow = arrow(length=unit(0.2,"cm"),
-                               type = "closed")) +
-    geom_segment(data = arrow_2,
-                 mapping = aes(x = .data[["x"]],
-                               y = .data[["y"]],
-                               xend = .data[["xend"]],
-                               yend = .data[["yend"]]),
-                 color = "black",
-                 inherit.aes = FALSE,
-                 linewidth = 0.3,
-                 arrow = arrow(length=unit(0.2,"cm"),
-                               type = "closed")) +
-    geom_text(data = text_1,
-              aes(x = .data[["x"]],
-                  y = .data[["y"]]),
-              inherit.aes = FALSE,
-              label = paste0(dr, " 2"),
-              angle = 90,
-              size = 2,
-              hjust = "left",
-              vjust = "top",
-              color = "black") +
-    geom_text(data = text_2,
-              aes(x = .data[["x"]],
-                  y = .data[["y"]]),
-              inherit.aes = FALSE,
-              label = paste0(dr, " 1"),
-              size = 2,
-              hjust = "left",
-              vjust = "bottom",
-              color = "black")
-}
-
-   p <- p + coord_fixed()
-
-  if(!is.null(color_by)) {
-    p <- p + cscale + cguides
-  }
-
-  if(!is.null(label_by)) {
-    p <- p + geom_label_repel(data = label_df,
-                             mapping = aes(x = .data[["x"]],
-                                           y = .data[["y"]],
-                                           label = .data[["label"]]),
-                             inherit.aes = FALSE, size = label_size)
-  }
-
-  if(!is.null(group_by)) {
-    p <- p + facet_wrap(group_by)
-  }
-  
-  if(!is.null(trajectory)) {
-    trj <- metadata(sce)[[trajectory]]
-    
-    if(rescale) {
-      trj$x0 <- .rescalen(trj$x0, 
-                        from = range(orig_range$x),
-                        to = range(udf$x))
-      trj$x1 <- .rescalen(trj$x1, 
-                        from = range(orig_range$x),
-                        to = range(udf$x))
-      
-      trj$y0 <- .rescalen(trj$y0,
-                        from = range(orig_range$y),
-                        to = range(udf$y))
-      
-      trj$y1 <- .rescalen(trj$y1,
-                       from = range(orig_range$y),
-                       to = range(udf$y))
+    if (is(num_scale, "numeric") & length(num_scale) != 2) {
+        stop(paste0(ep, " if specified, `num_scale` must contain exactly 2 numbers"))
     }
-    trj <- as.data.frame(trj)
-    p <- p + geom_segment(data = trj, 
-                          mapping = aes(x = .data[["x0"]],
-                                       xend = .data[["x1"]],
-                                       y = .data[["y0"]],
-                                       yend = .data[["y1"]]),
-                          inherit.aes = FALSE
-    )
-  }
-  p + 
-  	theme_minimal() +
-	theme(panel.grid.major = element_blank(),
-		  panel.grid.minor = element_blank(),
-		  axis.line = element_blank(),
-		  axis.title = element_blank(),
-		  axis.ticks = element_blank(),
-		  axis.text = element_blank()
-	)	
+
+    udf <- as.data.frame(reducedDim(sce, dr)[, c(1, 2)])
+    udf <- udf[complete.cases(udf), ]
+
+    # Rescaling
+    if (rescale) {
+        orig_range <- lapply(udf, range)
+        names(orig_range) <- c("x", "y")
+        udf[, c(1, 2)] <- apply(udf[, c(1, 2)], 2, function(x) (x - min(x)) / diff(range(x)))
+    }
+
+    colnames(udf) <- c("x", "y")
+
+    if (!is.null(color_by) & (color_by %in% rowData(sce)$Symbol | color_by %in% rowData(sce)$ID | color_by %in% rownames(sce)) &
+        !color_by %in% colnames(colData(sce))) {
+        feature <- which(rowData(sce)$Symbol == color_by | rowData(sce)$ID == color_by | rownames(sce) == color_by)
+        colData(sce)[, color_by] <- as.numeric(assay(sce[feature, ], exprs_use))
+    }
+
+    # Check which mappings to include
+    include <- list(color_by, shape_by, group_by, label_by)
+    include <- unique(unlist(include[!is.null(include)]))
+
+    for (i in include) udf[[i]] <- colData(sce)[rownames(udf), i]
+
+    colnames(udf)[seq_len(length(include)) + 2] <- include
+
+    classes <- unlist(lapply(udf[, include, drop = FALSE], class))
+
+    names(classes) <- include
+    aes_umap <- aes(x = .data[["x"]], y = .data[["y"]])
+
+    # Add color aesthetic if needed and decide what type of scale
+    if (!is.null(color_by)) {
+        aes_umap$colour <- aes(colour = .data[[color_by]])$colour
+
+        if (classes[color_by] == "numeric") {
+            if (knn_smooth) {
+                udf[, color_by] <- .smoothValues(udf[, color_by], k = smoothing_k)
+            }
+
+            if (plotting_order == "max") {
+                udf <- udf[order(udf[, color_by]), ]
+            } else if (plotting_order == "min") {
+                udf <- udf[order(-udf[, color_by]), ]
+            } else if (plotting_order == "random") {
+                udf <- udf[sample(seq_len(nrow(udf)), nrow(udf)), ]
+            }
+
+            udf <- rbind(
+                udf[is.na(udf[, color_by]), ],
+                udf[!is.na(udf[, color_by]), ]
+            )
+
+            pal <- .choosePalette(cpal = color_palette, default = "Sunset")
+
+            if (num_scale != "auto") {
+                lims <- num_scale
+                cscale <- scale_colour_gradientn(
+                    colours = pal, na.value = "lightgray",
+                    limits = lims
+                )
+            } else {
+                cscale <- scale_colour_gradientn(colours = pal, na.value = "lightgray")
+            }
+            cguides <- NULL
+        } else if (classes[color_by] %in% c("character", "logical")) {
+            udf[, color_by] <- factor(udf[, color_by])
+            if (length(levels(udf[, color_by])) == 1) {
+                pal <- .choosePalette(cpal = NA)
+            } else {
+                pal <- .choosePalette(
+                    cpal = color_palette, default = "qualpal",
+                    n = length(unique(udf[, color_by]))
+                )
+            }
+            if (!is.null(names(pal)) & all(names(pal) %in% levels(udf[, color_by]))) {
+                pal <- pal[levels(udf[, color_by])]
+            }
+            cscale <- scale_colour_manual(values = pal, na.value = "lightgray")
+            cguides <- guides(color = guide_legend(override.aes = list(size = 2)))
+        } else if (classes[color_by] == "factor") {
+            pal <- .choosePalette(
+                cpal = color_palette, default = "qualpal",
+                n = length(unique(udf[, color_by]))
+            )
+
+            if (!is.null(names(pal)) & all(names(pal) %in% levels(udf[, color_by]))) {
+                pal <- pal[levels(udf[, color_by])]
+            }
+            cscale <- scale_colour_manual(values = pal, na.value = "lightgray")
+            cguides <- guides(color = guide_legend(override.aes = list(size = 2)))
+        }
+    }
+
+    # Add shape aesthetic if needed
+    if (!is.null(shape_by)) {
+        if (classes[shape_by] == "numeric") {
+            stop("Cannot map `shape` aesthetic to a numeric value")
+        } else if (classes[shape_by] == "character") {
+            udf[, shape_by] <- factor(udf[, shape_by])
+        }
+        aes_umap$shape <- aes(shape = .data[[shape_by]])$shape
+    }
+
+    if (!is.null(label_by)) {
+        labels <- unique(udf[, label_by])
+        medoids <- lapply(labels, function(x) {
+            t(apply(udf[udf[, label_by] == x, c("x", "y")], 2, median))
+        })
+        label_df <- as.data.frame(do.call(rbind, medoids))
+        label_df[, label_by] <- labels
+        colnames(label_df) <- c("x", "y", "label")
+    }
+
+    if (!is.null(group_by)) {
+        if (is(udf[, group_by], "character")) {
+            udf[, group_by] <- factor(udf[, group_by])
+        }
+    }
+
+    # Plot construction
+    p <- ggplot(udf, mapping = aes_umap)
+
+    if (outline) {
+        p <- p + geom_point(
+            size = point_size * outline_size,
+            color = "black"
+        )
+    }
+
+    p <- p + geom_point(size = point_size) +
+        theme(plot.margin = margin(2, 2, 2, 2, "cm"))
+
+    # Coordinate arrows (bottom left corner)
+
+    if (arrows) {
+        arrow_1 <- data.frame(x = 0, xend = 0.15, y = 0, yend = 0)
+        arrow_2 <- data.frame(x = 0, xend = 0, y = 0, yend = 0.15)
+        text_1 <- data.frame(x = -0.03, y = 0.02)
+        text_2 <- data.frame(x = 0.02, y = -0.03)
+
+        p <- p +
+            geom_segment(
+                data = arrow_1,
+                mapping = aes(
+                    x = .data[["x"]],
+                    y = .data[["y"]],
+                    xend = .data[["xend"]],
+                    yend = .data[["yend"]]
+                ),
+                inherit.aes = FALSE,
+                color = "black",
+                linewidth = 0.3,
+                arrow = arrow(
+                    length = unit(0.2, "cm"),
+                    type = "closed"
+                )
+            ) +
+            geom_segment(
+                data = arrow_2,
+                mapping = aes(
+                    x = .data[["x"]],
+                    y = .data[["y"]],
+                    xend = .data[["xend"]],
+                    yend = .data[["yend"]]
+                ),
+                color = "black",
+                inherit.aes = FALSE,
+                linewidth = 0.3,
+                arrow = arrow(
+                    length = unit(0.2, "cm"),
+                    type = "closed"
+                )
+            ) +
+            geom_text(
+                data = text_1,
+                aes(
+                    x = .data[["x"]],
+                    y = .data[["y"]]
+                ),
+                inherit.aes = FALSE,
+                label = paste0(dr, " 2"),
+                angle = 90,
+                size = 2,
+                hjust = "left",
+                vjust = "top",
+                color = "black"
+            ) +
+            geom_text(
+                data = text_2,
+                aes(
+                    x = .data[["x"]],
+                    y = .data[["y"]]
+                ),
+                inherit.aes = FALSE,
+                label = paste0(dr, " 1"),
+                size = 2,
+                hjust = "left",
+                vjust = "bottom",
+                color = "black"
+            )
+    }
+
+    p <- p + coord_fixed()
+
+    if (!is.null(color_by)) {
+        p <- p + cscale + cguides
+    }
+
+    if (!is.null(label_by)) {
+        p <- p + geom_label_repel(
+            data = label_df,
+            mapping = aes(
+                x = .data[["x"]],
+                y = .data[["y"]],
+                label = .data[["label"]]
+            ),
+            inherit.aes = FALSE, size = label_size
+        )
+    }
+
+    if (!is.null(group_by)) {
+        p <- p + facet_wrap(group_by)
+    }
+
+    if (!is.null(trajectory)) {
+        trj <- metadata(sce)[[trajectory]]
+
+        if (rescale) {
+            trj$x0 <- .rescalen(trj$x0,
+                from = range(orig_range$x),
+                to = range(udf$x)
+            )
+            trj$x1 <- .rescalen(trj$x1,
+                from = range(orig_range$x),
+                to = range(udf$x)
+            )
+
+            trj$y0 <- .rescalen(trj$y0,
+                from = range(orig_range$y),
+                to = range(udf$y)
+            )
+
+            trj$y1 <- .rescalen(trj$y1,
+                from = range(orig_range$y),
+                to = range(udf$y)
+            )
+        }
+        trj <- as.data.frame(trj)
+        p <- p + geom_segment(
+            data = trj,
+            mapping = aes(
+                x = .data[["x0"]],
+                xend = .data[["x1"]],
+                y = .data[["y0"]],
+                yend = .data[["y1"]]
+            ),
+            inherit.aes = FALSE
+        )
+    }
+    p +
+        theme_minimal() +
+        theme(
+            panel.grid.major = element_blank(),
+            panel.grid.minor = element_blank(),
+            axis.line = element_blank(),
+            axis.title = element_blank(),
+            axis.ticks = element_blank(),
+            axis.text = element_blank()
+        )
 }
 
 #' Plot a gene expression dot plot
@@ -2167,6 +2226,7 @@ plotLabelMD <- function(dge,
 #' @importFrom SummarizedExperiment colData assay
 #' @importFrom ggplot2 ggplot geom_path geom_abline facet_wrap theme_bw
 #' @importFrom ggplot2 .data aes 
+#' 
 plotROC <- function(sce, 
 					gene,
 					label, 
