@@ -179,10 +179,19 @@ plotProportions <- function(sce,
 #' @param label_by character, column name in the \code{colData} slot of \code{sce},
 #'     e.g. "cluster". Will be used to add labels to the plot. Can only be used
 #'     for categorical variables.
+#' @param knn_smooth logical, should the continuous values be smoothed using
+#' 	   k-nearest neighbors? Default is FALSE.
+#' @param smoothing_k numeric, the number of neighbors to use for smoothing.
+#'     Default is 10.
 #' @param point_size numeric, the size of the points in the plot. Default is 0.7.
 #' @param label_size numeric, the size of the font for the labels. Default is 2.
+#' @param plotting_order character, either "max", "min" or "random". This will determine
+#'     the plotting order of the points in the plot. Default is "max", meaning that
+#'     points will be plotted showing the highest values of \code{color_by} on top.
+#'     If "min", points will be plotted in the order of the minimum value of \code{color_by}.
+#'     If "random", points will be plotted in a random order.
 #' @param outline logical, should a black outline be painted around the point cloud?
-#'     Default is TRUE.
+#'     Default is FALSE
 #' @param outline_size numeric, the thickness of the outline, expressed as a fraction
 #'     of the dot size. Default is 1.3, meaning the outline will be point size * 1.3.  
 #' @param arrows logical, should two perpendicular arrows be drawn on the bottom left 
@@ -210,7 +219,19 @@ plotProportions <- function(sce,
 #' @details This plotting function is heavily inspired by the \code{\link[scater]{plotReducedDim}} 
 #' function from the \code{{scater}} package.
 #' 
-#'
+#' 	   The function can be used to plot 2D dimensionality reduction coordinates, coloured by 
+#'     a continuous or categorical variable, shaped by a categorical variable, and facetted
+#'     by a categorical variable. It can also add labels to the plot, and draw arrows in the 
+#'     bottom left corner with coordinate names. 
+#' 
+#'     The function also allows to plot a feature/gene from the \code{assay} slot of 
+#'     the \code{SingleCellExperiment} object by looking up the character in the columns
+#' 	   of the \code{rowData} slot. 
+#' 
+#'     To avoid overplotting the \code{knn_smooth} argument can be set to TRUE, 
+#'     which will smooth numeric values using k-nearest neighbors taking, for 
+#'     each cell, the mean of the values of its neighbourhood. The size of the
+#' 	   neighborhood can be set with the \code{smoothing_k} argument. 	
 #'
 #' @importFrom SingleCellExperiment reducedDimNames reducedDim
 #' @importFrom SummarizedExperiment colData
@@ -230,9 +251,12 @@ plot_DR <- function(sce,
                       shape_by = NULL,
                       group_by = NULL,
                       label_by = NULL,
+					  knn_smooth = FALSE,
+					  smoothing_k = 10,
                       point_size = 0.7,
                       label_size = 2,
-                      outline = TRUE,
+					  plotting_order = "max",
+                      outline = FALSE,
                       outline_size = 1.3,
                       arrows = TRUE,
                       exprs_use = "logcounts",
@@ -310,8 +334,21 @@ plot_DR <- function(sce,
   # Add color aesthetic if needed and decide what type of scale
   if(!is.null(color_by)) {
     aes_umap$colour <- aes(colour = .data[[color_by]])$colour
+
     if(classes[color_by] == "numeric") {
-      udf <- udf[order(udf[,color_by]),]
+
+	if(knn_smooth) {
+		udf[,color_by] <- .smoothValues(udf[,color_by], k = smoothing_k)
+	}
+
+	if(plotting_order == "max") {
+		udf <- udf[order(udf[,color_by]),]
+	} else if(plotting_order == "min"){
+		udf <- udf[order(-udf[,color_by]),]
+	} else if(plotting_order == "random"){
+		udf <- udf[sample(seq_len(nrow(udf)), nrow(udf)),]
+	}
+
       udf <- rbind(udf[is.na(udf[,color_by]),], 
                   udf[!is.na(udf[,color_by]),])
 
@@ -2101,66 +2138,103 @@ plotLabelMD <- function(dge,
 			theme_bw()
 }
 
-plotROC <- function(sce, gene, label, exprs = "logcounts", data = NULL, plot = TRUE){
-  
-rocs = lapply(unique(colData(sce)[,label]), function(x) {
-  gin = colData(sce)[,label] == x
-  truepos <- gin[order(assay(sce, exprs)[gene,], decreasing = FALSE)]
-  TPR <- rev((sum(truepos) - cumsum(truepos))/sum(truepos))
-  FPR <- rev(1-(cumsum(!truepos)/sum(!truepos)))
+#' plot Receiver-Operator Characteristic curves
+#' 
+#' plot ROC curves with other classification statistics
+#' 
+#' @param sce a SingleCellExperiment object
+#' @param gene character, the gene to use for the ROC curve
+#' @param label character, the column in the \code{colData} slot of the \code{sce} object
+#'   to use as labels for classification and facetting
+#' @param exprs character, the name of the assay with expression values to use.
+#'    Default is \code{"logcounts"}
+#' @param plot logical, should the ROC curves be plotted? Default is \code{TRUE}
+#' 
+#' @return if \code{plot = TRUE}, a facetted plot with ROC curves for each label in the \code{label} column
+#'    together with other classification statistics (see details). 
+#' 	  If \code{plot = FALSE}, a list with the ROC curve data and other
+#'    statistics is returned.
+#' 
+#' @details the function calculates the ROC curve for the gene specified 
+#'     in the \code{gene} argument, showing the classification performance 
+#' 	   of the gene for the label against all other labels. The function
+#' 	   calculates the Area Under the Curve (AUC), Youden's J statistic,
+#' 	   the entropy of the gene expression distribution, and the Jensen-Shannon
+#' 	   Divergence between the gene expression distribution and the ideal distribution.
+#' 
+#' 	   If \code
+#' 
+#' @importFrom SummarizedExperiment colData assay
+#' @importFrom ggplot2 ggplot geom_path geom_abline facet_wrap theme_bw
+#' @importFrom ggplot2 .data aes 
+plotROC <- function(sce, 
+					gene,
+					label, 
+					exprs = "logcounts", 
+					plot = TRUE){
 
-  # AUC
-  h <- diff(FPR)
-  ab = rowSums(embed(TPR, 2))
-  auc = sum((ab*h)/2)
-  message("AUC: ", round(auc, 4))
-  
-  # Youden's J: max(sens + spec - 1)
-  # FPR = 1 - spec
-  # spec = 1 - FPR
-  # sens + spec - 1 = TPR + 1 - FPR - 1
-  # sens + spec = TPR - FPR
-  
-  youden = which.max(TPR - FPR)
-  thresh = sort(assay(sce, exprs)[gene, colData(sce)[,label] == x], decreasing = TRUE)
-  youden_j = thresh[youden]
-  
-  # Entropy and Jensen-Shannon Divergence
-  entropy = function(x) {
-    x <- x[x > 0]
-    x <- x/sum(x)
-    -sum(x * log(x, 2))
-  }
-  
-  real = unlist(lapply(split(assay(sce, "logcounts")[gene,], colData(sce)[,label]), mean))
-  
-  ideal = rep((1/(length(real)-1))/(length(real)-1), length(real))
-  names(ideal) = names(real)
-  ideal[x] = 1-1/(length(real)-1)
-  ent = entropy(real/sum(real))
-  mixture = ((real/sum(real)) + ideal) * 0.5
-  jsd = entropy(mixture) - ((entropy(real) + entropy(ideal))*0.5)
-  
-  roc_curve = cbind(FPR, TPR)
-  colnames(roc_curve) = c("FPR", "TPR")
-  list(roc_curve = roc_curve,
-       auc = auc,
-       youden_j = youden_j,
-       ent = ent,
-       jsd = jsd)
-})	
+	rocs = lapply(unique(colData(sce)[,label]), function(x) {
+		gin = colData(sce)[,label] == x
+		truepos <- gin[order(assay(sce, exprs)[gene,], decreasing = FALSE)]
+		TPR <- rev((sum(truepos) - cumsum(truepos))/sum(truepos))
+		FPR <- rev(1-(cumsum(!truepos)/sum(!truepos)))
 
-	rocdf = as.data.frame(do.call(rbind, lapply(rocs, function(x) x$roc)))
-	rocdf$label = rep(unique(colData(sce)[,label]), unlist(lapply(rocs, function(y) nrow(y$roc))))
+		# AUC
+		h <- diff(FPR)
+		ab = rowSums(embed(TPR, 2))
+		auc = sum((ab*h)/2)
+		message("AUC: ", round(auc, 4))
+		
+		# Youden's J: max(sens + spec - 1)
+		# FPR = 1 - spec
+		# spec = 1 - FPR
+		# sens + spec - 1 = TPR + 1 - FPR - 1
+		# sens + spec = TPR - FPR
+		
+		youden = which.max(TPR - FPR)
+		thresh = sort(assay(sce, exprs)[gene, colData(sce)[,label] == x], decreasing = TRUE)
+		youden_j = thresh[youden]
+		
+		# Entropy and Jensen-Shannon Divergence
+		entropy = function(x) {
+			x <- x[x > 0]
+			x <- x/sum(x)
+			-sum(x * log(x, 2))
+		}
+		
+		real = unlist(lapply(split(assay(sce, "logcounts")[gene,], colData(sce)[,label]), mean))
+		
+		ideal = rep((1/(length(real)-1))/(length(real)-1), length(real))
+		names(ideal) = names(real)
+		ideal[x] = 1-1/(length(real)-1)
+		ent = entropy(real/sum(real))
+		mixture = ((real/sum(real)) + ideal) * 0.5
+		jsd = entropy(mixture) - ((entropy(real) + entropy(ideal))*0.5)
+		
+		roc_curve = cbind(FPR, TPR)
+		colnames(roc_curve) = c("FPR", "TPR")
+		list(roc_curve = roc_curve,
+			auc = auc,
+			youden_j = youden_j,
+			ent = ent,
+			jsd = jsd)
+	})	
 
-  # Plot
-  if(plot) { 
-		ggplot(rocdf, aes(x = .data[["FPR"]], y = .data[["TPR"]], color = .data[["label"]])) +
-			geom_path() +
-			geom_abline(intercept = 0, slope = 1, linetype = 2)
-			facet_wrap("label")
-			theme_bw() 
-  }
+		rocdf = as.data.frame(do.call(rbind, lapply(rocs, function(x) x$roc)))
+		rocdf$label = rep(unique(colData(sce)[,label]), unlist(lapply(rocs, function(y) nrow(y$roc))))
+		
+		if(!plot) return(ROC_data = rocs))
+
+	# Plot
+	if(plot) { 
+			ggplot(rocdf, aes(x = .data[["FPR"]], 
+							  y = .data[["TPR"]], 
+							  color = .data[["label"]])) +
+				geom_path() +
+				geom_abline(intercept = 0, slope = 1, linetype = 2) +
+				facet_wrap("label") +
+				theme_bw() 
+	}
  
 }	
 
