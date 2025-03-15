@@ -2101,6 +2101,70 @@ plotLabelMD <- function(dge,
 			theme_bw()
 }
 
+plotROC <- function(sce, gene, label, exprs = "logcounts", data = NULL, plot = TRUE){
+  
+rocs = lapply(unique(colData(sce)[,label]), function(x) {
+  gin = colData(sce)[,label] == x
+  truepos <- gin[order(assay(sce, exprs)[gene,], decreasing = FALSE)]
+  TPR <- rev((sum(truepos) - cumsum(truepos))/sum(truepos))
+  FPR <- rev(1-(cumsum(!truepos)/sum(!truepos)))
+
+  # AUC
+  h <- diff(FPR)
+  ab = rowSums(embed(TPR, 2))
+  auc = sum((ab*h)/2)
+  message("AUC: ", round(auc, 4))
+  
+  # Youden's J: max(sens + spec - 1)
+  # FPR = 1 - spec
+  # spec = 1 - FPR
+  # sens + spec - 1 = TPR + 1 - FPR - 1
+  # sens + spec = TPR - FPR
+  
+  youden = which.max(TPR - FPR)
+  thresh = sort(assay(sce, exprs)[gene, colData(sce)[,label] == x], decreasing = TRUE)
+  youden_j = thresh[youden]
+  
+  # Entropy and Jensen-Shannon Divergence
+  entropy = function(x) {
+    x <- x[x > 0]
+    x <- x/sum(x)
+    -sum(x * log(x, 2))
+  }
+  
+  real = unlist(lapply(split(assay(sce, "logcounts")[gene,], colData(sce)[,label]), mean))
+  
+  ideal = rep((1/(length(real)-1))/(length(real)-1), length(real))
+  names(ideal) = names(real)
+  ideal[x] = 1-1/(length(real)-1)
+  ent = entropy(real/sum(real))
+  mixture = ((real/sum(real)) + ideal) * 0.5
+  jsd = entropy(mixture) - ((entropy(real) + entropy(ideal))*0.5)
+  
+  roc_curve = cbind(FPR, TPR)
+  colnames(roc_curve) = c("FPR", "TPR")
+  list(roc_curve = roc_curve,
+       auc = auc,
+       youden_j = youden_j,
+       ent = ent,
+       jsd = jsd)
+})	
+
+	rocdf = as.data.frame(do.call(rbind, lapply(rocs, function(x) x$roc)))
+	rocdf$label = rep(unique(colData(sce)[,label]), unlist(lapply(rocs, function(y) nrow(y$roc))))
+
+  # Plot
+  if(plot) { 
+		ggplot(rocdf, aes(x = .data[["FPR"]], y = .data[["TPR"]], color = .data[["label"]])) +
+			geom_path() +
+			geom_abline(intercept = 0, slope = 1, linetype = 2)
+			facet_wrap("label")
+			theme_bw() 
+  }
+ 
+}	
+
+
 #' Plot UMAP
 #' 
 #' Alias for plot_DR for consistency with previous iterations
