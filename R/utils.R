@@ -148,7 +148,6 @@ checkFunctionDependencies <- function(depdf) {
     d_poly <- sqrt(rowSums(diff(as.matrix(poly_coords))^2))
     bandwidth <- mean(d_poly) * smoothness
     dense_poly <- .addPoints(poly_coords, steps = n_dense)
-    npt <- nrow(dense_poly)
     d_dense <- sqrt(rowSums(diff(as.matrix(dense_poly))^2))
     d_x <- c(0, cumsum(d_dense))
     poly_sm <- NULL
@@ -199,8 +198,7 @@ checkFunctionDependencies <- function(depdf) {
 }
 
 #' @noRd
-.mav <- function (x, window = 50) 
-{
+.mav <- function (x, window = 50){
     xp = c(rep(NA, floor((window - 1)/2)), x, rep(NA, ceiling((window - 
         1)/2)))
     n = window
@@ -212,11 +210,10 @@ checkFunctionDependencies <- function(depdf) {
     rsum
 }
 
-#' @importFrom BiocNeibhors findKmknn
+#' @importFrom BiocNeighbors findKmknn
 #'
 #' @noRd
-.smoothValues <- function (udf, column, k = 10) 
-{
+.smoothValues <- function (udf, column, k = 10) {
 	knn = findKmknn(udf[,c("x", "y")], k = k)
 	smoothed = unlist(lapply(seq_len(nrow(udf)), function(i) {
 		mean(udf[,column][knn$index[i,]])

@@ -2209,8 +2209,9 @@ plotLabelMD <- function(dge,
 #'    Default is \code{"logcounts"}
 #' @param plot logical, should the ROC curves be plotted? Default is \code{TRUE}
 #' 
-#' @return if \code{plot = TRUE}, a facetted plot with ROC curves for each label in the \code{label} column
-#'    together with other classification statistics (see details). 
+#' @return if \code{plot = TRUE}, a facetted plot with ROC curves 
+#'    for each label in the \code{label} column together with other 
+#'    classification statistics (see details). 
 #' 	  If \code{plot = FALSE}, a list with the ROC curve data and other
 #'    statistics is returned.
 #' 
@@ -2219,13 +2220,13 @@ plotLabelMD <- function(dge,
 #' 	   of the gene for the label against all other labels. The function
 #' 	   calculates the Area Under the Curve (AUC), Youden's J statistic,
 #' 	   the entropy of the gene expression distribution, and the Jensen-Shannon
-#' 	   Divergence between the gene expression distribution and the ideal distribution.
-#' 
-#' 	   If \code
+#' 	   Divergence between the gene expression distribution and an idealized 
+#'     distribution where the gene is only expressed in one label.
 #' 
 #' @importFrom SummarizedExperiment colData assay
 #' @importFrom ggplot2 ggplot geom_path geom_abline facet_wrap theme_bw
 #' @importFrom ggplot2 .data aes 
+#' @importFrom stats embed
 #' 
 plotROC <- function(sce, 
 					gene,
@@ -2283,7 +2284,7 @@ plotROC <- function(sce,
 		rocdf = as.data.frame(do.call(rbind, lapply(rocs, function(x) x$roc)))
 		rocdf$label = rep(unique(colData(sce)[,label]), unlist(lapply(rocs, function(y) nrow(y$roc))))
 		
-		if(!plot) return(ROC_data = rocs))
+		if(!plot) return(rocs)
 
 	# Plot
 	if(plot) { 

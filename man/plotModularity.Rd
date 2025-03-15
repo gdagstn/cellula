@@ -19,5 +19,5 @@ for different plot types}
 a heatmap of pairwise modularity
 }
 \description{
-Plots a heatmap showing pairwise cluster modularity from a SCE object
+Plots a heatmap showing pairwise cluster modularity
 }
