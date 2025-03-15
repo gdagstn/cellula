@@ -356,7 +356,7 @@ plot_DR <- function(sce,
 
         if (classes[color_by] == "numeric") {
             if (knn_smooth) {
-                udf[, color_by] <- .smoothValues(udf[, c("x", "y")], k = smoothing_k)
+                udf[, color_by] <- .smoothValues(udf, column = color_by, k = smoothing_k)
             }
 
             if (plotting_order == "max") {
