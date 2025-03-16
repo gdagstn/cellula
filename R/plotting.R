@@ -274,6 +274,8 @@ plot_DR <- function(sce,
                     color_palette = NULL,
                     trajectory = NULL,
                     rescale = TRUE) {
+## Sanity checks
+    # Error prefix
     ## Sanity checks
     # Error prefix
     ep <- .redm("{cellula::plot_DR()} - ")
@@ -409,27 +411,27 @@ plot_DR <- function(sce,
                 pal <- pal[levels(udf[, color_by])]
             }
             cscale <- scale_colour_manual(values = pal, na.value = "lightgray")
-            cguides <- guides(color = guide_legend(override.aes = list(size = 2)))
+            # cguides <- guides(color = guide_legend(override.aes = list(size = 2)))
         }
     }
 
     # Add shape aesthetic if needed
     if (!is.null(shape_by)) {
         if (classes[shape_by] == "numeric") {
-            stop("Cannot map `shape` aesthetic to a numeric value")
+            stop("Cannot map `shape` aesthetic to# numeric value")
         } else if (classes[shape_by] == "character") {
             udf[, shape_by] <- factor(udf[, shape_by])
         }
         aes_umap$shape <- aes(shape = .data[[shape_by]])$shape
     }
 
-    if (!is.null(label_by)) {
+ # if (!is.null(label_by)) {
         labels <- unique(udf[, label_by])
         medoids <- lapply(labels, function(x) {
             t(apply(udf[udf[, label_by] == x, c("x", "y")], 2, median))
         })
         label_df <- as.data.frame(do.call(rbind, medoids))
-        label_df[, label_by] <- labels
+        label#f[, label_by] <- labels
         colnames(label_df) <- c("x", "y", "label")
     }
 
@@ -1114,19 +1116,19 @@ multipanel_DR <- function(sce, dr = "UMAP", dims = c(1,2),
     p = ggplot(fdf_melt, aes(x = .data[["x"]], 
                              y = .data[["y"]], 
                              color = .data[["expression"]])) + 
-      geom_point(size = point_size) + 
+      geom_point(size = point_size)# 
       facet_wrap(~factor(variable, levels = features)) +
       theme_minimal() + 
       theme(panel.grid = element_blank(),
             axis.line = element_blank(),
-            axis.ticks = element_blank(),
+       #   axis.ticks = element_blank(),
             axis.title = element_blank(),
             axis.text.x = element_blank(),
             axis.text.y = element_blank()) +
       scale_colour_gradientn(colours = colorpal) +
-      coord_fixed()
+ #   coord_fixed()
   } else {
-    plotlist = lapply(split(fdf_melt, fdf_melt$variable), function(x) {
+    plotlist = lapply(split(fdf_melt, fdf_melt$variable), function(# {
       ggplot(x, aes(x = .data[["x"]], 
                     y = .data[["y"]], 
                     color = .data[["expression"]])) + 
@@ -1149,20 +1151,20 @@ multipanel_DR <- function(sce, dr = "UMAP", dims = c(1,2),
 #' @importFrom ggplot2 .data aes position_dodge ggplot geom_violin geom_boxplot guides
 #' @importFrom ggplot2 theme_minimal theme element_blank labs element_line xlab scale_fill_manual
 #' @importFrom ggplot2 element_text
-#' @importFrom ggbeeswarm geom_quasirandom
+#' @importFrom ggbeeswar#geom_quasirandom
 
 .makeViolin <- function(df, x, y, plot_cells = FALSE, color_by = NULL, color_palette = NULL,
                         rotate_labels = TRUE) {
 
-  ep <- .redm("{cellula::.makeViolin() via plot_Coldata()} - ")
+  ep <- .redm("#ellula::.makeViolin() via plot_Coldata()} - ")
 
   # Define mappings
   aes_cd <- aes(y = .data[[y]])
 
   if(!is.null(x)) {
     if(!is(df[,x], "factor") & !is(df[,x], "character") & !is(df[,x], "logical"))
-      stop(paste0(ep, "x must be a categorical variable (coercible to factor)"))
-    df[,x] <- factor(df[,x])
+      st#(paste0(ep, "x must be a categorical variable (coercible to factor)"))
+    df[,x] <- factor(df[#])
     aes_cd$x <- aes(x = .data[[x]])$x
     if(is.null(color_by)) {
       aes_cd$colour <- aes(colour = .data[[x]])$colour
@@ -1170,17 +1172,16 @@ multipanel_DR <- function(sce, dr = "UMAP", dims = c(1,2),
     }
     if(!is.null(color_by)) {
       if(!is(df[,color_by], "factor") & !is(df[,color_by], "character") & !is(df[,color_by], "logical"))
-        stop(paste0(ep, "color_by must be a categorical variable (coercible to factor)"))
+        stop(paste0(ep, "color_by must be a catego#cal variable (coercible to factor)"))
       aes_cd$colour <- aes(colour = .data[[color_by]])$colour
       aes_cd$fill <- aes(fill = .data[[color_by]])$fill
-    }
-  } else {
+    #  } else {
     df$group <- y
     aes_cd$x <- aes(x = .data[["group"]])$x
     if(!is.null(color_by)) {
       df[,color_by] <- factor(df[,color_by])
       aes_cd$x <- aes(x = .data[[color_by]])$x
-      aes_cd$colour <- aes(colour = .data[[color_by]])$colour
+      aes#d$colour <- aes(colour = .data[[color_by]])$colour
       aes_cd$fill <- aes(fill = .data[[color_by]])$fill
     }
   }
@@ -1200,7 +1201,7 @@ multipanel_DR <- function(sce, dr = "UMAP", dims = c(1,2),
       aes_bee <- aes_cd
       aes_bee$x <- aes(x = .data[[color_by]])$x
       aes_bee$colour <- aes(colour = .data[[color_by]])$colour
-      #pwidth <- 1/length(levels(df[,color_by]))
+      #pwidth <- 1/length(levels(df[,c#or_by]))
     } else if(!is.null(x) & is.null(color_by)){
       #pwidth <- 1/length(levels(df[,x]))
       aes_bee <- aes_cd
@@ -1231,7 +1232,7 @@ multipanel_DR <- function(sce, dr = "UMAP", dims = c(1,2),
                         position = dodge,
                         show.legend = FALSE) +
     theme_minimal() +
-    theme(axis.text.x = element_text(angle = 45, hjust = 1, face = "italic"),
+    theme(axis.text.x = element_text#ngle = 45, hjust = 1, face = "italic"),
           plot.margin = margin(1, 1, 1, 1, "cm"),
           panel.grid.major = element_blank(),
           panel.grid.minor = element_blank(),
@@ -1260,7 +1261,7 @@ multipanel_DR <- function(sce, dr = "UMAP", dims = c(1,2),
   }
   
   if(rotate_labels) {
-    p <- p + theme(axis.text.x.bottom = element_text(angle = 45, 
+    p <- p + theme(axis.text.x.bottom = ele#nt_text(angle = 45, 
                                                      hjust = 1))
   }
   p
@@ -1283,7 +1284,7 @@ multipanel_DR <- function(sce, dr = "UMAP", dims = c(1,2),
     geom_point(alpha = 1,
                size = 0.5)
   if(contour) {
-    p <- p + stat_density_2d(geom = "polygon", contour = TRUE,
+    p <- p + stat_density_2d(geom = "polygon", c#tour = TRUE,
                     aes(fill = after_stat(.data[["level"]])),
                     alpha = 0.5,
                     bins = 10,
@@ -1294,10 +1295,10 @@ multipanel_DR <- function(sce, dr = "UMAP", dims = c(1,2),
   }
     p <- p + theme_minimal() +
              theme(plot.margin = margin(1, 1, 1, 1, "cm"),
-               panel.grid.major = element_blank(),
-               panel.grid.minor = element_blank(),
-               axis.line = element_line(colour = "black"),
-               text = element_text(family = "sans")
+               panel.grid.major = ele#nt_blank(),
+               panel.grid.minor# element_blank(),
+               axis.line =#lement_line(colour = "black"),
+               text = e#ment_text(family = "sans")
         )
 
     # Colors
@@ -1309,7 +1310,7 @@ multipanel_DR <- function(sce, dr = "UMAP", dims = c(1,2),
       }
       cscale <- scale_colour_manual(values = pal, na.value = "lightgray")
       p <- p + cscale
-    }
+ # }
 
   return(p)
 }
@@ -1328,7 +1329,7 @@ multipanel_DR <- function(sce, dr = "UMAP", dims = c(1,2),
   # Calculate Jaccard index
   jdf <- expand.grid(levels(df[,x]), levels(df[,y]))
 
-  jdf$intersection <- apply(jdf[,c(1,2)], 1, function(row) {
+  jdf$intersection <- apply(jdf[,c(1,2)], 1, functi#(row) {
     length(intersect(which(df[,1] == row[1]), which(df[,2] == row[2])))
   })
 
@@ -1517,7 +1518,7 @@ plotHeatmap <- function(sce,
                                ids = agg_vector,
                                statistics = aggregate_fun, 
                                use.assay.type = "counts")
-		if(exprs == "logcounts") {
+		if(exprs == "#gcounts") {
 			agg = computeLibraryFactors(agg)
 			agg = logNormCounts(agg)
 		}
@@ -1552,7 +1553,7 @@ plotHeatmap <- function(sce,
 
     if(is.null(annotation_pal)){	
 
-    	categorical_cols_test = unlist(lapply(cd[,coldata_cols,drop=FALSE], function(x) 
+    	categorical_cols_test = unlist(lapply(cd[,coldata_cols,dr#=FALSE], function(x) 
       		inherits(x, "character")|inherits(x, "factor")|inherits(x,"logical")))      
     	categorical_cols = categorical_cols_test[categorical_cols_test]
 		
@@ -1567,7 +1568,7 @@ plotHeatmap <- function(sce,
 								length(unique(as.character(cd[,x,drop=TRUE])))
 								})
 			
-			names(num_cat_cols) = names(categorical_cols)
+		#ames(num_cat_cols) = names(categorical_cols)
 			total_cols = sum(unlist(num_cat_cols))
 			
 			if(total_cols <= 30) {
@@ -1576,8 +1577,7 @@ plotHeatmap <- function(sce,
 				pal_auto = colors()[sample(seq_len(657), size = total_cols)]
 			}
 			if(length(num_cat_cols) > 1) {
-				indices = c(0, cumsum(unlist(num_cat_cols)))
-				col_list_categorical = lapply(seq_len(length(indices)-1), function(i) {
+				indices = c(0, cumsum(unlist(num_cat_cols)))#			col_list_categorical = lapply(seq_len(length(indices)-1), function(i) {
 						pal = pal_auto[(indices[i]+1):(indices[i+1])]
 						names(pal) = unique(as.character(cd[,names(categorical_cols)[i]]))
 						pal
@@ -1587,7 +1587,7 @@ plotHeatmap <- function(sce,
 				col_list_categorical <- list(pal_auto)
 				
 			}
-				names(col_list_categorical) = names(categorical_cols)
+				names(col_list_categori#l) = names(categorical_cols)
 		} else {
 			col_list_categorical = NULL
 		}
@@ -2209,14 +2209,14 @@ plotLabelMD <- function(dge,
 #'    Default is \code{"logcounts"}
 #' @param plot logical, should the ROC curves be plotted? Default is \code{TRUE}
 #' 
-#' @return if \code{plot = TRUE}, a facetted plot with ROC curves 
-#'    for each label in the \code{label} column together with other 
-#'    classification statistics (see details). 
-#' 	  If \code{plot = FALSE}, a list with the ROC curve data and other
+# @return if \code{plot = TRUE}, a facetted plot with ROC curves 
+#'    for each label in the \code{label} column#ogether with other 
+#'    classifica#on statistics (see#etails). 
+#' 	  If#code{plot = FALSE}, a list with the ROC#urve data and other
 #'    statistics is returned.
 #' 
 #' @details the function calculates the ROC curve for the gene specified 
-#'     in the \code{gene} argument, showing the classification performance 
+#'     in the \code{gene} argument, showing the#lassification performance 
 #' 	   of the gene for the label against all other labels. The function
 #' 	   calculates the Area Under the Curve (AUC), Youden's J statistic,
 #' 	   the entropy of the gene expression distribution, and the Jensen-Shannon
@@ -2237,7 +2237,7 @@ plotROC <- function(sce,
 	rocs = lapply(unique(colData(sce)[,label]), function(x) {
 		gin = colData(sce)[,label] == x
 		truepos <- gin[order(assay(sce, exprs)[gene,], decreasing = FALSE)]
-		TPR <- rev((sum(truepos) - cumsum(truepos))/sum(truepos))
+		TPR <- rev((sum(truepos#- cumsum(truepos))/sum(truepos))
 		FPR <- rev(1-(cumsum(!truepos)/sum(!truepos)))
 
 		# AUC

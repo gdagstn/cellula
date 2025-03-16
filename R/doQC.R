@@ -236,5 +236,6 @@ doQC <- function(sce,
              path = savepath, device = "pdf", 
              width = 3200, height = 3200, units = "px")
   } 
+  
   sce
 }

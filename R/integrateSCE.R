@@ -737,7 +737,10 @@ if(length(dr) > 1) {
 		function(r) {
     	if(verbose) message(paste0(.bluem("[INT/Diagnosis - Jaccard]"), " Calculating mean-max Jaccard index for reduction ", r))
 			
-			sce_overcl = colData(makeGraphsAndClusters(sce, neighbors = neighbors, k = k, dr = r))[,paste0("SNN_", k)]
+			sce_overcl = colData(makeGraphsAndClusters(sce, neighbors = neighbors, 
+													   k = k, dr = r, 
+													   calculate_modularity = FALSE, 
+													   calculate_silhouette = FALSE))[,paste0("SNN_", k)]
 			
 			jac = lapply(sce_overcl, function(x) {
 				pairs = as.data.frame(expand.grid(unique(x), unique(colData(sce)[,labels])))
