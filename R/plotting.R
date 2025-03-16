@@ -1106,9 +1106,9 @@ multipanel_DR <- function(sce, dr = "UMAP", dims = c(1,2),
             axis.text.x = element_blank(),
             axis.text.y = element_blank()) +
       scale_colour_gradientn(colours = colorpal) +
- #   coord_fixed()
+    coord_fixed()
   } else {
-    plotlist = lapply(split(fdf_melt, fdf_melt$variable), function(# {
+    plotlist = lapply(split(fdf_melt, fdf_melt$variable), function(x){
       ggplot(x, aes(x = .data[["x"]], 
                     y = .data[["y"]], 
                     color = .data[["expression"]])) + 
@@ -1143,8 +1143,8 @@ multipanel_DR <- function(sce, dr = "UMAP", dims = c(1,2),
 
   if(!is.null(x)) {
     if(!is(df[,x], "factor") & !is(df[,x], "character") & !is(df[,x], "logical"))
-      st#(paste0(ep, "x must be a categorical variable (coercible to factor)"))
-    df[,x] <- factor(df[#])
+      stop(paste0(ep, "x must be a categorical variable (coercible to factor)"))
+    df[,x] <- factor(df[,x])
     aes_cd$x <- aes(x = .data[[x]])$x
     if(is.null(color_by)) {
       aes_cd$colour <- aes(colour = .data[[x]])$colour
@@ -1155,15 +1155,16 @@ multipanel_DR <- function(sce, dr = "UMAP", dims = c(1,2),
         stop(paste0(ep, "color_by must be a catego#cal variable (coercible to factor)"))
       aes_cd$colour <- aes(colour = .data[[color_by]])$colour
       aes_cd$fill <- aes(fill = .data[[color_by]])$fill
-    #  } else {
+      } else {
     df$group <- y
     aes_cd$x <- aes(x = .data[["group"]])$x
     if(!is.null(color_by)) {
       df[,color_by] <- factor(df[,color_by])
       aes_cd$x <- aes(x = .data[[color_by]])$x
-      aes#d$colour <- aes(colour = .data[[color_by]])$colour
+      aes_cd$colour <- aes(colour = .data[[color_by]])$colour
       aes_cd$fill <- aes(fill = .data[[color_by]])$fill
     }
+   }
   }
 
   dodge <- position_dodge(width = 1)
@@ -1181,7 +1182,7 @@ multipanel_DR <- function(sce, dr = "UMAP", dims = c(1,2),
       aes_bee <- aes_cd
       aes_bee$x <- aes(x = .data[[color_by]])$x
       aes_bee$colour <- aes(colour = .data[[color_by]])$colour
-      #pwidth <- 1/length(levels(df[,c#or_by]))
+      #pwidth <- 1/length(levels(df[,color_by]))
     } else if(!is.null(x) & is.null(color_by)){
       #pwidth <- 1/length(levels(df[,x]))
       aes_bee <- aes_cd
@@ -1212,7 +1213,7 @@ multipanel_DR <- function(sce, dr = "UMAP", dims = c(1,2),
                         position = dodge,
                         show.legend = FALSE) +
     theme_minimal() +
-    theme(axis.text.x = element_text#ngle = 45, hjust = 1, face = "italic"),
+    theme(axis.text.x = element_text(angle = 45, hjust = 1, face = "italic"),
           plot.margin = margin(1, 1, 1, 1, "cm"),
           panel.grid.major = element_blank(),
           panel.grid.minor = element_blank(),
@@ -1241,7 +1242,7 @@ multipanel_DR <- function(sce, dr = "UMAP", dims = c(1,2),
   }
   
   if(rotate_labels) {
-    p <- p + theme(axis.text.x.bottom = ele#nt_text(angle = 45, 
+    p <- p + theme(axis.text.x.bottom = element_text(angle = 45, 
                                                      hjust = 1))
   }
   p
@@ -1264,7 +1265,7 @@ multipanel_DR <- function(sce, dr = "UMAP", dims = c(1,2),
     geom_point(alpha = 1,
                size = 0.5)
   if(contour) {
-    p <- p + stat_density_2d(geom = "polygon", c#tour = TRUE,
+    p <- p + stat_density_2d(geom = "polygon", contour = TRUE,
                     aes(fill = after_stat(.data[["level"]])),
                     alpha = 0.5,
                     bins = 10,
@@ -1275,10 +1276,10 @@ multipanel_DR <- function(sce, dr = "UMAP", dims = c(1,2),
   }
     p <- p + theme_minimal() +
              theme(plot.margin = margin(1, 1, 1, 1, "cm"),
-               panel.grid.major = ele#nt_blank(),
-               panel.grid.minor# element_blank(),
-               axis.line =#lement_line(colour = "black"),
-               text = e#ment_text(family = "sans")
+               panel.grid.major = element_blank(),
+               panel.grid.minor =  element_blank(),
+               axis.line = element_line(colour = "black"),
+               text = element_text(family = "sans")
         )
 
     # Colors
@@ -1290,7 +1291,7 @@ multipanel_DR <- function(sce, dr = "UMAP", dims = c(1,2),
       }
       cscale <- scale_colour_manual(values = pal, na.value = "lightgray")
       p <- p + cscale
- # }
+  }
 
   return(p)
 }
@@ -1309,7 +1310,7 @@ multipanel_DR <- function(sce, dr = "UMAP", dims = c(1,2),
   # Calculate Jaccard index
   jdf <- expand.grid(levels(df[,x]), levels(df[,y]))
 
-  jdf$intersection <- apply(jdf[,c(1,2)], 1, functi#(row) {
+  jdf$intersection <- apply(jdf[,c(1,2)], 1, function(row) {
     length(intersect(which(df[,1] == row[1]), which(df[,2] == row[2])))
   })
 
@@ -1533,7 +1534,7 @@ plotHeatmap <- function(sce,
 
     if(is.null(annotation_pal)){	
 
-    	categorical_cols_test = unlist(lapply(cd[,coldata_cols,dr#=FALSE], function(x) 
+    	categorical_cols_test = unlist(lapply(cd[,coldata_cols,drop=FALSE], function(x) 
       		inherits(x, "character")|inherits(x, "factor")|inherits(x,"logical")))      
     	categorical_cols = categorical_cols_test[categorical_cols_test]
 		
@@ -1548,7 +1549,7 @@ plotHeatmap <- function(sce,
 								length(unique(as.character(cd[,x,drop=TRUE])))
 								})
 			
-		#ames(num_cat_cols) = names(categorical_cols)
+		names(num_cat_cols) = names(categorical_cols)
 			total_cols = sum(unlist(num_cat_cols))
 			
 			if(total_cols <= 30) {
@@ -1557,7 +1558,8 @@ plotHeatmap <- function(sce,
 				pal_auto = colors()[sample(seq_len(657), size = total_cols)]
 			}
 			if(length(num_cat_cols) > 1) {
-				indices = c(0, cumsum(unlist(num_cat_cols)))#			col_list_categorical = lapply(seq_len(length(indices)-1), function(i) {
+				indices = c(0, cumsum(unlist(num_cat_cols)))
+				col_list_categorical = lapply(seq_len(length(indices)-1), function(i) {
 						pal = pal_auto[(indices[i]+1):(indices[i+1])]
 						names(pal) = unique(as.character(cd[,names(categorical_cols)[i]]))
 						pal
@@ -1567,7 +1569,7 @@ plotHeatmap <- function(sce,
 				col_list_categorical <- list(pal_auto)
 				
 			}
-				names(col_list_categori#l) = names(categorical_cols)
+				names(col_list_categorical) = names(categorical_cols)
 		} else {
 			col_list_categorical = NULL
 		}
@@ -2217,7 +2219,7 @@ plotROC <- function(sce,
 	rocs = lapply(unique(colData(sce)[,label]), function(x) {
 		gin = colData(sce)[,label] == x
 		truepos <- gin[order(assay(sce, exprs)[gene,], decreasing = FALSE)]
-		TPR <- rev((sum(truepos#- cumsum(truepos))/sum(truepos))
+		TPR <- rev((sum(truepos) - cumsum(truepos))/sum(truepos))
 		FPR <- rev(1-(cumsum(!truepos)/sum(!truepos)))
 
 		# AUC
