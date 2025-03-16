@@ -11,9 +11,12 @@ plot_DR(
   shape_by = NULL,
   group_by = NULL,
   label_by = NULL,
+  knn_smooth = FALSE,
+  smoothing_k = 10,
   point_size = 0.7,
   label_size = 2,
-  outline = TRUE,
+  plotting_order = "max",
+  outline = FALSE,
   outline_size = 1.3,
   arrows = TRUE,
   exprs_use = "logcounts",
@@ -45,36 +48,48 @@ categorical variables.}
 e.g. "cluster". Will be used to add labels to the plot. Can only be used
 for categorical variables.}
 
+\item{knn_smooth}{logical, should the continuous values be smoothed using
+k-nearest neighbors? Default is FALSE.}
+
+\item{smoothing_k}{numeric, the number of neighbors to use for smoothing.
+Default is 10.}
+
 \item{point_size}{numeric, the size of the points in the plot. Default is 0.7.}
 
 \item{label_size}{numeric, the size of the font for the labels. Default is 2.}
 
+\item{plotting_order}{character, either "max", "min" or "random". This will determine
+the plotting order of the points in the plot. Default is "max", meaning that
+points will be plotted showing the highest values of \code{color_by} on top.
+If "min", points will be plotted in the order of the minimum value of \code{color_by}.
+If "random", points will be plotted in a random order.}
+
 \item{outline}{logical, should a black outline be painted around the point cloud?
-Default is TRUE.}
+Default is FALSE}
 
 \item{outline_size}{numeric, the thickness of the outline, expressed as a fraction
 of the dot size. Default is 1.3, meaning the outline will be point size * 1.3.}
 
-\item{arrows}{logical, should two perpendicular arrows be drawn on the bottom left 
+\item{arrows}{logical, should two perpendicular arrows be drawn on the bottom left
 corner of the plot be drawn? Default is TRUE.}
 
-\item{exprs_use}{character, the name of the assay to be used when plotting a 
+\item{exprs_use}{character, the name of the assay to be used when plotting a
 feature. Default is \code{"logcounts"}.}
 
 \item{num_scale}{numeric or character, either "auto" (default), which computes
-color scale numbers automatically, or a numeric vector of length 2 with 
+color scale numbers automatically, or a numeric vector of length 2 with
 lower and upper limits for the scale.}
 
 \item{color_palette}{a character string containing colors to be used. Default
-is \code{NULL}, meaning an automatic palette will be generated based on 
+is \code{NULL}, meaning an automatic palette will be generated based on
 the type of datum supplied in \code{color_by}. Some palettes can be named:
 "Sunset", "Parula", "Turbo", "YlGnBU" for quantitative data, and "Qualpal",
-"Tritan", "Protan", "Tableau", "Pear", "Polychrome" and "Polylight" for 
+"Tritan", "Protan", "Tableau", "Pear", "Polychrome" and "Polylight" for
 categorical data. The "Protan" and "Tritan" palettes are adapted for CVD
 (Color Vision Deficiency) caused by protanopia and tritanopia respectively.}
 
 \item{trajectory}{a character string indicating the `metadata` slot containing
-segment trajectories to be plotted. Usually either 
+segment trajectories to be plotted. Usually either
 \code{"Slingshot_embedded_curves"} or \code{"Monocle_embedded_curves"}.}
 
 \item{rescale}{logical, should coordinates be rescaled between 0 and 1? Default is TRUE.}
@@ -88,6 +103,20 @@ Plots dimensionality reduction coordinates from a SingleCellExperiment object,
 coloured and grouped according to colData fields
 }
 \details{
-This plotting function is heavily inspired by the \code{\link[scater]{plotReducedDim}} 
+This plotting function is heavily inspired by the \code{\link[scater]{plotReducedDim}}
 function from the \code{{scater}} package.
+
+	   The function can be used to plot 2D dimensionality reduction coordinates, coloured by
+    a continuous or categorical variable, shaped by a categorical variable, and facetted
+    by a categorical variable. It can also add labels to the plot, and draw arrows in the
+    bottom left corner with coordinate names.
+
+    The function also allows to plot a feature/gene from the \code{assay} slot of
+    the \code{SingleCellExperiment} object by looking up the character in the columns
+	   of the \code{rowData} slot.
+
+    To avoid overplotting the \code{knn_smooth} argument can be set to TRUE,
+    which will smooth numeric values using k-nearest neighbors taking, for
+    each cell, the mean of the values of its neighbourhood. The size of the
+	   neighborhood can be set with the \code{smoothing_k} argument.
 }

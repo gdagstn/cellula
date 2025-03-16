@@ -148,7 +148,6 @@ checkFunctionDependencies <- function(depdf) {
     d_poly <- sqrt(rowSums(diff(as.matrix(poly_coords))^2))
     bandwidth <- mean(d_poly) * smoothness
     dense_poly <- .addPoints(poly_coords, steps = n_dense)
-    npt <- nrow(dense_poly)
     d_dense <- sqrt(rowSums(diff(as.matrix(dense_poly))^2))
     d_x <- c(0, cumsum(d_dense))
     poly_sm <- NULL
@@ -199,8 +198,7 @@ checkFunctionDependencies <- function(depdf) {
 }
 
 #' @noRd
-.mav <- function (x, window = 50) 
-{
+.mav <- function (x, window = 50){
     xp = c(rep(NA, floor((window - 1)/2)), x, rep(NA, ceiling((window - 
         1)/2)))
     n = window
@@ -210,4 +208,46 @@ checkFunctionDependencies <- function(depdf) {
     rn <- cn[(n + 1):length(cx)] - cn[1:(length(cx) - n)]
     rsum <- rx/rn
     rsum
+}
+
+#' @importFrom BiocNeighbors findKmknn
+#'
+#' @noRd
+.smoothValues <- function (udf, column, k = 10) {
+	knn = findKmknn(udf[,c("x", "y")], k = k)
+	smoothed = unlist(lapply(seq_len(nrow(udf)), function(i) {
+		mean(udf[,column][knn$index[i,]])
+	}))
+	smoothed
+}
+
+.checkInputs <- function(sce, dr, color_by, shape_by, label_by, group_by, num_scale, ep) {
+  if (!is(sce, "SingleCellExperiment"))
+    stop(paste0(ep, "Must provide a SingleCellExperiment object"))
+  if (!dr %in% reducedDimNames(sce))
+    stop(paste0(ep, "Could not find a slot named \"", dr, "\" in the SingleCellExperiment object"))
+  if (!is.null(color_by)) {
+    if (!color_by %in% colnames(colData(sce)) & !color_by %in% rowData(sce)$Symbol & !color_by %in% rowData(sce)$ID)
+      stop(paste0(ep, color_by, " is not a column or a rowData element of the SingleCellExperiment object"))
+  }
+  if (!is.null(shape_by)) {
+    if (!shape_by %in% colnames(colData(sce)))
+      stop(paste0(ep, shape_by, " column not found in the colData of the SingleCellExperiment object"))
+  }
+  if (!is.null(label_by)) {
+    if (!label_by %in% colnames(colData(sce)))
+      stop(paste0(label_by, " column not found in the colData of the SingleCellExperiment object"))
+    if (!is(colData(sce)[, label_by], "character") & !is(colData(sce)[, label_by], "factor"))
+      stop(paste0(ep, "Cannot label by a numeric value, convert it to factor first."))
+  }
+  if (!is.null(group_by)) {
+    if (!group_by %in% colnames(colData(sce)))
+      stop(paste0(ep, group_by, " column not found in the colData of the SingleCellExperiment object"))
+    if (!is(colData(sce)[, group_by], "character") & !is(colData(sce)[, group_by], "factor"))
+      stop(paste0(ep, "Cannot group by a numeric value, convert it to factor first."))
+  }
+  if (num_scale != "auto" & !is(num_scale, "numeric")) 
+    stop(paste0(ep, " `num_scale` must be either a numeric vector or \"auto\""))
+  if (is(num_scale, "numeric") & length(num_scale) != 2) 
+    stop(paste0(ep, " if specified, `num_scale` must contain exactly 2 numbers"))
 }
