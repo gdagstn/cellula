@@ -425,7 +425,7 @@ plot_DR <- function(sce,
         aes_umap$shape <- aes(shape = .data[[shape_by]])$shape
     }
 
- # if (!is.null(label_by)) {
+ 	if (!is.null(label_by)) {
         labels <- unique(udf[, label_by])
         medoids <- lapply(labels, function(x) {
             t(apply(udf[udf[, label_by] == x, c("x", "y")], 2, median))
