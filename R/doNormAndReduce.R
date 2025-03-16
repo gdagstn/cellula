@@ -119,7 +119,6 @@ doNormAndReduce <- function(sce, batch = NULL, name = NULL,
   sce
 }
 
-
 #' UMAP Parameter Sweep
 #'
 #' Runs 
@@ -138,7 +137,9 @@ doNormAndReduce <- function(sce, batch = NULL, name = NULL,
 #'     to be used in some steps of the pipeline. Default is \code{SerialParam()},
 #'     meaning no parallelization will be used.
 #'
-#' @return a \code{list} containing two elements: a \code{list} of UMAP embedding coordinates and a \code{data.frame} with the parameter grid and its associated seed
+#' @return a \code{list} containing two elements: 
+#'     a \code{list} of UMAP embedding coordinates and a 
+#'     \code{data.frame} with the parameter grid and its associated seed
 #'
 #' @importFrom uwot umap
 #' @importFrom SingleCellExperiment reducedDim 

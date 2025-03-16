@@ -411,7 +411,7 @@ buildReference <- function(sce, agg_by, agg_assay = "logcounts", agg_fun = "sum"
       stop(ep, "an assay slot must be supplied through the assay argument")
     if (!agg_by %in% colnames(colData(sce)))
       stop(ep, "agg_by was not found in the colData slot")
-    if (!is(colData(sce)[,agg_by], "factor") & !is(colData(sce)[,agg_by], "character"))
+    if (!is(colData(sce)[,agg_by], "factor") && !is(colData(sce)[,agg_by], "character"))
       stop(ep, "agg_by must point to either a factor or character in colData")
     if (is(colData(sce)[,agg_by], "factor")) {
       colData(sce)

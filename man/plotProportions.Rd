@@ -9,7 +9,7 @@ plotProportions(sce, label, group_by, color_palette = NULL)
 \arguments{
 \item{sce}{a SingleCellExperiment object}
 
-\item{label}{character, the column name in the 
+\item{label}{character, the column name in the
 colData of the SingleCellExperiment used for
 colouring the plot}
 
@@ -18,7 +18,7 @@ colData of the SingleCellExperiment used for
 grouping the bars}
 
 \item{color_palette}{named character, the name of the color
-palette to be used. Default is \code{NULL}, 
+palette to be used. Default is \code{NULL},
 meaning an automatic palette will be generated.}
 }
 \value{
