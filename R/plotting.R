@@ -1138,7 +1138,7 @@ multipanel_DR <- function(sce, dr = "UMAP", dims = c(1,2),
 
   ep <- .redm("#ellula::.makeViolin() via plot_Coldata()} - ")
 
-  # Define mappings
+   # Define mappings
   aes_cd <- aes(y = .data[[y]])
 
   if(!is.null(x)) {
@@ -1152,10 +1152,11 @@ multipanel_DR <- function(sce, dr = "UMAP", dims = c(1,2),
     }
     if(!is.null(color_by)) {
       if(!is(df[,color_by], "factor") & !is(df[,color_by], "character") & !is(df[,color_by], "logical"))
-        stop(paste0(ep, "color_by must be a catego#cal variable (coercible to factor)"))
+        stop(paste0(ep, "color_by must be a categorical variable (coercible to factor)"))
       aes_cd$colour <- aes(colour = .data[[color_by]])$colour
       aes_cd$fill <- aes(fill = .data[[color_by]])$fill
-      } else {
+    }
+  } else {
     df$group <- y
     aes_cd$x <- aes(x = .data[["group"]])$x
     if(!is.null(color_by)) {
@@ -1164,11 +1165,10 @@ multipanel_DR <- function(sce, dr = "UMAP", dims = c(1,2),
       aes_cd$colour <- aes(colour = .data[[color_by]])$colour
       aes_cd$fill <- aes(fill = .data[[color_by]])$fill
     }
-   }
   }
 
   dodge <- position_dodge(width = 1)
-
+  
   # Violins
   p <- ggplot(df, mapping = aes_cd) +
     geom_violin(alpha = 0.35,
