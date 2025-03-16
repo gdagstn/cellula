@@ -1136,7 +1136,7 @@ multipanel_DR <- function(sce, dr = "UMAP", dims = c(1,2),
 .makeViolin <- function(df, x, y, plot_cells = FALSE, color_by = NULL, color_palette = NULL,
                         rotate_labels = TRUE) {
 
-  ep <- .redm("#ellula::.makeViolin() via plot_Coldata()} - ")
+  ep <- .redm("cellula::.makeViolin() via plot_Coldata()} - ")
 
    # Define mappings
   aes_cd <- aes(y = .data[[y]])
