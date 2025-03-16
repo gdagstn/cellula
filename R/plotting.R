@@ -1136,9 +1136,9 @@ multipanel_DR <- function(sce, dr = "UMAP", dims = c(1,2),
 .makeViolin <- function(df, x, y, plot_cells = FALSE, color_by = NULL, color_palette = NULL,
                         rotate_labels = TRUE) {
 
-  ep <- .redm("cellula::.makeViolin() via plot_Coldata()} - ")
+  ep <- .redm("{cellula::.makeViolin() via plot_Coldata()} - ")
 
-   # Define mappings
+  # Define mappings
   aes_cd <- aes(y = .data[[y]])
 
   if(!is.null(x)) {
@@ -1168,7 +1168,7 @@ multipanel_DR <- function(sce, dr = "UMAP", dims = c(1,2),
   }
 
   dodge <- position_dodge(width = 1)
-  
+
   # Violins
   p <- ggplot(df, mapping = aes_cd) +
     geom_violin(alpha = 0.35,
@@ -1247,6 +1247,7 @@ multipanel_DR <- function(sce, dr = "UMAP", dims = c(1,2),
   }
   p
 }
+
 
 #' @importFrom ggplot2 .data aes ggplot stat_density_2d after_stat scale_fill_gradientn
 #' @importFrom ggplot2 theme_minimal theme element_blank labs element_line
