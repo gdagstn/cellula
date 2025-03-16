@@ -159,7 +159,7 @@ plotProportions <- function(sce,
         scale_fill_manual(values = color_palette) +
         theme_bw() +
         ylab("Proportion") +
-        scale_y_continuous(expand = c(0, 0), limits = c(0, 100)) +
+        scale_y_continuous(expand = c(0, 0), limits = c(0, 110)) +
         theme(
             axis.text.x = element_text(angle = 45, hjust = 1),
             axis.text.y = element_text(size = 10),
@@ -431,7 +431,7 @@ plot_DR <- function(sce,
             t(apply(udf[udf[, label_by] == x, c("x", "y")], 2, median))
         })
         label_df <- as.data.frame(do.call(rbind, medoids))
-        label#f[, label_by] <- labels
+        label_df[, label_by] <- labels
         colnames(label_df) <- c("x", "y", "label")
     }
 
