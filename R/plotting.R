@@ -436,7 +436,7 @@ if(arrows) {
               hjust = "left",
               vjust = "bottom",
               color = "black")
-}
+	}
 
    p <- p + coord_fixed()
 
