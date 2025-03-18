@@ -1101,7 +1101,7 @@ multipanel_DR <- function(sce, dr = "UMAP", dims = c(1,2),
       theme_minimal() + 
       theme(panel.grid = element_blank(),
             axis.line = element_blank(),
-       #   axis.ticks = element_blank(),
+            axis.ticks = element_blank(),
             axis.title = element_blank(),
             axis.text.x = element_blank(),
             axis.text.y = element_blank()) +
