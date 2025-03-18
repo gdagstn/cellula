@@ -1096,7 +1096,7 @@ multipanel_DR <- function(sce, dr = "UMAP", dims = c(1,2),
     p = ggplot(fdf_melt, aes(x = .data[["x"]], 
                              y = .data[["y"]], 
                              color = .data[["expression"]])) + 
-      geom_point(size = point_size)# 
+      geom_point(size = point_size) + 
       facet_wrap(~factor(variable, levels = features)) +
       theme_minimal() + 
       theme(panel.grid = element_blank(),
