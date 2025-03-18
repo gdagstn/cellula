@@ -411,7 +411,7 @@ plot_DR <- function(sce,
                 pal <- pal[levels(udf[, color_by])]
             }
             cscale <- scale_colour_manual(values = pal, na.value = "lightgray")
-            # cguides <- guides(color = guide_legend(override.aes = list(size = 2)))
+            cguides <- guides(color = guide_legend(override.aes = list(size = 2)))
         }
     }
 
