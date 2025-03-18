@@ -1044,6 +1044,8 @@ multipanel_DR <- function(sce, dr = "UMAP", dims = c(1,2),
                           features, point_size = 1.2, 
                           plot_order = "decreasing",
                           exprs_use = "logcounts",
+						  knn_smooth = FALSE,
+                          smoothing_k = 10,
                           rng_seed = 11,
                           common_scale = FALSE,
                           color_palette = NULL) {
@@ -1081,7 +1083,18 @@ multipanel_DR <- function(sce, dr = "UMAP", dims = c(1,2),
   } else {
     colorpal = color_palette
   }
-  
+
+   if (knn_smooth) {
+
+	  fdf_melt_split <- split(fdf_melt, fdf_melt$variable)
+
+	  for (i in 1:length(fdf_melt_split)) {
+                fdf_melt_split[[i]]$expression <- .smoothValues(fdf_melt_split[[i]], column = "expression", k = smoothing_k)
+	  }
+
+	  fdf_melt <- as.data.frame(do.call(rbind, fdf_melt_split))
+    }
+
   if(plot_order == "decreasing") {
     fdf_melt = fdf_melt[order(fdf_melt$expression),]
   } else if(plot_order == "increasing") {
@@ -1131,7 +1144,7 @@ multipanel_DR <- function(sce, dr = "UMAP", dims = c(1,2),
 #' @importFrom ggplot2 .data aes position_dodge ggplot geom_violin geom_boxplot guides
 #' @importFrom ggplot2 theme_minimal theme element_blank labs element_line xlab scale_fill_manual
 #' @importFrom ggplot2 element_text
-#' @importFrom ggbeeswar#geom_quasirandom
+#' @importFrom ggbeeswarm geom_quasirandom
 
 .makeViolin <- function(df, x, y, plot_cells = FALSE, color_by = NULL, color_palette = NULL,
                         rotate_labels = TRUE) {

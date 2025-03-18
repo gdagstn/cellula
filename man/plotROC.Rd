@@ -17,21 +17,19 @@ to use as labels for classification and facetting}
 \item{exprs}{character, the name of the assay with expression values to use.
 Default is \code{"logcounts"}}
 
-\item{plot}{logical, should the ROC curves be plotted? Default is \code{TRUE}}
-}
-\value{
-if \code{plot = TRUE}, a facetted plot with ROC curves 
-   for each label in the \code{label} column together with other 
-   classification statistics (see details). 
-	  If \code{plot = FALSE}, a list with the ROC curve data and other
-   statistics is returned.
+\item{plot}{logical, should the ROC curves be plotted? Default is \code{TRUE}
+
+   for each label in the \code{label} column#ogether with other 
+   classifica#on statistics (see#etails). 
+      If#code{plot = FALSE}, a list with the ROC#urve data and other
+   statistics is returned.}
 }
 \description{
 plot ROC curves with other classification statistics
 }
 \details{
 the function calculates the ROC curve for the gene specified 
-    in the \code{gene} argument, showing the classification performance 
+    in the \code{gene} argument, showing the#lassification performance 
 	   of the gene for the label against all other labels. The function
 	   calculates the Area Under the Curve (AUC), Youden's J statistic,
 	   the entropy of the gene expression distribution, and the Jensen-Shannon
