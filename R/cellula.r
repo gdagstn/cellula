@@ -96,21 +96,15 @@ cellula <- function(sce,
     name <- .randomName()
     message("No name selected, so the randomly assigned name is: ", name)
   }
-
-  dir.create(paste0(path, "/", name))
-  clog$name <- name
-  clog$dir <- paste0(path, "/", name)
-  
   # Begin
     if(verbose) {
     message("\nWorking on object ", name, "\n")
     ncells <- ncol(sce)
     message("Input cells: ", ncells, "\n")
-      clog$qc$input_cells <- ncells
+      
     if(!is.null(batch)) {
       message("By batch: \n")
       print(table(colData(sce)[,batch]))
-      clog$qc$input_by_batch <- table(colData(sce)[,batch])
     }
   }
  

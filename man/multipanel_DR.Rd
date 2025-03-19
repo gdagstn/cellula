@@ -37,6 +37,11 @@ Influences the way points are plotted, important when dealing with overplotting.
 \item{exprs_use}{character, the name of the \code{assay} in the object whose values will
 be plotted. Default is "logcounts".}
 
+\item{knn_smooth}{logical, should the values be smoothed using a k-nearest neighbors
+approach? Default is FALSE.}
+
+\item{smoothing_k}{numeric, the number of neighbors to use when smoothing. Default is 10.}
+
 \item{rng_seed}{numeric, the random number generator seed used when \code{plot_order = "random"}.}
 
 \item{common_scale}{logical, should the points have a single, common color scale (TRUE) or 

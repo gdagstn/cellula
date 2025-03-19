@@ -153,7 +153,6 @@ makeGraphsAndClusters <- function(sce,
       }
     }
   }
-  metadata(sce)$cellula_log = clog
   return(sce)
 }
 
