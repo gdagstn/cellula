@@ -210,11 +210,11 @@ checkFunctionDependencies <- function(depdf) {
     rsum
 }
 
-#' @importFrom BiocNeighbors findKmknn
+#' @importFrom BiocNeighbors findKNN
 #'
 #' @noRd
 .smoothValues <- function (udf, column, k = 10) {
-	knn = findKmknn(udf[,c("x", "y")], k = k)
+	knn = findKNN(udf[,c("x", "y")], k = k)
 	smoothed = unlist(lapply(seq_len(nrow(udf)), function(i) {
 		mean(udf[,column][knn$index[i,]])
 	}))

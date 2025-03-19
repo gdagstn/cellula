@@ -12,7 +12,8 @@ plotPseudotimeHeatmap(
   cluster_genes = FALSE,
   labels = NULL,
   labels_pal = NULL,
-  smoothing_window = 200
+  smoothing_window = 200,
+  raster = FALSE
 )
 }
 \arguments{
@@ -37,6 +38,8 @@ to use for the labels. Default is \code{NULL}}
 
 \item{smoothing_window}{numeric, the window size for smoothing the expression values.
 Default is \code{200}}
+
+\item{raster}{logical, should the heatmap be rasterized? Default is \code{FALSE}}
 }
 \value{
 a heatmap of the gene expression data ordered by pseudotime with,
