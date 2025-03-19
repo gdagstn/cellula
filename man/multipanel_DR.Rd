@@ -12,6 +12,8 @@ multipanel_DR(
   point_size = 1.2,
   plot_order = "decreasing",
   exprs_use = "logcounts",
+  knn_smooth = FALSE,
+  smoothing_k = 10,
   rng_seed = 11,
   common_scale = FALSE,
   color_palette = NULL

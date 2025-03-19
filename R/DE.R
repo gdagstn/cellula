@@ -11,6 +11,8 @@
 #'     that contains the label information
 #' @param condition character, column in \code{colData(sce)}
 #'     that contains the condition information
+#' @param min_cells numeric, minimum number of cells per condition
+#'     to keep the pseudobulk sample. Default is 10.
 #' @param subset_conditions logical, should the object be subset to contain 
 #'	   only the conditions specified in the contrast? 
 #'     Default is \code{FALSE}.
@@ -77,6 +79,7 @@ doPBDGE <- function(sce,
 					replicates,
 					labels,
 					condition,
+					min_cells = 10,
 					subset_conditions = FALSE,
 					contrast = NULL,
 					design = NULL,
@@ -121,6 +124,7 @@ doPBDGE <- function(sce,
 
 				sce = sce[,sce$condition %in% conditions_used]
 			}
+
 			conditions_vector = colData(sce)[,condition]
 			replicates_vector = colData(sce)[,replicates]
 			labels_vector = colData(sce)[,labels]
@@ -134,13 +138,41 @@ doPBDGE <- function(sce,
 									BPPARAM = parallel_param)
 
 			agg$condition = factor(colData(agg)[,condition])
+			agg$label = factor(colData(agg)[,labels])
 
+			# Filtering
+			remove_ids = agg$ids[which(agg$ncells < min_cells & agg$condition %in% conditions_used)]
+
+			if(verbose) message(.bluem("[DE] "), "Samples with insufficient cell numbers: ", length(remove_ids))
+
+			all_tab = as.data.frame(table(as.data.frame(colData(agg))[,c("condition", "label")]))
+			all_tab_current = all_tab[all_tab$condition %in% conditions_used,]
+			remove_tab = as.data.frame(table(as.data.frame(colData(agg))[remove_ids, c("condition", "label")]))
+
+			remove_lowrep = Reduce(union, lapply(split(all_tab_current, all_tab_current$condition), 
+												function(x) as.character(x$label[which(x$Freq < 3)])))
+
+			remove_tab$Freq[remove_tab$label %in% remove_lowrep] = Inf
+
+			remove_tab_ok = all_tab[which((all_tab$Freq - remove_tab$Freq) < 3),]
+
+			remove_samples = unlist(apply(remove_tab_ok, 1, function(x) 
+				which(agg$condition == x[1] & agg$label == x[2])))
+
+			before = unique(agg$label)
+			if(length(remove_samples) > 0) {
+				agg = agg[, -1 * remove_samples]
+				difference = setdiff(before, unique(agg$label))
+				if(verbose) message(.bluem("[DE] "),
+							"The following labels were removed due to low replicates/low cells: \n", 
+							paste0("\t", paste(difference, collapse = ", ")))
+			}
+
+			if(verbose) message(.bluem("[DE] "),"Performing differential expression analysis.")
+			
 			if(is.null(design)){
 					design = formula(paste0("~0 + ", condition))
 			}
-			agg$label = colData(agg)[,labels]
-
-			if(verbose) message(.bluem("[DE] "),"Performing differential expression analysis.")
 
 			dge = pseudoBulkDGE(agg, 
 								label = agg$label, 

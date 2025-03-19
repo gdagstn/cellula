@@ -552,11 +552,11 @@ findTrajectories <- function(sce,
     outd <- degree(msgr, v = V(msgr), mode = "out")
     outnodes <- names(outd)[outd == 1]
     paths <- all_shortest_paths(msgr, from = start, to = outnodes)
-    paths <- lapply(paths$res, function(x) as.numeric(x))
+    paths <- lapply(paths$res, function(x) names(x))
     
     dptlist <- dmlist <- list()
     
-    if(verbose) message(paste0(.bluem("[TRAJ/MOD-DPT] "),"Calculating diffusion maps and DPT"))
+    if(verbose) message(paste0(.bluem("[TRAJ/MOD-DPT] "), "Calculating diffusion maps and DPT"))
     
     for(i in seq_along(paths)) {
       if(verbose) {
@@ -708,6 +708,7 @@ makeMetacells  <- function(sce, w = 10, group = NULL, dr = "PCA", ndims = 20) {
       crds <- lapply(unique(levels(dptcuts)), function(l) {
         colMedians(curr[which(dptcuts == l),dims,drop=FALSE])})
       cdf <- data.frame(do.call(rbind, crds))
+	  cdf <- cdf[!is.nan(cdf[,1]),]
       if(smooth) cdf <- .smoothPolyline(cdf)
       segs <- data.frame(x0 = cdf$x[seq_len(nrow(cdf)-1)], 
                         y0 = cdf$y[seq_len(nrow(cdf)-1)],

@@ -411,7 +411,7 @@ plot_DR <- function(sce,
                 pal <- pal[levels(udf[, color_by])]
             }
             cscale <- scale_colour_manual(values = pal, na.value = "lightgray")
-            # cguides <- guides(color = guide_legend(override.aes = list(size = 2)))
+            cguides <- guides(color = guide_legend(override.aes = list(size = 2)))
         }
     }
 
@@ -1044,6 +1044,8 @@ multipanel_DR <- function(sce, dr = "UMAP", dims = c(1,2),
                           features, point_size = 1.2, 
                           plot_order = "decreasing",
                           exprs_use = "logcounts",
+						  knn_smooth = FALSE,
+                          smoothing_k = 10,
                           rng_seed = 11,
                           common_scale = FALSE,
                           color_palette = NULL) {
@@ -1081,7 +1083,18 @@ multipanel_DR <- function(sce, dr = "UMAP", dims = c(1,2),
   } else {
     colorpal = color_palette
   }
-  
+
+   if (knn_smooth) {
+
+	  fdf_melt_split <- split(fdf_melt, fdf_melt$variable)
+
+	  for (i in 1:length(fdf_melt_split)) {
+                fdf_melt_split[[i]]$expression <- .smoothValues(fdf_melt_split[[i]], column = "expression", k = smoothing_k)
+	  }
+
+	  fdf_melt <- as.data.frame(do.call(rbind, fdf_melt_split))
+    }
+
   if(plot_order == "decreasing") {
     fdf_melt = fdf_melt[order(fdf_melt$expression),]
   } else if(plot_order == "increasing") {
@@ -1096,12 +1109,12 @@ multipanel_DR <- function(sce, dr = "UMAP", dims = c(1,2),
     p = ggplot(fdf_melt, aes(x = .data[["x"]], 
                              y = .data[["y"]], 
                              color = .data[["expression"]])) + 
-      geom_point(size = point_size)# 
+      geom_point(size = point_size) + 
       facet_wrap(~factor(variable, levels = features)) +
       theme_minimal() + 
       theme(panel.grid = element_blank(),
             axis.line = element_blank(),
-       #   axis.ticks = element_blank(),
+            axis.ticks = element_blank(),
             axis.title = element_blank(),
             axis.text.x = element_blank(),
             axis.text.y = element_blank()) +
@@ -1131,7 +1144,7 @@ multipanel_DR <- function(sce, dr = "UMAP", dims = c(1,2),
 #' @importFrom ggplot2 .data aes position_dodge ggplot geom_violin geom_boxplot guides
 #' @importFrom ggplot2 theme_minimal theme element_blank labs element_line xlab scale_fill_manual
 #' @importFrom ggplot2 element_text
-#' @importFrom ggbeeswar#geom_quasirandom
+#' @importFrom ggbeeswarm geom_quasirandom
 
 .makeViolin <- function(df, x, y, plot_cells = FALSE, color_by = NULL, color_palette = NULL,
                         rotate_labels = TRUE) {
@@ -1696,7 +1709,7 @@ plotHeatmap <- function(sce,
 #'    to use for the labels. Default is \code{NULL}
 #' @param smoothing_window numeric, the window size for smoothing the expression values.
 #'     Default is \code{200}
-#'
+#' @param raster logical, should the heatmap be rasterized? Default is \code{FALSE}
 #' @return a heatmap of the gene expression data ordered by pseudotime with,
 #' 	   optionally, the labels of each cells as annotation on top of the heatmap.
 #' 	   Each gene is scaled between 0 and 1 and smoothed using a zero-padded moving 
@@ -1713,7 +1726,8 @@ plotPseudotimeHeatmap <- function(sce,
 							  cluster_genes = FALSE,
                               labels = NULL, 
 							  labels_pal = NULL, 
-							  smoothing_window = 200) {
+							  smoothing_window = 200,
+							  raster = FALSE) {
 
   ep = .redm("cellula::plotPseudotimeHeatmap() - ")
   dependencies = data.frame("package" = c("ComplexHeatmap", "circlize"),
@@ -1749,7 +1763,7 @@ plotPseudotimeHeatmap <- function(sce,
   genemat = t(apply(genemat, 1, function(x) 
     .rescalen(.mav(x, window = smoothing_window), 
                     to = c(0,1))))
-  
+
   colors_pt = circlize::colorRamp2(colors = c("gray70", "purple"), 
                                    breaks = c(0, max(colData(sce)[,pseudotime])))
   
@@ -1802,6 +1816,7 @@ plotPseudotimeHeatmap <- function(sce,
                           top_annotation = column_ha,
                           cluster_rows = cluster_genes,
                           cluster_columns = FALSE,
+						  use_raster = raster,
                           name = "Scaled expression")
 } 
 

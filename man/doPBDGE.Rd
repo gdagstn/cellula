@@ -9,6 +9,7 @@ doPBDGE(
   replicates,
   labels,
   condition,
+  min_cells = 10,
   subset_conditions = FALSE,
   contrast = NULL,
   design = NULL,
@@ -27,6 +28,9 @@ that contains the label information}
 
 \item{condition}{character, column in \code{colData(sce)}
 that contains the condition information}
+
+\item{min_cells}{numeric, minimum number of cells per condition
+to keep the pseudobulk sample. Default is 10.}
 
 \item{subset_conditions}{logical, should the object be subset to contain 
 only the conditions specified in the contrast? 
