@@ -47,12 +47,7 @@ doNormAndReduce <- function(sce, batch = NULL, name = NULL,
   }
   if (hvg_ntop > nrow(sce))
     stop(ep, "hvg_ntop cannot be higher than the number of features (nrow) in the object")
-  # Start parameter logging - not fully implemented
-  if (is.null(metadata(sce)$cellula_log)) {
-    clog <- .initLog()
-  } else {
-    clog <- metadata(sce)$cellula_log
-  }
+
     if (verbose) message(.bluem("[NORM] "), "Calculating size factors and normalizing.")
   # Size factors
   if (verbose) message(.bluem("[NORM] "),"   Preclustering.")
@@ -102,18 +97,14 @@ doNormAndReduce <- function(sce, batch = NULL, name = NULL,
                 exprs_values = "logcounts",
                 ncomponents	= ndims)#,
   #BPPARAM = parallel_param) # the overhead for parallel PCA seems to be big.
+  
   # UMAP
   if (verbose) message(.bluem("[DR] "), "Running UMAP on uncorrected PCA.")
   neighbor_n <- floor(sqrt(ncol(sce)))
   reducedDim(sce, "UMAP") <- umap(reducedDim(sce, "PCA")[,seq_len(ndims)],
                                   n_neighbors = neighbor_n,
                                   min_dist = 0.7)
-  # Parameter logs
-  clog$norm_reduce$umap_min_dist <- 0.7
-  clog$norm_reduce$umap_n_neighbors <- neighbor_n
-  clog$norm_reduce$umap_other <- formals(umap)[!formalArgs(umap) %in% c("n_neighbors", "min_dist", "X")]
-  clog$norm_reduce$parallel_param <- parallel_param
-  
+
   metadata(sce)$cellula_log <- clog
     
   sce

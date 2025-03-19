@@ -91,11 +91,6 @@ cellula <- function(sce,
      colData(sce)[,batch] <- as.factor(colData(sce)[,batch])
  }
   
-  # Start parameter logging - not fully implemented
-  if(is.null(metadata(sce)$cellula_log)) {
-    clog <- .initLog()
-  } else clog <- metadata(sce)$cellula_log
-  
   # Make folder
   if(is.null(name)) {
     name <- .randomName()
@@ -134,21 +129,6 @@ cellula <- function(sce,
                 save_plots = save_plots,
 				path = path,
                 parallel_param = parallel_param)
-    
-    clog$qc$do_qc <- do_qc
-    clog$qc$discard <- discard
-    clog$qc$subset_mito <- subset_mito
-    clog$qc$subset_ribo <- subset_ribo
-    clog$qc$subset_malat1 <- subset_malat1
-    clog$qc$detect_doublets <- detect_doublets
-    clog$qc$run_emptydrops <- run_emptydrops
-    clog$qc$emptydrops_cutoff <- emptydrops_cutoff
-    clog$qc$emptydrops_alpha <- emptydrops_alpha
-    clog$qc$parallel_param <- parallel_param
-    clog$qc$output_cells <- ncol(sce)
-    if(!is.null(batch)) clog$qc$output_by_batch <- table(colData(sce)[,batch])
-    
-    metadata(sce)$cellula_log <- clog
     
     if(save_temp) {
       if(verbose) message("Saving temporary file.")

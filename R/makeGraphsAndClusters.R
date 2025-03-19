@@ -70,26 +70,7 @@ makeGraphsAndClusters <- function(sce,
     stop(ep, "method not recognized - must be one of \"jaccard\", \"rank\", or \"number\"")
   if (length(reducedDim(sce)) == 0) stop(ep, "there are no dimensionality reductions in the SingleCellExperiment object.")
   if (!dr %in% reducedDimNames(sce)) stop(ep, "the dr name supplied was not found in the SingleCellExperiment object")
-  
-  # Start parameter logging - not fully implemented
-    if (is.null(metadata(sce)$cellula_log)) {
-    clog <- .initLog()
-  } else {
-    clog <- metadata(sce)$cellula_log
-  }
-  clog$clustering$neighbors <- neighbors
-  clog$clustering$weighting_scheme <- weighting_scheme
-  clog$clustering$clustering_sweep <- sweep_on
-  if (sweep_on == "clustering") {
-    clog$clustering$resolution_ks <- k
-  } else if (sweep_on == "SNN") {
-    clog$clustering$graph_ks <- k
-  }
-  clog$clustering$clustering_method <- method
-  clog$clustering$dr <- dr
-  clog$clustering$ndims <- ndims
-  clog$clustering$leiden_iterations <- leiden_iterations
-  
+    
   # Case 1: parameter sweep on clustering resolution
 
   if (sweep_on == "clustering" & !is.null(neighbors)) {
