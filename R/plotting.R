@@ -1709,7 +1709,7 @@ plotHeatmap <- function(sce,
 #'    to use for the labels. Default is \code{NULL}
 #' @param smoothing_window numeric, the window size for smoothing the expression values.
 #'     Default is \code{200}
-#'
+#' @param raster logical, should the heatmap be rasterized? Default is \code{FALSE}
 #' @return a heatmap of the gene expression data ordered by pseudotime with,
 #' 	   optionally, the labels of each cells as annotation on top of the heatmap.
 #' 	   Each gene is scaled between 0 and 1 and smoothed using a zero-padded moving 
@@ -1726,7 +1726,8 @@ plotPseudotimeHeatmap <- function(sce,
 							  cluster_genes = FALSE,
                               labels = NULL, 
 							  labels_pal = NULL, 
-							  smoothing_window = 200) {
+							  smoothing_window = 200,
+							  raster = FALSE) {
 
   ep = .redm("cellula::plotPseudotimeHeatmap() - ")
   dependencies = data.frame("package" = c("ComplexHeatmap", "circlize"),
@@ -1762,7 +1763,7 @@ plotPseudotimeHeatmap <- function(sce,
   genemat = t(apply(genemat, 1, function(x) 
     .rescalen(.mav(x, window = smoothing_window), 
                     to = c(0,1))))
-  
+
   colors_pt = circlize::colorRamp2(colors = c("gray70", "purple"), 
                                    breaks = c(0, max(colData(sce)[,pseudotime])))
   
@@ -1815,6 +1816,7 @@ plotPseudotimeHeatmap <- function(sce,
                           top_annotation = column_ha,
                           cluster_rows = cluster_genes,
                           cluster_columns = FALSE,
+						  use_raster = raster,
                           name = "Scaled expression")
 } 
 
