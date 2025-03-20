@@ -2229,6 +2229,7 @@ plotLabelMD <- function(dge,
 #' @importFrom ggplot2 .data aes 
 #' @importFrom stats embed
 #' 
+#' @export
 plotROC <- function(sce, 
 					gene,
 					label, 

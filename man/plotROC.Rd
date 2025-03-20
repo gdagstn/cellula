@@ -29,7 +29,7 @@ plot ROC curves with other classification statistics
 }
 \details{
 the function calculates the ROC curve for the gene specified 
-    in the \code{gene} argument, showing the#lassification performance 
+    in the \code{gene} argument, showing the classification performance 
 	   of the gene for the label against all other labels. The function
 	   calculates the Area Under the Curve (AUC), Youden's J statistic,
 	   the entropy of the gene expression distribution, and the Jensen-Shannon
