@@ -2247,7 +2247,7 @@ plotROC <- function(sce,
 		h <- diff(FPR)
 		ab = rowSums(embed(TPR, 2))
 		auc = sum((ab*h)/2)
-		message("AUC: ", round(auc, 4))
+		message(x, " AUC: ", round(auc, 4))
 		
 		# Youden's J: max(sens + spec - 1)
 		# FPR = 1 - spec
@@ -2286,7 +2286,7 @@ plotROC <- function(sce,
 
 		rocdf = as.data.frame(do.call(rbind, lapply(rocs, function(x) x$roc)))
 		rocdf$label = rep(unique(colData(sce)[,label]), unlist(lapply(rocs, function(y) nrow(y$roc))))
-		
+		rocdf$label = factor(rocdf$label, levels = unique(colData(sce)[,label]))
 		if(!plot) return(rocs)
 
 	# Plot
