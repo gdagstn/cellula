@@ -2303,6 +2303,187 @@ plotROC <- function(sce,
 }	
 
 
+#' Plot clustering tree
+#' 
+#' Plot a clustering tree using clustering or any other labels
+#' 
+#' @param sce a SingleCellExperiment object
+#' @param prefix character, the prefix of the clustering labels. Default is \code{"SNN_"}
+#' @param additional_labels character, additional labels to include in the tree. Default is \code{NULL}
+#' @param color_palette named character vector, the color palette to use for the clusters. Default is \code{NULL}
+#' 
+#' @return a \code{ggraph} object with the clustering tree
+#' 
+#' @details the function generates a tree of the clustering labels as implemented 
+#'     in the \code{clustree} package by Zappia and Oshlack (2018) (\url{https://doi.org/10.1093/gigascience/giy083}). 
+#' 	   
+#' The function generates a graph of the clustering labels using the \code{igraph}
+#'     package, and plots it using the \code{ggraph} package. 
+#' 
+#' 	   This is a much simpler implementation of the principle behind \code{clustree}, with fewer options and 
+#'     possibilities compared to the original package.
+#' 
+#'     The nodes are colored by the resolution and/or label parameter, and the size of 
+#'     the nodes is proportional to the number of cells in each cluster. The edges are colored 
+#'     by the number of cells in each cluster that overlap between two consecutive clustering 
+#'     resolutions, and shaded by the proportion of overlapping cells. 
+#' 
+#'     Groupings identified by the prefix are assumed to have a numeric resolution value 
+#'     after the prefix, and the function will sort these grouping by this value.
+#' 
+#'     Additional labels (specified in the \code{additional_labels} argument) will be included in the tree 
+#'     in the order in which they were provided. 
+#' 
+#' @importFrom igraph graph_from_data_frame V E set_vertex_attr set_edge_attr
+#' @importFrom ggplot2 .data aes scale_size theme_minimal element_blank scale_color_manual 
+#' @importFrom SummarizedExperiment colData
+#' 
+#' @export
+
+plotClusTree <- function(sce, 
+                         prefix = "SNN_", 
+                         additional_labels = NULL, 
+                         color_palette = NULL) {
+
+	## Sanity checks
+	ep = .redm("cellula::plotClusTree() - ")
+
+	dependencies = data.frame("package" = "ggraph", "repo" = "CRAN")
+    if(checkFunctionDependencies(dependencies)) 
+		stop(paste0(ep, "Missing required packages."))
+	if(!is(sce, "SingleCellExperiment"))
+		stop(paste0(ep, "Must provide a SingleCellExperiment object"))			
+	if(!any(grepl(prefix, colnames(colData(sce)))))
+		stop(paste0(ep, "No columns in the colData found with the prefix provided."))
+	if(!is.null(additional_labels) & any(!(additional_labels %in% colnames(colData(sce)))))
+		stop(paste0(ep, "additional_labels must be a character vector in the colData"))
+	if(!is.null(color_palette) & length(color_palette) != length(grep(prefix, colnames(colData(sce))) + length(additional_labels)))
+		stop(paste0(ep, "color_palette must have the same number of colors as the number of clusterings + additional_labels"))			
+  
+  clusterings = colnames(colData(sce))[grep(prefix, colnames(colData(sce)))]
+  
+  clusterings_numeric = as.numeric(gsub(pattern = prefix, replacement = "", clusterings))
+  clusterings = clusterings[order(clusterings_numeric)]
+  
+  if(!is.null(additional_labels)) clusterings = c(additional_labels, clusterings)
+
+  # Compute overlaps between successive layers of clustering and proportions of overlap
+  overlaps = .computeOverlaps(sce, clusterings)
+  
+  proportions_df = do.call(rbind, overlaps$prop)
+  rownames(proportions_df) = paste0(proportions_df$from, "_", proportions_df$to)
+  
+  gr_df = do.call(rbind, overlaps$gl)
+  
+  # Build the graph
+  gr = graph_from_data_frame(gr_df)
+  
+  # Add resolution
+  resolution_values = .subsplit(V(gr)$name, prefix, 2)
+  gr = set_vertex_attr(gr, "resolution", value = resolution_values)
+
+  # Add additional labels if provided as resolution attribute
+  if(!is.null(additional_labels)) {
+    for(i in additional_labels) {
+		gr = set_vertex_attr(gr, "resolution", index = grep(i, V(gr)$name), value = i)
+    }
+  }
+  # Add size
+  sizes = lapply(clusterings, function(x) table(colData(sce)[,x]))
+  names(sizes) = clusterings
+
+  for(i in seq_along(sizes)) {
+    modified_names <- paste0(names(sizes[[i]]), "_", clusterings[i])
+    names(sizes[[i]]) <- modified_names
+  }
+  names(sizes) = NULL
+  sizes = unlist(sizes, use.names = TRUE)
+  
+  # Remove the clustering suffix from the vertex names
+  gr = set_vertex_attr(gr, "size", value = sizes[names(V(gr))])
+  gr = set_vertex_attr(gr, "name", value = gsub(pattern = prefix, replacement = "", names(V(gr))))
+  gr = set_vertex_attr(gr, "name", value = gsub(pattern = "_0.[1-9]", replacement = "", names(V(gr))))
+  gr = set_vertex_attr(gr, "name", value = gsub(pattern = "_[1-9]", replacement = "", names(V(gr))))
+
+  # Same if labels are provided
+  if(!is.null(additional_labels)) {
+    for(i in additional_labels) {
+      new_vnames = gsub(pattern = paste0("_", i), replacement = "", names(V(gr)))
+	  gr = set_vertex_attr(	gr, "name", value = new_vnames)
+    }
+  }
+  # Extremely hacky way to keep same proportions ordered - make up rownames
+  proportions_ordered = proportions_df[paste0(gr_df$from, "_", gr_df$to), "prop_in"]
+  gr = set_edge_attr(gr, "proportions", value = proportions_ordered)
+  
+  # Plot the graph
+  p = ggraph::ggraph(gr, layout = "sugiyama") + 
+    ggraph::geom_edge_link(aes(edge_colour = I(E(gr)$weight), colour = I(E(gr)$weight), alpha = .data[["proportions"]]),
+                   width = 1.5,
+                   arrow = grid::arrow(length = unit(4, 'mm')),
+                   end_cap = ggraph::circle(3, 'mm')) + 
+    ggraph::geom_node_point(aes(color = .data[["resolution"]], size = .data[["size"]])) + 
+    ggraph::geom_node_text(aes(label = .data[["name"]])) +
+    ggraph::scale_edge_color_continuous() +
+    scale_size(range = c(3, 15)) +
+    theme_minimal() +
+    theme(axis.ticks = element_blank(),
+          axis.text = element_blank(),
+          panel.grid = element_blank(),
+          axis.title = element_blank())
+  
+  if(!is.null(color_palette)) {
+    p = p + scale_color_manual(values = color_palette)
+  }
+  p
+}
+
+
+#' Compute overlaps between successive layers of clustering
+#' 
+#' @param sce a SingleCellExperiment object
+#' @param clusterings character, the names of the clusterings to use
+#' @return a list with two elements:
+#'    - gl: a list of data frames with the overlaps between successive layers
+#'    - prop: a list of data frames with the proportions of overlap between successive layers
+#' @details this function is used internally in \code{\link{plotClusTree}} to compute the overlaps
+#' 
+#' @importFrom SummarizedExperiment colData
+#' @noRd
+
+.computeOverlaps <- function(sce, clusterings) {
+
+  graph_list = lapply(seq_len(length(clusterings) - 1), function(x) {
+    overlap_mat = as.matrix(table(colData(sce)[,clusterings[[x]]], colData(sce)[,clusterings[[x + 1]]]))
+    rownames(overlap_mat) = paste0(rownames(overlap_mat), "_", clusterings[x])
+    colnames(overlap_mat) = paste0(colnames(overlap_mat), "_", clusterings[x+1])
+    combinations = expand.grid(rownames(overlap_mat), colnames(overlap_mat))
+    colnames(combinations) = c("from", "to")
+    weights = apply(combinations, 1, function(x) overlap_mat[x[1], x[2]])
+    combinations$weight = weights
+    combinations = combinations[!duplicated(combinations),]
+    combinations = combinations[combinations$weight > 0,]
+    combinations
+  })
+  
+  proportions = lapply(graph_list, function(x) {
+    from_clusters = as.character(unique(x$from))
+    props = lapply(from_clusters, function(y) {
+      prop_y = x[x$from == y, "weight"]/sum(x[x$from == y, "weight"])
+      names(prop_y) = as.character(x$to[x$from == y])
+      prop_y
+    })
+    names(props) = from_clusters
+    do.call(rbind, lapply(names(props), function(nn) {
+      data.frame("from" = rep(nn, length(props[[nn]])),
+                 "to" = names(props[[nn]]),
+                 "prop_in" = props[[nn]])
+    }))
+   })
+
+   return(list("gl" = graph_list, "prop" = proportions))
+}
+
 #' Plot UMAP
 #' 
 #' Alias for plot_DR for consistency with previous iterations

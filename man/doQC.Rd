@@ -9,6 +9,7 @@ doQC(
   batch = NULL,
   name,
   discard = TRUE,
+  nmad = 3,
   subset_mito = TRUE,
   subset_ribo = TRUE,
   subset_malat1 = TRUE,
@@ -33,6 +34,9 @@ processed as a single batch.}
 
 \item{discard}{logical, should values that do not meet QC thresholds be discarded?
 Default is \code{TRUE}.}
+
+\item{nmad}{numeric, the number of median absolute deviations to use for
+outlier detection. Default is \code{3}.}
 
 \item{subset_mito}{logical, should mitochondrial transcripts be used for QC?
 Default is \code{TRUE}}

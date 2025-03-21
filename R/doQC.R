@@ -9,6 +9,8 @@
 #' @param name character, the name of the file/folder.
 #' @param discard logical, should values that do not meet QC thresholds be discarded?
 #'     Default is \code{TRUE}.
+#' @param nmad numeric, the number of median absolute deviations to use for
+#'     outlier detection. Default is \code{3}.
 #' @param subset_mito logical, should mitochondrial transcripts be used for QC?
 #'     Default is \code{TRUE}
 #' @param subset_ribo logical, should ribosomal transcripts be used for QC?
@@ -42,6 +44,7 @@ doQC <- function(sce,
                  batch = NULL,
                  name,
                  discard = TRUE,
+				 nmad = 3,
                  subset_mito = TRUE,
                  subset_ribo = TRUE,
                  subset_malat1 = TRUE,
@@ -106,30 +109,30 @@ doQC <- function(sce,
     low.lib <- isOutlier(log10(sce_fqc$sum),
                          batch = qcbatch,
                          type = "lower",
-                         nmads=3)
+                         nmads=nmad)
     low.genes <- isOutlier(log10(sce_fqc$detected),
                            batch = qcbatch,
                            type = "lower",
-                           nmads=3)
+                           nmads=nmad)
     if (!all(is.na(mito))) {
       high.mt <- isOutlier(sce_fqc$subsets_mito_percent,
                            batch = qcbatch,
                            type = "higher",
-                           nmads = 3)
+                           nmads = nmad)
     } else high.mt <- FALSE
 
     if (!all(is.na(Malat1))) {
       high.malat1 <- isOutlier(sce_fqc$subsets_Malat1_percent,
                                batch = qcbatch,
                                type = "higher",
-                               nmads = 3)
+                               nmads = nmad)
     } else high.malat1 <- FALSE
 
     if (!all(is.na(Ribo))) {
       high.ribo <- isOutlier(sce_fqc$subsets_Ribo_percent,
                              batch = qcbatch,
                              type = "higher",
-                             nmads = 3)
+                             nmads = nmad)
     } else high.ribo <- FALSE
 
     data.frame(LowLib=sum(low.lib),

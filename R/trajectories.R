@@ -652,8 +652,9 @@ makeMetacells  <- function(sce, w = 10, group = NULL, dr = "PCA", ndims = 20) {
       names(clustl) <- gv
       memberships <- unlist(clustl, use.names = TRUE)
       groups <- rep(gv, lengths(clustl))
-      names(memberships) <- sapply(names(memberships), function(x) 
-        unlist(strsplit(x, split = "[.]"))[-1])
+      names(memberships) <- .subsplit(names(memberships), "[.]", -1)
+	  #sapply(names(memberships), function(x) 
+       # unlist(strsplit(x, split = "[.]"))[-1])
       ref <- data.frame(groups = groups, 
                        membership = memberships, 
                        row.names = seq_along(memberships))

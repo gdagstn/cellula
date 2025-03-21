@@ -56,12 +56,10 @@ doNormAndReduce <- function(sce, batch = NULL, name = NULL,
                          block = colData(sce)[,batch],
                          min.size = floor(sqrt(min(table(colData(sce)[,batch])))),
                          BPPARAM = parallel_param)
-    clog$norm_reduce$precluster_min_size = floor(sqrt(min(table(colData(sce)[,batch]))))
   } else {
     sce_cl <- quickCluster(sce,
                            min.size = floor(sqrt(ncol(sce))),
                            BPPARAM = parallel_param)
-    clog$norm_reduce$precluster_min_size = floor(sqrt(ncol(sce)))
   }
   if (verbose) message(.bluem("[NORM] "),"   Calculating pooled factors.")
   sce <- computeSumFactors(sce,
@@ -72,10 +70,8 @@ doNormAndReduce <- function(sce, batch = NULL, name = NULL,
   if (!is.null(batch)) {
     sce <- multiBatchNorm(sce,
                           batch = colData(sce)[,batch])
-    clog$norm_reduce$norm_strategy = "multiBatchNorm"
   } else {
     sce <- logNormCounts(sce)
-    clog$norm_reduce$norm_strategy = "logNormCounts"
   }
   
   # HVGs
@@ -89,7 +85,6 @@ doNormAndReduce <- function(sce, batch = NULL, name = NULL,
   }
   hvgs <- getTopHVGs(vargenes, n = hvg_ntop)
   metadata(sce)$hvgs <- hvgs
-  clog$norm_reduce$hvg_ntop = hvg_ntop
   # PCA
   if(verbose) message(.bluem("[DR] "), "Running PCA.")
   sce <- runPCA(sce,
@@ -104,8 +99,6 @@ doNormAndReduce <- function(sce, batch = NULL, name = NULL,
   reducedDim(sce, "UMAP") <- umap(reducedDim(sce, "PCA")[,seq_len(ndims)],
                                   n_neighbors = neighbor_n,
                                   min_dist = 0.7)
-
-  metadata(sce)$cellula_log <- clog
     
   sce
 }

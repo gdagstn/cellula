@@ -14,6 +14,8 @@
 #'     will be calculated.
 #' @param discard logical, should values that do not meet QC thresholds be discarded?
 #'     Default is \code{TRUE}.
+#' @param nmad numeric, the number of median absolute deviations to use as a threshold
+#'     for QC. Default is 3.
 #' @param subset_mito logical, should mitochondrial transcripts be used for QC?
 #'     Default is \code{TRUE}
 #' @param subset_ribo logical, should ribosomal transcripts be used for QC?
@@ -67,6 +69,7 @@ cellula <- function(sce,
                      do_norm = TRUE,
                      geneset_list = NULL,
                      discard = TRUE,
+					 nmad = 3,
                      subset_mito = TRUE,
                      subset_ribo = TRUE,
                      subset_malat1 = TRUE,
@@ -111,7 +114,9 @@ cellula <- function(sce,
   # QC module
     if(do_qc) {
     sce <- doQC(sce, name = name,
-                batch = batch, discard = discard,
+                batch = batch, 
+				discard = discard,
+				nmad = nmad,
                 subset_mito = subset_mito,
                 subset_ribo = subset_ribo,
                 subset_malat1 = subset_malat1,
@@ -168,10 +173,7 @@ cellula <- function(sce,
   }
 
   if (verbose) message("All done. Input cells: ", ncells, ", final cell number: ", ncol(sce))
-  metadata(sce)$cellula_log[["output_cells"]] <- ncol(sce)
-  if (!is.null(batch)) {
-    metadata(sce)$cellula_log[["output_by_batch"]] <- table(colData(sce)[,batch])
-  }
+
   sce
 }
 
