@@ -8,6 +8,9 @@ You can read all about it on the companion [website](https://gdagstn.github.io/c
 
 ## Changelog
 
+-   23/3/2025:\
+	Various bug fixes 
+
 -   13/3/2025:\
 	Added heatmap plotting and proportion plotting functions
 
