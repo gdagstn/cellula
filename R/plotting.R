@@ -2010,7 +2010,7 @@ plotDEHeatmap <- function(sce,
   pal_cluster = cluster_pal
 	
 	if(is.null(cluster_pal)) {
-		if(length(dge)) == 1 {
+		if(length(dge) == 1) {
 			pal_cluster = .cpal_qual(length(dge)+1)[1]
 		} else {
 			pal_cluster = .cpal_qual(length(dge))
