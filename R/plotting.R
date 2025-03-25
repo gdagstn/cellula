@@ -2010,8 +2010,12 @@ plotDEHeatmap <- function(sce,
   pal_cluster = cluster_pal
 	
 	if(is.null(cluster_pal)) {
-	pal_cluster = .cpal_qual(length(dge))
-	names(pal_cluster) = unique(names(dge))
+		if(length(dge)) == 1 {
+			pal_cluster = .cpal_qual(length(dge)+1)[1]
+		} else {
+			pal_cluster = .cpal_qual(length(dge))
+		}
+		names(pal_cluster) = unique(names(dge))
 	}
 
 	cl_labs = agg$label[order(agg$label, agg$condition)]
