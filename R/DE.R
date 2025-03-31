@@ -13,6 +13,8 @@
 #'     that contains the condition information
 #' @param min_cells numeric, minimum number of cells per condition
 #'     to keep the pseudobulk sample. Default is 10.
+#' @param min_rep numeric, minimum number of replicates per condition
+#'     to keep the pseudobulk sample. Default is 3.
 #' @param subset_conditions logical, should the object be subset to contain 
 #'	   only the conditions specified in the contrast? 
 #'     Default is \code{FALSE}.
@@ -80,6 +82,7 @@ doPBDGE <- function(sce,
 					labels,
 					condition,
 					min_cells = 10,
+					min_rep = 3,
 					subset_conditions = FALSE,
 					contrast = NULL,
 					design = NULL,
@@ -150,14 +153,14 @@ doPBDGE <- function(sce,
 			remove_tab = as.data.frame(table(as.data.frame(colData(agg))[remove_ids, c("condition", "label")]))
 
 			remove_lowrep = Reduce(union, lapply(split(all_tab_current, all_tab_current$condition), 
-												function(x) as.character(x$label[which(x$Freq < 3)])))
+												function(x) as.character(x$label[which(x$Freq < min_rep)])))
 
 			remove_tab$Freq[remove_tab$label %in% remove_lowrep] = Inf
 
-			remove_tab_ok = all_tab[which((all_tab$Freq - remove_tab$Freq) < 3),]
+			remove_tab_ok = all_tab[which((all_tab$Freq - remove_tab$Freq) < min_rep),]
 
-			remove_samples = unlist(apply(remove_tab_ok, 1, function(x) 
-				which(agg$condition == x[1] & agg$label == x[2])))
+			remove_samples = as.numeric(unlist(apply(remove_tab_ok, 1, function(x) 
+				which(agg$condition == x[1] & agg$label == x[2]))))
 
 			before = unique(agg$label)
 			if(length(remove_samples) > 0) {
@@ -172,6 +175,22 @@ doPBDGE <- function(sce,
 			
 			if(is.null(design)){
 					design = formula(paste0("~0 + ", condition))
+			}
+
+		
+			if(!subset_conditions) {
+			check_full_rank = lapply(unique(agg$label), function(l) {
+				agg_sub = agg[,agg$label == l]
+				curdata = colData(agg_sub)
+				curdesign = model.matrix(design, data=curdata)
+				names(which(colSums(curdesign) == 0))
+			})
+			
+			check_full_rank = Reduce(union, check_full_rank)
+			remove_conditions = setdiff(check_full_rank, paste0("condition", conditions_used))
+			remove_conditions = gsub("condition", "", remove_conditions)
+			agg = agg[,!agg$condition %in% remove_conditions]
+			agg$condition = factor(as.character(agg$condition))
 			}
 
 			dge = pseudoBulkDGE(agg, 

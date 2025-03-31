@@ -1516,7 +1516,7 @@ plotHeatmap <- function(sce,
                                ids = agg_vector,
                                statistics = aggregate_fun, 
                                use.assay.type = "counts")
-		if(exprs == "#gcounts") {
+		if(exprs == "logcounts") {
 			agg = computeLibraryFactors(agg)
 			agg = logNormCounts(agg)
 		}
