@@ -35,6 +35,7 @@
 #'     information.
 #' @param ndims numeric, the number of dimensions to retain in the reduced dimension
 #'     embedding for downstream applications. Default is 20.
+#' @param umap_seed numeric, the random number generator seed. Default is 11.
 #' @param verbose logical, display messages on progress? Default is \code{FALSE}.
 #' @param save_plots logical, should plots be drawn and saved? Default is \code{TRUE}
 #' @param save_temp logical, should temporary files be saved as the pipeline progresses?
@@ -80,6 +81,7 @@ cellula <- function(sce,
                      hvg_ntop = 2000,
                      integration_method = "fastMNN",
                      ndims = 20,
+					 umap_seed = 11,
                      verbose = FALSE,
                      save_plots = TRUE,
                      save_temp = FALSE,
@@ -142,6 +144,7 @@ cellula <- function(sce,
                            ndims = ndims,
                            hvg_ntop = hvg_ntop,
                            verbose = verbose,
+						   umap_seed = umap_seed,
                            parallel_param = parallel_param)
 
     if(save_temp) {
@@ -161,6 +164,7 @@ cellula <- function(sce,
                        method = integration_method,
                        ndims = ndims,
                        parallel_param = parallel_param,
+					   umap_seed = umap_seed,
                        verbose = verbose)
   }
 

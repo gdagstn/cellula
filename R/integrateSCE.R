@@ -19,6 +19,7 @@
 #' @param ret_nmf logical, should the NMF matrices be returned with the object?
 #'     if \code{TRUE}, they will be saved in the \code{metadata} of the object
 #'     as a list named \code{"LIGER_NMF_matrices"}. Default is FALSE.
+#' @param umap_seed numeric, the seed to be used for UMAP. Default is 11.
 #' @param verbose logical, display messages on progress? Default is FALSE.
 #' @param ... extra arguments passed to the main integration functions used by each method.
 #'
@@ -78,6 +79,7 @@ integrateSCE <- function(sce,
                         neighbor_n = NULL,
                         parallel_param = SerialParam(),
                         ret_nmf = FALSE,
+						umap_seed = umap_seed,
                         verbose = FALSE,
                         ...){
   ## Sanity checks
@@ -112,6 +114,7 @@ integrateSCE <- function(sce,
                          neighbor_n = neighbor_n,
                          parallel_param = parallel_param,
                          verbose = verbose,
+						 umap_seed = umap_seed,
                          ...)
 
   } else if (method == "Harmony") {
@@ -121,6 +124,7 @@ integrateSCE <- function(sce,
                              ndims = ndims,
                              neighbor_n = neighbor_n,
                              verbose = verbose,
+							 umap_seed = umap_seed,
                              ...)
 
   } else if (method == "Seurat"){
@@ -131,6 +135,7 @@ integrateSCE <- function(sce,
                             neighbor_n = neighbor_n,
                             verbose = verbose,
                             hvg_ntop = hvg_ntop,
+							umap_seed = umap_seed,
                             ...)
 
   } else if (method == "LIGER") {
@@ -141,6 +146,7 @@ integrateSCE <- function(sce,
                            neighbor_n = neighbor_n,
                            verbose = verbose,
                            ret_nmf = ret_nmf,
+						   umap_seed = umap_seed,
                            ...)
 
   } else if (method == "regression") {
@@ -151,6 +157,7 @@ integrateSCE <- function(sce,
                                 neighbor_n = neighbor_n,
                                 verbose = verbose,
                                 hvgs = hvgs,
+								umap_seed = umap_seed,
                                 ...)
 
   } else if (method == "STACAS") {
@@ -160,7 +167,9 @@ integrateSCE <- function(sce,
                             neighbor_n = neighbor_n,
                             verbose = verbose,
                             hvg_ntop = hvg_ntop,
-                            ...)
+							umap_seed = umap_seed,
+							...)
+
   }
 
   else if (method == "scMerge2") {
@@ -171,6 +180,7 @@ integrateSCE <- function(sce,
                             verbose = verbose,
                             parallel_param = parallel_param,
                             hvgs = hvgs,
+							umap_seed = umap_seed,
                             ...)
   }
 
@@ -182,7 +192,7 @@ integrateSCE <- function(sce,
 #' @importFrom S4Vectors metadata
 #' @importFrom batchelor fastMNN
 
-.integrateMNN <- function(sce, batch, hvgs, ndims, neighbor_n, parallel_param, verbose, ...) {
+.integrateMNN <- function(sce, batch, hvgs, ndims, neighbor_n, parallel_param, verbose, umap_seed, ...) {
 
   ## Sanity checks
   # Error prefix
@@ -207,7 +217,7 @@ integrateSCE <- function(sce,
   if (verbose) message(.bluem("[INT/fastMNN]"), " Running UMAP on MNN-corrected space")
 
   reducedDim(sce, "UMAP_MNN") <- umap(reducedDim(sce, "PCA_MNN")[,seq_len(ndims)],
-                                      n_neighbors = neighbor_n,
+                                      n_neighbors = neighbor_n, seed = umap_seed,
                                       min_dist = 0.7)
   sce
 }
@@ -216,7 +226,7 @@ integrateSCE <- function(sce,
 #' @importFrom SingleCellExperiment reducedDim reducedDimNames
 #' @importFrom uwot umap
 
-.integrateHarmony <- function(sce, batch, dr = "PCA", ndims, neighbor_n, verbose, ...){
+.integrateHarmony <- function(sce, batch, dr = "PCA", ndims, neighbor_n, verbose, umap_seed, ...){
 
   ep <- .redm("{cellula::integrateSCE() / method = \"Harmony\"} - ")
 
@@ -238,7 +248,7 @@ integrateSCE <- function(sce,
   if (verbose) message(.bluem("[INT/Harmony]"), " Running UMAP on Harmony-corrected space")
 
   reducedDim(sce, "UMAP_Harmony") <- umap(reducedDim(sce, "PCA_Harmony")[,seq_len(ndims)],
-                                          n_neighbors = neighbor_n,
+                                          n_neighbors = neighbor_n, seed = umap_seed,
                                           min_dist = 0.7)
 
   sce
@@ -248,7 +258,7 @@ integrateSCE <- function(sce,
 #' @importFrom SummarizedExperiment colData
 #' @importFrom uwot umap
 
-.integrateSeurat <- function(sce, batch, ndims, neighbor_n, verbose, hvg_ntop, ...) {
+.integrateSeurat <- function(sce, batch, ndims, neighbor_n, verbose, hvg_ntop, umap_seed, ...) {
 
   ep <- .redm("{cellula::integrateSCE() / method = \"Seurat\"} - ")
 
@@ -324,7 +334,7 @@ integrateSCE <- function(sce,
   if (verbose) message(.bluem("[INT/Seurat]"), " Running UMAP on Seurat-corrected space.")
 
   reducedDim(sce, "UMAP_Seurat") <- umap(reducedDim(sce, "PCA_Seurat")[,seq_len(ndims)],
-                                         n_neighbors = neighbor_n,
+                                         n_neighbors = neighbor_n, seed = umap_seed,
                                          min_dist = 0.7)
   colnames(sce) <- nf[colnames(sce), 1]
 
@@ -335,7 +345,7 @@ integrateSCE <- function(sce,
 #' @importFrom SummarizedExperiment colData
 #' @importFrom uwot umap
 
-.integrateLIGER <- function(sce, batch, ndims, neighbor_n, ret_nmf, verbose, ...) {
+.integrateLIGER <- function(sce, batch, ndims, neighbor_n, ret_nmf, verbose, umap_seed, ...) {
 
   ep <- .redm("{cellula::integrateSCE() / method = \"LIGER\"} - ")
 
@@ -392,7 +402,7 @@ integrateSCE <- function(sce,
 
   if (verbose) message(.bluem("[INT/LIGER]"), " Running UMAP on LIGER factorization.")
   reducedDim(sce, "UMAP_LIGER") <- umap(reducedDim(sce, "LIGER_iNMF_NORM")[,seq_len(min(ncol(reducedDim(sce, "LIGER_iNMF_NORM")), ndims))],
-                                        n_neighbors = neighbor_n,
+                                        n_neighbors = neighbor_n, seed = umap_seed,
                                         min_dist = 0.7)
 
   colnames(sce) <- nf[colnames(sce), 1]
@@ -406,7 +416,7 @@ integrateSCE <- function(sce,
 #' @importFrom batchelor regressBatches
 
 .integrateRegression <- function(sce, batch, ndims, hvgs, neighbor_n,
-                                 parallel_param, verbose, ...){
+                                 parallel_param, verbose, umap_seed, ...){
 
   ep <- .redm("{cellula::integrateSCE() / method = \"regression\"} - ")
 
@@ -430,7 +440,7 @@ integrateSCE <- function(sce,
   if (verbose) message(.bluem("[INT/regression]"), " Running UMAP on regression-corrected space.")
 
   reducedDim(sce, "UMAP_regression") <- umap(reducedDim(sce, "LIGER_NORM")[,seq_len(min(ncol(reducedDim(sce, "PCA_regression")), ndims))],
-                                             n_neighbors = neighbor_n,
+                                             n_neighbors = neighbor_n, seed = umap_seed,
                                              min_dist = 0.7)
   sce
 }
@@ -442,7 +452,7 @@ integrateSCE <- function(sce,
 #' @importFrom scater runPCA
 
 .integrateScMerge <- function(sce, batch, ndims, hvgs, neighbor_n, parallel_param,
-                              verbose, ...) {
+                              verbose, umap_seed, ...) {
 
   ep <- .redm("{cellula::integrateSCE() / method = \"scMerge2\"} - ")
 
@@ -473,7 +483,7 @@ integrateSCE <- function(sce,
   if (verbose) message(.bluem("[INT/scMerge2]"), " Running UMAP on scMerge2-corrected space.")
 
   reducedDim(sce, "UMAP_scMerge2") <- umap(reducedDim(sce, "PCA_scMerge2")[,seq_len(min(ncol(reducedDim(sce, "PCA_scMerge2")), ndims))],
-                                           n_neighbors = neighbor_n,
+                                           n_neighbors = neighbor_n, seed = umap_seed,
                                            min_dist = 0.7)
   sce
 }
@@ -483,7 +493,7 @@ integrateSCE <- function(sce,
 #' @importFrom uwot umap
 
 .integrateSTACAS <- function(sce, batch, hvg_ntop, ndims, neighbor_n,
-                             verbose, ...) {
+                             verbose, umap_seed, ...) {
 
   ep <- .redm("{cellula::integrateSCE() / method = \"STACAS\"} - ")
 
@@ -527,7 +537,7 @@ integrateSCE <- function(sce,
   if (verbose) message(.bluem("[INT/STACAS]"), "Running UMAP on Seurat-corrected space.")
 
   reducedDim(sce, "UMAP_STACAS") <- umap(reducedDim(sce, "PCA_STACAS")[,seq_len(ndims)],
-                                         n_neighbors = neighbor_n,
+                                         n_neighbors = neighbor_n, seed = umap_seed,
                                          min_dist = 0.7)
   colnames(sce) <- nf[colnames(sce), 1]
 

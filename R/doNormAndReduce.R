@@ -10,6 +10,9 @@
 #' @param ndims numeric, number of dimensions (PCs) to be used for UMAP construction.
 #'     Default is 20.
 #' @param hvg_ntop numeric, number of top HVGs to retain
+#'    Default is 2000.
+#' @param umap_seed numeric, the random number generator seed
+#'     Default is 11.
 #' @param verbose logical, display messages on progress? Default is \code{FALSE}.
 #' @param parallel_param a \code{BiocParallel} object specifying the parallelization backend
 #'     to be used in some steps of the pipeline. Default is \code{SerialParam()},
@@ -34,6 +37,7 @@
 doNormAndReduce <- function(sce, batch = NULL, name = NULL,
                             ndims = 20,
                             hvg_ntop = 2000,
+							umap_seed = 11,
                             verbose = TRUE,
                             parallel_param = SerialParam()) {
   
@@ -96,8 +100,9 @@ doNormAndReduce <- function(sce, batch = NULL, name = NULL,
   # UMAP
   if (verbose) message(.bluem("[DR] "), "Running UMAP on uncorrected PCA.")
   neighbor_n <- floor(sqrt(ncol(sce)))
-  reducedDim(sce, "UMAP") <- umap(reducedDim(sce, "PCA")[,seq_len(ndims)],
+  reducedDim(sce, "UMAP") <- umap(reducedDim(sce, "PCA")[,seq_len(ndims)],		
                                   n_neighbors = neighbor_n,
+								  seed = umap_seed,	
                                   min_dist = 0.7)
     
   sce
