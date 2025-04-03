@@ -23,13 +23,15 @@
 #' @param Monocle_lg_control list or NULL (default). A list of control parameters
 #'     for the \code{learn_graph()} function from \code{monocle3}. 
 #'     See \code{?monocle3::learn_graph}
-#'     for more information. Only used when \code{method = "monocle"}.     
+#'     for more information. Only used when \code{method = "monocle"}.    
+#' @param dist.method character, the distance method to be used for the \code{slingshot}
+#' 	implementation. Default is \code{"slingshot"}. See \code{\link[slingshot]{getLineages}} 
 #' @param omega logical, should the \code{omega} method for MST calculation be used?
 #'     Default is TRUE. See \code{\link[slingshot]{getLineages}} for more information.
 #' @param omega_scale numeric, the value of the \code{omega_scale} parameter. 
 #'     Default is 1.5. See \code{\link[slingshot]{getLineages}} for more information.  
 #' @param invert logical. Should the pseuodtime vector be inverted? Only valid
-#'     for monocle3. Default is FALSE.            
+#'     for \code{monocle3}. Default is FALSE.            
 #' @param do_de logical. Should differential expression across trajectories be
 #'     performed? Default is FALSE.
 #' @param batch_de character, the name of the \code{colData} column to be used as a
@@ -178,6 +180,7 @@ findTrajectories <- function(sce,
 							 dr_embed = NULL, 
 							 start = "auto", 
                              Monocle_lg_control = NULL, 
+							 dist.method = "slingshot",
 							 omega = TRUE,
                              omega_scale = 1.5, 
 							 invert = FALSE, 
@@ -226,10 +229,11 @@ findTrajectories <- function(sce,
     if(method == "slingshot"){
       sce <- .getSlingshotTrajectories(sce = sce, dr = dr, ndims = ndims,
                                       clusters = clusters, start = start, 
-                                      dr_embed = dr_embed, omega = omega, 
-                                      omega_scale = omega_scale, do_de = do_de,
-                                      batch_de = batch_de, return_sds = return_sds,
-                                      add_metadata = add_metadata, verbose = verbose)
+                                      dr_embed = dr_embed, dist.method = dist.method,
+									  omega = omega,  omega_scale = omega_scale, 
+									  do_de = do_de, batch_de = batch_de, 
+									  return_sds = return_sds, add_metadata = add_metadata, 
+									  verbose = verbose)
       
     } else if(method == "monocle") {
       sce <- .getMonocleTrajectories(sce = sce, dr = dr, ndims = ndims,
@@ -446,6 +450,7 @@ findTrajectories <- function(sce,
                                       start,
                                       omega = TRUE,
                                       omega_scale = 1.5,
+									  dist.method = "slingshot",
                                       do_de = FALSE,
                                       batch_de = NULL,
                                       add_metadata = TRUE,
@@ -466,7 +471,7 @@ findTrajectories <- function(sce,
                                reducedDim = dr,
                                clusterLabels = clusters,
                                start.clus = start,
-                               omega = omega,
+                               omega = omega, dist.method = dist.method,
                                omega_scale = omega_scale)
     
     metadata(sce)[["Slingshot_lineages"]] = slingshot::slingLineages(sce)

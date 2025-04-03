@@ -101,6 +101,8 @@ cellula <- function(sce,
     name <- .randomName()
     message("No name selected, so the randomly assigned name is: ", name)
   }
+ 	dir.create(file.path(path, name), showWarnings = FALSE)
+
   # Begin
     if(verbose) {
     message("\nWorking on object ", name, "\n")
@@ -169,11 +171,12 @@ cellula <- function(sce,
   }
 
   if(verbose) message("Saving final object.")
-  	saveRDS(sce, file = paste0(path, "/", name, "/", name, "_PS_INT_SCE.RDS"))
+  	saveRDS(sce, file = file.path(path, name, paste0(name, "_PS_INT_SCE.RDS")))
 
   if (save_temp) {
     if (verbose) message("Deleting temporary file.")
-    file.remove(paste0(path, "/", name, "/", name, "_tempSCE.RDS"))
+	if(file.exists(file.path(path, name, paste0(name, "_tempSCE.RDS"))))
+    	file.remove(file.path(path, name, paste0(name, "_tempSCE.RDS")))
   }
 
   if (verbose) message("All done. Input cells: ", ncells, ", final cell number: ", ncol(sce))
