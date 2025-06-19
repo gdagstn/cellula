@@ -1,6 +1,12 @@
-<img src="https://user-images.githubusercontent.com/21171362/232594749-6a6beacc-6c59-4e40-ae62-e7026f355742.png" align="right" width="200"/>
 
-# cellula
+<img src="https://user-images.githubusercontent.com/21171362/232594749-6a6beacc-6c59-4e40-ae62-e7026f355742.png" align="right" width="200px"/>
+<div id="toc">
+	<ul align="left" style="list-style: none;">
+		<summary>
+			<h1>cellula</h1>
+		</summary>
+	</ul>
+</div>
 
 **`cellula`** is a simple R-based pipeline for single cell RNA-seq processing with a number of methods for integration and identity assignment.
 
