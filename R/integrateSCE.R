@@ -79,7 +79,7 @@ integrateSCE <- function(sce,
                         neighbor_n = NULL,
                         parallel_param = SerialParam(),
                         ret_nmf = FALSE,
-						umap_seed = umap_seed,
+						            umap_seed = 11,
                         verbose = FALSE,
                         ...){
   ## Sanity checks
@@ -114,7 +114,7 @@ integrateSCE <- function(sce,
                          neighbor_n = neighbor_n,
                          parallel_param = parallel_param,
                          verbose = verbose,
-						 umap_seed = umap_seed,
+						             umap_seed = umap_seed,
                          ...)
 
   } else if (method == "Harmony") {
@@ -124,7 +124,7 @@ integrateSCE <- function(sce,
                              ndims = ndims,
                              neighbor_n = neighbor_n,
                              verbose = verbose,
-							 umap_seed = umap_seed,
+							               umap_seed = umap_seed,
                              ...)
 
   } else if (method == "Seurat"){
@@ -135,7 +135,7 @@ integrateSCE <- function(sce,
                             neighbor_n = neighbor_n,
                             verbose = verbose,
                             hvg_ntop = hvg_ntop,
-							umap_seed = umap_seed,
+							              umap_seed = umap_seed,
                             ...)
 
   } else if (method == "LIGER") {
@@ -146,7 +146,7 @@ integrateSCE <- function(sce,
                            neighbor_n = neighbor_n,
                            verbose = verbose,
                            ret_nmf = ret_nmf,
-						   umap_seed = umap_seed,
+						               umap_seed = umap_seed,
                            ...)
 
   } else if (method == "regression") {
@@ -157,7 +157,7 @@ integrateSCE <- function(sce,
                                 neighbor_n = neighbor_n,
                                 verbose = verbose,
                                 hvgs = hvgs,
-								umap_seed = umap_seed,
+								                umap_seed = umap_seed,
                                 ...)
 
   } else if (method == "STACAS") {
@@ -167,7 +167,7 @@ integrateSCE <- function(sce,
                             neighbor_n = neighbor_n,
                             verbose = verbose,
                             hvg_ntop = hvg_ntop,
-							umap_seed = umap_seed,
+							              umap_seed = umap_seed,
 							...)
 
   }
@@ -180,7 +180,7 @@ integrateSCE <- function(sce,
                             verbose = verbose,
                             parallel_param = parallel_param,
                             hvgs = hvgs,
-							umap_seed = umap_seed,
+							              umap_seed = umap_seed,
                             ...)
   }
 
