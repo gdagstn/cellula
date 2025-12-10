@@ -79,7 +79,7 @@ integrateSCE <- function(sce,
                         neighbor_n = NULL,
                         parallel_param = SerialParam(),
                         ret_nmf = FALSE,
-						umap_seed = umap_seed,
+						umap_seed = 11,
                         verbose = FALSE,
                         ...){
   ## Sanity checks
@@ -248,8 +248,8 @@ integrateSCE <- function(sce,
   if (verbose) message(.bluem("[INT/Harmony]"), " Running UMAP on Harmony-corrected space")
 
   reducedDim(sce, "UMAP_Harmony") <- umap(reducedDim(sce, "PCA_Harmony")[,seq_len(ndims)],
-                                          n_neighbors = neighbor_n, seed = umap_seed,
-                                          min_dist = 0.7)
+                                      n_neighbors = neighbor_n, seed = umap_seed,
+                                      min_dist = 0.7)
 
   sce
 }
