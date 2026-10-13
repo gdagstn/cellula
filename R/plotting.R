@@ -190,7 +190,7 @@ plotProportions <- function(sce,
 #'     e.g. "cluster". Will be used to add labels to the plot. Can only be used
 #'     for categorical variables.
 #' @param knn_smooth logical, should the continuous values be smoothed using
-#' 	   k-nearest neighbors? Default is FALSE.
+#'     k-nearest neighbors? Default is FALSE.
 #' @param smoothing_k numeric, the number of neighbors to use for smoothing.
 #'     Default is 10.
 #' @param point_size numeric, the size of the points in the plot. Default is 0.7.
@@ -199,7 +199,8 @@ plotProportions <- function(sce,
 #'     the plotting order of the points in the plot. Default is "max", meaning that
 #'     points will be plotted showing the highest values of \code{color_by} on top.
 #'     If "min", points will be plotted in the order of the minimum value of \code{color_by}.
-#'     If "random", points will be plotted in a random order.
+#'     If "random", points will be plotted in a random order, for both continuous
+#'     and categorical variables. "max" and "min" have no effect on categorical variables.
 #' @param outline logical, should a black outline be painted around the point cloud?
 #'     Default is FALSE
 #' @param outline_size numeric, the thickness of the outline, expressed as a fraction
@@ -229,19 +230,19 @@ plotProportions <- function(sce,
 #' @details This plotting function is heavily inspired by the \code{\link[scater]{plotReducedDim}}
 #' function from the \code{{scater}} package.
 #'
-#' 	   The function can be used to plot 2D dimensionality reduction coordinates, coloured by
+#'     The function can be used to plot 2D dimensionality reduction coordinates, coloured by
 #'     a continuous or categorical variable, shaped by a categorical variable, and facetted
 #'     by a categorical variable. It can also add labels to the plot, and draw arrows in the
 #'     bottom left corner with coordinate names.
 #'
 #'     The function also allows to plot a feature/gene from the \code{assay} slot of
 #'     the \code{SingleCellExperiment} object by looking up the character in the columns
-#' 	   of the \code{rowData} slot.
+#'     of the \code{rowData} slot, or in the rownames.
 #'
 #'     To avoid overplotting the \code{knn_smooth} argument can be set to TRUE,
 #'     which will smooth numeric values using k-nearest neighbors taking, for
 #'     each cell, the mean of the values of its neighbourhood. The size of the
-#' 	   neighborhood can be set with the \code{smoothing_k} argument.
+#'     neighborhood can be set with the \code{smoothing_k} argument.
 #'
 #' @importFrom SingleCellExperiment reducedDimNames reducedDim
 #' @importFrom SummarizedExperiment colData
@@ -274,8 +275,6 @@ plot_DR <- function(sce,
                     color_palette = NULL,
                     trajectory = NULL,
                     rescale = TRUE) {
-## Sanity checks
-    # Error prefix
     ## Sanity checks
     # Error prefix
     ep <- .redm("{cellula::plot_DR()} - ")
@@ -288,7 +287,8 @@ plot_DR <- function(sce,
         stop(paste0(ep, "Could not find a slot named \"", dr, "\" in the SingleCellExperiment object"))
     }
     if (!is.null(color_by)) {
-        if (!color_by %in% colnames(colData(sce)) & !color_by %in% rowData(sce)$Symbol & !color_by %in% rowData(sce)$ID) {
+        if (!color_by %in% colnames(colData(sce)) && !color_by %in% rowData(sce)$Symbol &&
+            !color_by %in% rowData(sce)$ID && !color_by %in% rownames(sce)) {
             stop(paste0(ep, color_by, " is not a column or a rowData element of the SingleCellExperiment object"))
         }
     }
@@ -313,16 +313,16 @@ plot_DR <- function(sce,
             stop(paste0(ep, "Cannot group by a numeric value, convert it to factor first."))
         }
     }
-    if (num_scale != "auto" & !is(num_scale, "numeric")) {
+    if (!identical(num_scale, "auto") && !is.numeric(num_scale)) {
         stop(paste0(ep, " `num_scale` must be either a numeric vector or \"auto\""))
     }
 
-    if (is(num_scale, "numeric") & length(num_scale) != 2) {
+    if (is.numeric(num_scale) && length(num_scale) != 2) {
         stop(paste0(ep, " if specified, `num_scale` must contain exactly 2 numbers"))
     }
 
-    udf <- as.data.frame(reducedDim(sce, dr)[, c(1, 2)])
-    udf <- udf[complete.cases(udf), ]
+    keep <- complete.cases(reducedDim(sce, dr)[, c(1, 2)])
+    udf <- as.data.frame(reducedDim(sce, dr)[keep, c(1, 2)])
 
     # Rescaling
     if (rescale) {
@@ -333,21 +333,37 @@ plot_DR <- function(sce,
 
     colnames(udf) <- c("x", "y")
 
-    if (!is.null(color_by) & (color_by %in% rowData(sce)$Symbol | color_by %in% rowData(sce)$ID | color_by %in% rownames(sce)) &
+    # Look up features in rowData or rownames
+    if (!is.null(color_by) &&
+        (color_by %in% rowData(sce)$Symbol || color_by %in% rowData(sce)$ID || color_by %in% rownames(sce)) &&
         !color_by %in% colnames(colData(sce))) {
-        feature <- which(rowData(sce)$Symbol == color_by | rowData(sce)$ID == color_by | rownames(sce) == color_by)
-        colData(sce)[, color_by] <- as.numeric(assay(sce[feature, ], exprs_use))
+        feature <- which(rownames(sce) == color_by)
+        if (length(feature) == 0 && color_by %in% rowData(sce)$Symbol) {
+            feature <- which(rowData(sce)$Symbol == color_by)
+        }
+        if (length(feature) == 0) {
+            feature <- which(rowData(sce)$ID == color_by)
+        }
+        colData(sce)[, color_by] <- as.numeric(assay(sce[feature[1], ], exprs_use))
     }
 
     # Check which mappings to include
     include <- list(color_by, shape_by, group_by, label_by)
     include <- unique(unlist(include[!is.null(include)]))
 
-    for (i in include) udf[[i]] <- colData(sce)[rownames(udf), i]
+    for (i in include) udf[[i]] <- colData(sce)[[i]][keep]
 
     colnames(udf)[seq_len(length(include)) + 2] <- include
 
-    classes <- unlist(lapply(udf[, include, drop = FALSE], class))
+    classes <- unlist(lapply(udf[, include, drop = FALSE], function(x) {
+        if (is.numeric(x)) {
+            "numeric"
+        } else if (is.factor(x)) {
+            "factor"
+        } else {
+            class(x)[1]
+        }
+    }))
 
     names(classes) <- include
     aes_umap <- aes(x = .data[["x"]], y = .data[["y"]])
@@ -376,7 +392,7 @@ plot_DR <- function(sce,
 
             pal <- .choosePalette(cpal = color_palette, default = "Sunset")
 
-            if (num_scale != "auto") {
+            if (!identical(num_scale, "auto")) {
                 lims <- num_scale
                 cscale <- scale_colour_gradientn(
                     colours = pal, na.value = "lightgray",
@@ -425,7 +441,7 @@ plot_DR <- function(sce,
         aes_umap$shape <- aes(shape = .data[[shape_by]])$shape
     }
 
- 	if (!is.null(label_by)) {
+    if (!is.null(label_by)) {
         labels <- unique(udf[, label_by])
         medoids <- lapply(labels, function(x) {
             t(apply(udf[udf[, label_by] == x, c("x", "y")], 2, median))
@@ -439,6 +455,11 @@ plot_DR <- function(sce,
         if (is(udf[, group_by], "character")) {
             udf[, group_by] <- factor(udf[, group_by])
         }
+    }
+
+    # Shuffle categorical points
+    if (!is.null(color_by) && classes[color_by] != "numeric" && plotting_order == "random") {
+        udf <- udf[sample(nrow(udf)), ]
     }
 
     # Plot construction
@@ -455,54 +476,61 @@ plot_DR <- function(sce,
         theme(plot.margin = margin(2, 2, 2, 2, "cm"))
 
     # Coordinate arrows (bottom left corner)
-
     if (arrows) {
         arrow_1 <- data.frame(x = 0, xend = 0.15, y = 0, yend = 0)
         arrow_2 <- data.frame(x = 0, xend = 0, y = 0, yend = 0.15)
         text_1 <- data.frame(x = -0.03, y = 0.02)
         text_2 <- data.frame(x = 0.02, y = -0.03)
 
-   p <- p +
-    geom_segment(data = arrow_1,
-                 mapping = aes(x = .data[["x"]],
-                               y = .data[["y"]],
-                               xend = .data[["xend"]],
-                               yend = .data[["yend"]]),
-                 inherit.aes = FALSE,
-                 color = "black",
-                 linewidth = 0.3,
-                 arrow = arrow(length=unit(0.2,"cm"),
-                               type = "closed")) +
-    geom_segment(data = arrow_2,
-                 mapping = aes(x = .data[["x"]],
-                               y = .data[["y"]],
-                               xend = .data[["xend"]],
-                               yend = .data[["yend"]]),
-                 color = "black",
-                 inherit.aes = FALSE,
-                 linewidth = 0.3,
-                 arrow = arrow(length=unit(0.2,"cm"),
-                               type = "closed")) +
-    geom_text(data = text_1,
-              aes(x = .data[["x"]],
-                  y = .data[["y"]]),
-              inherit.aes = FALSE,
-              label = paste0(dr, " 2"),
-              angle = 90,
-              size = 2,
-              hjust = "left",
-              vjust = "top",
-              color = "black") +
-    geom_text(data = text_2,
-              aes(x = .data[["x"]],
-                  y = .data[["y"]]),
-              inherit.aes = FALSE,
-              label = paste0(dr, " 1"),
-              size = 2,
-              hjust = "left",
-              vjust = "bottom",
-              color = "black")
-}
+        p <- p +
+            geom_segment(
+                data = arrow_1,
+                mapping = aes(
+                    x = .data[["x"]],
+                    y = .data[["y"]],
+                    xend = .data[["xend"]],
+                    yend = .data[["yend"]]
+                ),
+                inherit.aes = FALSE,
+                color = "black",
+                linewidth = 0.3,
+                arrow = arrow(length = unit(0.2, "cm"), type = "closed")
+            ) +
+            geom_segment(
+                data = arrow_2,
+                mapping = aes(
+                    x = .data[["x"]],
+                    y = .data[["y"]],
+                    xend = .data[["xend"]],
+                    yend = .data[["yend"]]
+                ),
+                color = "black",
+                inherit.aes = FALSE,
+                linewidth = 0.3,
+                arrow = arrow(length = unit(0.2, "cm"), type = "closed")
+            ) +
+            geom_text(
+                data = text_1,
+                aes(x = .data[["x"]], y = .data[["y"]]),
+                inherit.aes = FALSE,
+                label = paste0(dr, " 2"),
+                angle = 90,
+                size = 2,
+                hjust = "left",
+                vjust = "top",
+                color = "black"
+            ) +
+            geom_text(
+                data = text_2,
+                aes(x = .data[["x"]], y = .data[["y"]]),
+                inherit.aes = FALSE,
+                label = paste0(dr, " 1"),
+                size = 2,
+                hjust = "left",
+                vjust = "bottom",
+                color = "black"
+            )
+    }
 
     p <- p + coord_fixed()
 
@@ -543,7 +571,6 @@ plot_DR <- function(sce,
                 from = range(orig_range$y),
                 to = range(udf$y)
             )
-
             trj$y1 <- .rescalen(trj$y1,
                 from = range(orig_range$y),
                 to = range(udf$y)
@@ -572,7 +599,6 @@ plot_DR <- function(sce,
             axis.text = element_blank()
         )
 }
-
 #' Plot a gene expression dot plot
 #'
 #' Plots a dot plot with gene expression from a SingleCellExperiment object
