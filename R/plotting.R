@@ -1,6 +1,6 @@
 #' Plot cluster modularity
 #'
-#' Plots a heatmap showing pairwise cluster modularity 
+#' Plots a heatmap showing pairwise cluster modularity
 #'
 #' @param sce a \code{SingleCellExperiment} object
 #' @param name character, the name in the \code{metadata slot} of the
@@ -32,7 +32,7 @@ plotModularity <- function(sce, name, type = "heatmap") {
             function(x) modmat[m[x, 1], m[x, 2]], numeric(1)
         )
         p <- ggplot(m, aes(x = .data[["x"]], y = .data[["y"]])) +
-            geom_tile(aes(fill = .data[["value"]], color = NA)) +
+            geom_tile(aes(fill = .data[["value"]]), colour = NA) +
             scale_x_discrete(position = "top")
         p <- p + theme_minimal() +
             theme(
@@ -40,9 +40,9 @@ plotModularity <- function(sce, name, type = "heatmap") {
                 panel.grid.major = element_blank(),
                 panel.grid.minor = element_blank(),
                 axis.line = element_blank(),
-                text = element_text(family = "sans"),
-                title = "log2(modularity ratio + 1)"
-            )
+                text = element_text(family = "sans")
+            ) +
+            labs(title = "log2(modularity ratio + 1)")
     } else if (type == "graph") {
         cgr <- graph_from_adjacency_matrix(modmat,
             mode = "upper",
@@ -68,7 +68,7 @@ plotModularity <- function(sce, name, type = "heatmap") {
 #'
 #' @return a beeswarm plot of silhouette widths
 #'
-#' @importFrom ggplot2 ggplot aes_string theme_minimal
+#' @importFrom ggplot2 ggplot aes .data theme_minimal
 #' @importFrom ggbeeswarm geom_quasirandom
 #' @importFrom S4Vectors metadata metadata<-
 #'
@@ -79,7 +79,7 @@ plotModularity <- function(sce, name, type = "heatmap") {
 
 plotSilhouette <- function(sce, name) {
     name <- paste0("silhouette_", name)
-    ggplot(metadata(sce)[[name]], aes_string(x = "cluster", y = "width", colour = "closest")) +
+    ggplot(metadata(sce)[[name]], aes(x = .data[["cluster"]], y = .data[["width"]], colour = .data[["closest"]])) +
         geom_quasirandom(method = "smiley") +
         theme_minimal()
 }
@@ -638,7 +638,6 @@ plot_dots <- function(sce,
                      color_palette = NULL,
                      format = "wide") {
 
-
   ## Sanity checks
   # Error prefix
   ep <- .redm("{cellula::plot_dots()} - ")
@@ -669,8 +668,11 @@ plot_dots <- function(sce,
     }
   }
 
+  cluster_genes <- cluster_genes && length(genes) > 1
+  cluster_groups <- cluster_groups && length(unique(colData(sce)[,group_by])) > 1
+
   sce_byclust <- lapply(unique(colData(sce)[,group_by]), function(x) {
-    cur <- assay(sce, exprs_use)[genes, which(colData(sce)[,group_by] == x)]
+    cur <- assay(sce, exprs_use)[genes, which(colData(sce)[,group_by] == x), drop = FALSE]
     props <- apply(cur, 1, function(x) sum(x > threshold))/ncol(cur)
     aves <- apply(cur, 1, function(x) mean(x))
     final_df <- data.frame("proportion" = props,
@@ -686,22 +688,22 @@ plot_dots <- function(sce,
     hc_props_genes <- hclust(dist(scdf_props_genes))$order
     hc_exp_genes <- hclust(dist(scdf_exp_genes))$order
   }
-  
+
   if(cluster_groups) {
     scdf_props_clusters <- do.call(rbind, lapply(sce_byclust, function(x) x$proportion))
     scdf_exp_clusters <- do.call(rbind, lapply(sce_byclust, function(x) x$mean_expression))
     hc_props_clusters <- hclust(dist(scdf_props_clusters))$order
     hc_exp_clusters <- hclust(dist(scdf_exp_clusters))$order
   }
-  
+
   scdf <- do.call(rbind, sce_byclust)
-  
+
   if(cluster_genes) {
     scdf$gene <- factor(scdf$gene, levels = genes[as.numeric(hc_exp_genes)])
   } else scdf$gene <- factor(scdf$gene, levels = rev(genes))
   if(cluster_groups) {
     scdf$cluster <- factor(scdf$cluster, levels = unique(colData(sce)[,group_by])[as.numeric(hc_exp_clusters)])
-  } 
+  }
 
   scdf$mean_expression[scdf$mean_expression == 0] <- NA
   scdf$proportion[scdf$proportion == 0] <- NA
@@ -782,18 +784,18 @@ plot_dots <- function(sce,
 #'     matrix heatmap? Default is \code{TRUE}.
 #' @param plot_cells logical, should cells be plotted as well? Default is \code{FALSE}
 #'     for speed.
-#' @param rotate_labels logical, should x axis labels be rotated by 45 degrees 
-#'     to prevent overlapping text? Only applies to heatmaps and violin plots. 
-#'     Default is \code{TRUE}     
+#' @param rotate_labels logical, should x axis labels be rotated by 45 degrees
+#'     to prevent overlapping text? Only applies to heatmaps and violin plots.
+#'     Default is \code{TRUE}
 #'
 #' @returns a ggplot with different types of visualization depending on the
-#'     classes of the columns chosen. 
-#'     
-#' @details If y is a numeric and x is NULL, or a categorical (character/factor), 
-#'     the function plots a violin + boxplot divided by x and/or by color_by. 
-#'     If y and x are both numeric, the function plots a scatterplot with optional 
-#'     2D kernel contouring. If y and x are both categorical, the function plots 
-#'     a heatmap of the confusion matrix, showing pairwise Jaccard indices. 
+#'     classes of the columns chosen.
+#'
+#' @details If y is a numeric and x is NULL, or a categorical (character/factor),
+#'     the function plots a violin + boxplot divided by x and/or by color_by.
+#'     If y and x are both numeric, the function plots a scatterplot with optional
+#'     2D kernel contouring. If y and x are both categorical, the function plots
+#'     a heatmap of the confusion matrix, showing pairwise Jaccard indices.
 #'     All plots can be facetted.
 #'
 #' @importFrom ggplot2 facet_wrap
@@ -814,7 +816,7 @@ plot_Coldata <- function(sce,
   ## Sanity checks
   # Error prefix
   ep <- .redm("{cellula::plot_Coldata()} - ")
-  
+
   if(!is(sce, "SingleCellExperiment"))
     stop(paste0(ep, "Must provide a SingleCellExperiment object"))
 
@@ -839,6 +841,8 @@ plot_Coldata <- function(sce,
     df[,x] <- factor(df[,x])
     df[,y] <- factor(df[,y])
     p <- .makeHeatmap(df, x, y, clustered, color_palette, rotate_labels)
+  } else {
+    stop(paste0(ep, "Unsupported combination of x and y: use numeric/numeric (scatter), categorical/numeric (violin) or categorical/categorical (heatmap)."))
   }
 
   # Facet
@@ -852,7 +856,6 @@ plot_Coldata <- function(sce,
   p
 }
 
-
 #' Plot a stacked violin plot
 #'
 #' Plots a stacked violin plot of at least two features in different groupings
@@ -860,12 +863,12 @@ plot_Coldata <- function(sce,
 #' @param sce a \code{SingleCellExperiment} object
 #' @param features character vector, list of features from \code{sce}
 #' @param cluster character, column name in the \code{colData} slot of \code{sce},
-#'     e.g. "cluster". Will be used to assign colors. 
+#'     e.g. "cluster". Will be used to assign colors.
 #'     Must be a categorical variable.
 #' @param split_by character, column name in the \code{colData} slot of the \code{sce},
-#'     e.g. "individual". Will be used to divide violin plots. 
+#'     e.g. "individual". Will be used to divide violin plots.
 #'     Must be a categorical variable.
-#' @param stack logical, should all violin plots be stacked on 1 column? 
+#' @param stack logical, should all violin plots be stacked on 1 column?
 #'     Default is TRUE.
 #' @param de (optional) data frame containing the results of differential expression.
 #'     Standardized column names are enforced.
@@ -881,20 +884,20 @@ plot_Coldata <- function(sce,
 #'
 #' @return a ggplot object showing a facetted violin plot with several features grouped
 #'     and colored according to two categorical variables.
-#' 
-#' @details This function has two possible outcomes, controlled by the \code{stack} argument: 
-#'     1) \code{stack = TRUE} returns a stacked violin plot where each feature is a row, and 
-#'     violins correspond to whatever grouping is specified in "cluster"; 
+#'
+#' @details This function has two possible outcomes, controlled by the \code{stack} argument:
+#'     1) \code{stack = TRUE} returns a stacked violin plot where each feature is a row, and
+#'     violins correspond to whatever grouping is specified in "cluster";
 #'     2) \code{stack = FALSE} returns a faceted grid of violin plots where each feature is a
 #'     panel.
-#' 
-#'     The first behaviour is useful to check markers/gene expression patterns in different 
+#'
+#'     The first behaviour is useful to check markers/gene expression patterns in different
 #'     groupings with an idea of the distribution. It reproduces \code{scanpy}'s stacked
-#'     violin plot. 
-#'     The second behaviour is useful to show comparisons between groupings/conditions 
+#'     violin plot.
+#'     The second behaviour is useful to show comparisons between groupings/conditions
 #'     for a set of features, and allows differential expression significance information
-#'     to be overlaid. 
-#' 
+#'     to be overlaid.
+#'
 #'     Since the idea is to make different groupings and features comparable
 #'     the \code{\link[ggplot2]{geom_violin}} geom is set with \code{scale = "width"}, which can show the
 #'     distribution of the data but does not scale with the number of data points (cells).
@@ -922,7 +925,7 @@ stacked_Violin <- function(sce, features, cluster, split_by = NULL, stack = TRUE
   if(is.null(features))
       stop(paste0(ep, "Must provide features to plot"))
   if(length(features) < 2)
-      stop(paste0(ep, "Must provide at least two features to plot. To plot a single feature use `plot_Coldata()`"))     
+      stop(paste0(ep, "Must provide at least two features to plot. To plot a single feature use `plot_Coldata()`"))
   if(is.null(cluster))
       stop(paste0(ep, "Must provide a cluster column name"))
   if(!cluster %in% colnames(colData(sce)))
@@ -937,104 +940,103 @@ stacked_Violin <- function(sce, features, cluster, split_by = NULL, stack = TRUE
       stop(paste0(ep, " `split_by` cannot be a numeric value, convert it to factor first."))
   }
   if(!is.null(color_palette)){
-    if(length(color_palette) < length(unique(colData(sce)[,cluster])))
-      stop(paste0(ep, "the color palette cannot be shorter than the number of unique values of `cluster`")) 
+    if(length(color_palette) < length(unique(colData(sce)[,ifelse(is.null(split_by), cluster, split_by)])))
+      stop(paste0(ep, "the color palette cannot be shorter than the number of unique values of `split_by` (or `cluster` if `split_by` is NULL)"))
   }
 
   if(significance & is.null(de))
-      stop(paste0(ep, "`signifiance` cannot be TRUE if you do not provide `de`."))
+      stop(paste0(ep, "`significance` cannot be TRUE if you do not provide `de`."))
 
   if(is.null(split_by)) split_by = cluster
-  
-    feat_index <- which(rowData(sce)$Symbol %in% features | rowData(sce)$ID %in% features | rownames(sce) %in% features)
-   
+
+    feat_index <- .matchFeatures(sce, features)
+
     featuredf = as.data.frame(as.matrix(t(assay(sce, "logcounts")[feat_index,])))
-    colnames(featuredf) = features = rowData(sce)[colnames(featuredf), "Symbol"]
-    
+    colnames(featuredf) = features = .featureLabels(sce, feat_index)
+
     featuredf$cluster = colData(sce)[,cluster]
     featuredf$splitby = colData(sce)[,split_by]
     fdf_melt = reshape2::melt(featuredf, value.name = "expression")
     fdf_melt$variable = factor(fdf_melt$variable, levels = colnames(featuredf))
-    
+
     if(stack) {
-      p = ggplot(fdf_melt, aes(y = .data[["expression"]], 
-                               x = .data[["cluster"]], 
-                               fill = .data[["splitby"]])) + 
-          geom_violin(scale = "width") + 
+      p = ggplot(fdf_melt, aes(y = .data[["expression"]],
+                               x = .data[["cluster"]],
+                               fill = .data[["splitby"]])) +
+          geom_violin(scale = "width") +
         facet_wrap(~factor(variable, levels = features),
-                  nrow = length(features), 
-                  strip.position = "right", 
+                  nrow = length(features),
+                  strip.position = "right",
                   scales = "free",
                   axis.labels = "all_y") +
-        theme_minimal() + 
+        theme_minimal() +
         theme(panel.grid = element_blank(),
               axis.line = element_line(),
               axis.ticks = element_line(),
               #axis.text.x = element_blank(),
-              axis.text.y = element_text(size = 15)) 
+              axis.text.y = element_text(size = 15))
 
       if(!is.null(color_palette)) {
         p = p + scale_fill_manual(values = color_palette)
     }
-      
+
     } else {
-      p = ggplot(fdf_melt, aes(y = .data[["expression"]], 
-                               x = .data[["cluster"]], 
-                               fill = .data[["splitby"]])) + 
-        geom_violin(scale = "width") + 
+      p = ggplot(fdf_melt, aes(y = .data[["expression"]],
+                               x = .data[["cluster"]],
+                               fill = .data[["splitby"]])) +
+        geom_violin(scale = "width") +
         geom_boxplot(data = fdf_melt, mapping =  aes(y = .data[["expression"]], x = .data[["cluster"]]),
                      width = 0.2,
                      position = position_dodge(width = 0.9), outliers = FALSE) +
         ylim(0, max(fdf_melt$expression) * 1.6) +
         facet_wrap(~factor(variable, levels = features), nrow = nrow, ncol = ncol) +
-        theme_minimal() + 
+        theme_minimal() +
         theme(panel.grid = element_blank(),
               axis.line = element_line(),
               axis.ticks = element_line(),
               #axis.text.x = element_blank(),
-              axis.text.y = element_text(size = 12)) 
+              axis.text.y = element_text(size = 12))
       if(!is.null(color_palette)) {
         p = p + scale_fill_manual(values = color_palette)
       }
     }
-    
+
     if(significance) {
-      
+
       built = ggplot_build(p)$data[[1]]
       xcoords = unique(built$x)
       ymax = max(built$y)*1.1
-      
+
       sigdf = as.data.frame(de[de$gene %in% features, c("gene", "logFC", "padj")])
       sigdf$variable = sigdf$gene
       sigdf$logFC = round(sigdf$logFC, digits = 2)
       sigdf$padj = formatC(sigdf$padj, format = "e", digits = 2)
       sigdf$padj[sigdf$padj == "0.00e+00"] = "< 1e-299"
       sigdf$lab = paste0("logFC: ", sigdf$logFC, "\n", "p: ", sigdf$padj)
-      
-      p = p + geom_segment(aes(x = xcoords[1], xend = xcoords[2], 
-                               y = ymax, yend = ymax), 
+
+      p = p + geom_segment(aes(x = xcoords[1], xend = xcoords[2],
+                               y = ymax, yend = ymax),
                             linewidth = 0.5) +
-          geom_text(data = sigdf, 
-                   aes(x = min(xcoords) + 0.45, y = ymax * 1.3, label = .data[["lab"]]), 
-                   inherit.aes = FALSE, nudge_x = -.225, size = 2.5) 
-      
+          geom_text(data = sigdf,
+                   aes(x = min(xcoords) + 0.45, y = ymax * 1.3, label = .data[["lab"]]),
+                   inherit.aes = FALSE, nudge_x = -.225, size = 2.5)
+
     }
     p
 }
 
-
-#' Plot a multi-panel dimensionality reduction 
+#' Plot a multi-panel dimensionality reduction
 #'
-#' Plots a multi-panel dimensionality reduction where points are colored 
+#' Plots a multi-panel dimensionality reduction where points are colored
 #' by different features (one per panel)
 #'
 #' @param sce a \code{SingleCellExperiment} object
-#' @param dr character, the name of the dimensional reduction slot (retrieved through 
+#' @param dr character, the name of the dimensional reduction slot (retrieved through
 #'     \code{reducedDim(sce, dr)}). Default is "UMAP".
 #' @param dims numeric, vector of 2 dimensions to plot. Default is 1, 2
-#' @param features character vector with features (e.g. genes) from \code{sce}. 
+#' @param features character vector with features (e.g. genes) from \code{sce}.
 #' @param point_size numeric, the size of the points in the plot. Default is 1.2
-#' @param plot_order character, one of "decreasing" (default), "increasing", or "random". 
+#' @param plot_order character, one of "decreasing" (default), "increasing", or "random".
 #'    Influences the way points are plotted, important when dealing with overplotting.
 #' @param exprs_use character, the name of the \code{assay} in the object whose values will
 #'    be plotted. Default is "logcounts".
@@ -1042,25 +1044,25 @@ stacked_Violin <- function(sce, features, cluster, split_by = NULL, stack = TRUE
 #'    approach? Default is FALSE.
 #' @param smoothing_k numeric, the number of neighbors to use when smoothing. Default is 10.
 #' @param rng_seed numeric, the random number generator seed used when \code{plot_order = "random"}.
-#' @param common_scale logical, should the points have a single, common color scale (TRUE) or 
-#'    should each panel have its own scale? Deafult is FALSE. 
+#' @param common_scale logical, should the points have a single, common color scale (TRUE) or
+#'    should each panel have its own scale? Deafult is FALSE.
 #' @param color_palette character, vector of colors to be interpolated across for the color
 #'    aesthetic. Default is NULL meaning a standard quantitative palette from \code{cellula}
 #'    will be used.
 #' @return a ggplot object showing a multi-panel plot of different features - one feature per panel -
 #'    where there is either a common scale or an individual scale per panel.
-#' 
-#' @details This function is inspired by Seurat's \code{\link[Seurat]{FeaturePlot}}. 
-#'     This function has two possible outcomes, controlled by the \code{common_scale} argument: 
+#'
+#' @details This function is inspired by Seurat's \code{\link[Seurat]{FeaturePlot}}.
+#'     This function has two possible outcomes, controlled by the \code{common_scale} argument:
 #'     1) \code{common_scale = TRUE} returns a faceted plot where there is a single scale for color.
-#'     This can be useful to compare gene expression across genes using color. 
+#'     This can be useful to compare gene expression across genes using color.
 #'     2) \code{common_scale = FALSE} returns a \code{patchwork} grid of feature plots, each with its own
-#'     individual scale. 
-#' 
-#' @importFrom SummarizedExperiment rowData assay 
+#'     individual scale.
+#'
+#' @importFrom SummarizedExperiment rowData assay
 #' @importFrom SingleCellExperiment reducedDim
 #' @importFrom ggplot2 ggplot aes .data theme_minimal theme element_blank
-#' @importFrom ggplot2 geom_point facet_wrap 
+#' @importFrom ggplot2 geom_point facet_wrap
 #' @importFrom ggplot2 scale_colour_gradientn coord_fixed
 #' @importFrom reshape2 melt
 #' @importFrom methods is
@@ -1068,12 +1070,11 @@ stacked_Violin <- function(sce, features, cluster, split_by = NULL, stack = TRUE
 #'
 #' @export
 
-
-multipanel_DR <- function(sce, dr = "UMAP", dims = c(1,2), 
-                          features, point_size = 1.2, 
+multipanel_DR <- function(sce, dr = "UMAP", dims = c(1,2),
+                          features, point_size = 1.2,
                           plot_order = "decreasing",
                           exprs_use = "logcounts",
-						  knn_smooth = FALSE,
+                          knn_smooth = FALSE,
                           smoothing_k = 10,
                           rng_seed = 11,
                           common_scale = FALSE,
@@ -1083,7 +1084,7 @@ multipanel_DR <- function(sce, dr = "UMAP", dims = c(1,2),
   # Error prefix
   ep <- .redm("{cellula::multipanel_DR()} - ")
 
-  # Checks                          
+  # Checks
   if(!is(sce, "SingleCellExperiment"))
     stop(paste0(ep, "Must provide a SingleCellExperiment object"))
   if(!dr %in% reducedDimNames(sce))
@@ -1091,22 +1092,22 @@ multipanel_DR <- function(sce, dr = "UMAP", dims = c(1,2),
   if(is.null(features))
       stop(paste0(ep, "Must provide features to plot"))
   if(length(features) < 2)
-      stop(paste0(ep, "Must provide at least two features to plot. To plot a single feature use `plot_DR()`"))     
+      stop(paste0(ep, "Must provide at least two features to plot. To plot a single feature use `plot_DR()`"))
   if(!plot_order %in% c("decreasing", "increasing", "random"))
       stop(paste0(ep, "`plot_order` must be one of \"decreasing\", \"increasing\", or \"random\""))
   if(!is(rng_seed, "numeric"))
       stop(paste0(ep, "`rng_seed` must be a numeric"))
 
-  feat_index <- which(rowData(sce)$Symbol %in% features | rowData(sce)$ID %in% features | rownames(sce) %in% features)
-  
+  feat_index <- .matchFeatures(sce, features)
+
   featuredf = as.data.frame(as(t(assay(sce, exprs_use)[feat_index,]), "matrix"))
-  colnames(featuredf) = features = rowData(sce)[colnames(featuredf), "Symbol"]
-  
+  colnames(featuredf) = features = .featureLabels(sce, feat_index)
+
   fdf_melt = reshape2::melt(featuredf, value.name = "expression")
   fdf_melt$variable = factor(fdf_melt$variable, levels = colnames(featuredf))
   fdf_melt$x = rep(reducedDim(sce, dr)[,dims[1]], length(features))
   fdf_melt$y = rep(reducedDim(sce, dr)[,dims[2]], length(features))
-  
+
   if(is.null(color_palette)) {
     colorpal = .cpal_seq_ylgnbu()
   } else {
@@ -1115,13 +1116,13 @@ multipanel_DR <- function(sce, dr = "UMAP", dims = c(1,2),
 
    if (knn_smooth) {
 
-	  fdf_melt_split <- split(fdf_melt, fdf_melt$variable)
+      fdf_melt_split <- split(fdf_melt, fdf_melt$variable)
 
-	  for (i in 1:length(fdf_melt_split)) {
+      for (i in seq_along(fdf_melt_split)) {
                 fdf_melt_split[[i]]$expression <- .smoothValues(fdf_melt_split[[i]], column = "expression", k = smoothing_k)
-	  }
+      }
 
-	  fdf_melt <- as.data.frame(do.call(rbind, fdf_melt_split))
+      fdf_melt <- as.data.frame(do.call(rbind, fdf_melt_split))
     }
 
   if(plot_order == "decreasing") {
@@ -1133,14 +1134,14 @@ multipanel_DR <- function(sce, dr = "UMAP", dims = c(1,2),
     new_ord = sample(seq_len(nrow(fdf_melt)), size = nrow(fdf_melt), replace = FALSE)
     fdf_melt = fdf_melt[new_ord,]
   }
-  
+
   if(common_scale) {
-    p = ggplot(fdf_melt, aes(x = .data[["x"]], 
-                             y = .data[["y"]], 
-                             color = .data[["expression"]])) + 
-      geom_point(size = point_size) + 
+    p = ggplot(fdf_melt, aes(x = .data[["x"]],
+                             y = .data[["y"]],
+                             color = .data[["expression"]])) +
+      geom_point(size = point_size) +
       facet_wrap(~factor(variable, levels = features)) +
-      theme_minimal() + 
+      theme_minimal() +
       theme(panel.grid = element_blank(),
             axis.line = element_blank(),
             axis.ticks = element_blank(),
@@ -1151,11 +1152,11 @@ multipanel_DR <- function(sce, dr = "UMAP", dims = c(1,2),
     coord_fixed()
   } else {
     plotlist = lapply(split(fdf_melt, fdf_melt$variable), function(x){
-      ggplot(x, aes(x = .data[["x"]], 
-                    y = .data[["y"]], 
-                    color = .data[["expression"]])) + 
-        geom_point(size = point_size) + 
-        theme_minimal() + 
+      ggplot(x, aes(x = .data[["x"]],
+                    y = .data[["y"]],
+                    color = .data[["expression"]])) +
+        geom_point(size = point_size) +
+        theme_minimal() +
         theme(panel.grid = element_blank(),
               axis.line = element_blank(),
               axis.ticks = element_blank(),
@@ -1220,6 +1221,7 @@ multipanel_DR <- function(sce, dr = "UMAP", dims = c(1,2),
 
   # Beeswarm
   if(plot_cells) {
+    aes_bee <- aes_cd
     if(is.null(x) & !is.null(color_by)) {
       aes_bee <- aes_cd
       aes_bee$x <- aes(x = .data[[color_by]])$x
@@ -1244,7 +1246,7 @@ multipanel_DR <- function(sce, dr = "UMAP", dims = c(1,2),
                               bandwidth = 1,
                               alpha = 0.3,
                               size = 0.6,
-                              dodge.width = 1)  
+                              dodge.width = 1)
   }
 
   # Boxplot
@@ -1280,16 +1282,15 @@ multipanel_DR <- function(sce, dr = "UMAP", dims = c(1,2),
     cscale <- scale_colour_manual(values = pal, na.value = "lightgray")
     fscale <- scale_fill_manual(values = pal, na.value = "lightgray")
     fguides <- guides(boxplot = "none")
-    p <- p + cscale + fscale + fguides 
+    p <- p + cscale + fscale + fguides
   }
-  
+
   if(rotate_labels) {
-    p <- p + theme(axis.text.x.bottom = element_text(angle = 45, 
+    p <- p + theme(axis.text.x.bottom = element_text(angle = 45,
                                                      hjust = 1))
   }
   p
 }
-
 
 #' @importFrom ggplot2 .data aes ggplot stat_density_2d after_stat scale_fill_gradientn
 #' @importFrom ggplot2 theme_minimal theme element_blank labs element_line
@@ -1339,17 +1340,16 @@ multipanel_DR <- function(sce, dr = "UMAP", dims = c(1,2),
   return(p)
 }
 
-
 #' @importFrom ggplot2 .data aes ggplot geom_tile element_text scale_x_discrete
 #' @importFrom ggplot2 theme_minimal theme element_blank labs element_line scale_fill_gradientn
 #' @importFrom stats dist hclust
 
-.makeHeatmap <- function(df, x, y, clustered = TRUE, color_palette = NULL, 
+.makeHeatmap <- function(df, x, y, clustered = TRUE, color_palette = NULL,
                          rotate_labels = TRUE) {
 
   if(!is(df[,x], "factor")) df[,x] = factor(df[,x])
   if(!is(df[,y], "factor")) df[,y] = factor(df[,y])
-  
+
   # Calculate Jaccard index
   jdf <- expand.grid(levels(df[,x]), levels(df[,y]))
 
@@ -1391,7 +1391,7 @@ multipanel_DR <- function(sce, dr = "UMAP", dims = c(1,2),
           text = element_text(family = "sans")
     )
 
-  if(rotate_labels) p <- p + theme(axis.text.x.top = element_text(angle = 45, 
+  if(rotate_labels) p <- p + theme(axis.text.x.top = element_text(angle = 45,
                                                                  hjust = 0))
   # Colors
   if(is.null(color_palette)) {
@@ -1405,16 +1405,16 @@ multipanel_DR <- function(sce, dr = "UMAP", dims = c(1,2),
 }
 
 #' Gene expression heatmap
-#' 
+#'
 #' Draws a heatmap of gene expression from a SingleCellExperiment object
-#' 
+#'
 #' @param sce a SingleCellExperiment object
 #' @param genes character, the genes to include in the heatmap.
-#'     These will be looked up in the rownames of the object, which are also the 
-#' 	   rownames of the data frames in the DE results. At least 2 genes must be provided.
+#'     These will be looked up in the rownames of the object, which are also the
+#'        rownames of the data frames in the DE results. At least 2 genes must be provided.
 #' @param coldata_cols character, the columns in the \code{colData} slot of the \code{sce} object
 #'     to include in the heatmap as annotations. Their order influences column ordering
-#' 	   when \code{cluster_cols = FALSE}. Default is \code{NULL}.
+#'        when \code{cluster_cols = FALSE}. Default is \code{NULL}.
 #' @param order_by character, the columns in the \code{colData} slot of the \code{sce} object
 #'     to order the heatmap by. Default is \code{coldata_cols}. Overrides \code{cluster_cols} if
 #'     not \code{NULL}.
@@ -1426,81 +1426,81 @@ multipanel_DR <- function(sce, dr = "UMAP", dims = c(1,2),
 #'     to aggregate by. Default is \code{NULL}
 #' @param aggregate_fun character, the function to use for aggregation. Default is \code{"sum"}
 #' @param color_pal character, the color palette to use for the heatmap. Default is \code{NULL}
-#' @param annotation_pal named list of named character vectors, the color palette 
-#' 	   to use for the annotations. Default is \code{NULL}. See Details
-#' @param cluster_cells logical, should the columns (cells) be clustered? 
-#'     Default is \code{TRUE}. It is automatically set to \code{FALSE} if \code{order_by} is 
+#' @param annotation_pal named list of named character vectors, the color palette
+#'        to use for the annotations. Default is \code{NULL}. See Details
+#' @param cluster_cells logical, should the columns (cells) be clustered?
+#'     Default is \code{TRUE}. It is automatically set to \code{FALSE} if \code{order_by} is
 #'     not \code{NULL}.
 #' @param cluster_genes logical, should the rows (genes) be clustered? Default is \code{TRUE}
 #' @param gaps character, the columns in \code{coldata_cols} to leave gaps between. See Details
 #'     Default is \code{NULL}.
 #' @param clip_values numeric, the percentile to clip the values at. Default is \code{99.5}
-#' @param raster logical, should the heatmap be rasterized? Default is \code{FALSE}, but 
-#'     it is changed to \code{TRUE} automatically if the number of cells or genes is 
-#' 	   greater than 2000. This behaviour can be overriden by setting \code{raster = "force"}.
+#' @param raster logical, should the heatmap be rasterized? Default is \code{FALSE}, but
+#'     it is changed to \code{TRUE} automatically if the number of cells or genes is
+#'        greater than 2000. This behaviour can be overriden by setting \code{raster = "force"}.
 #' @param ... additional arguments to pass to \code{\link[ComplexHeatmap]{Heatmap}}
 #'
-#' @return a heatmap of the gene expression data, optionally with annotations 
+#' @return a heatmap of the gene expression data, optionally with annotations
 #'    from the \code{colData} slot
-#' 
-#' @details this function generates a heatmap of genes using expression data from the \code{sce} 
-#' 	  object (specified by \code{exprs}) with optional aggregation. The heatmap can be annotated
-#' 	  with any number of column annotations, i.e. colouring segments above each column according
-#'    to the \code{colData} slot of the \code{sce} object. 
-#' 		
-#' 	  The \code{annotation_pal} argument is a named list of named character (colour) vectors, 
-#' 	  where each element of the list corresponds to a column in \code{coldata_cols}. 
-#' 	  The named character vectors should have the same length as the number of unique values 
-#'    in the column, and the names should be the unique values. 
-#' 	
-#' 	  The order of colData columns in \code{order_by} influences the order of the columns in the
-#' 	  heatmap. If \code{cluster_cols = FALSE}, the columns will be ordered according to the order
-#' 	  of the columns in \code{order_by}, where the first element dictates the major order, then
-#' 	  the second element the minor order, etc, e.g. if \code{order_by = c("condition", "label")}
+#'
+#' @details this function generates a heatmap of genes using expression data from the \code{sce}
+#'       object (specified by \code{exprs}) with optional aggregation. The heatmap can be annotated
+#'       with any number of column annotations, i.e. colouring segments above each column according
+#'    to the \code{colData} slot of the \code{sce} object.
+#'
+#'       The \code{annotation_pal} argument is a named list of named character (colour) vectors,
+#'       where each element of the list corresponds to a column in \code{coldata_cols}.
+#'       The named character vectors should have the same length as the number of unique values
+#'    in the column, and the names should be the unique values.
+#'
+#'       The order of colData columns in \code{order_by} influences the order of the columns in the
+#'       heatmap. If \code{cluster_cols = FALSE}, the columns will be ordered according to the order
+#'       of the columns in \code{order_by}, where the first element dictates the major order, then
+#'       the second element the minor order, etc, e.g. if \code{order_by = c("condition", "label")}
 #'    columns will be first ordered by condition and then, within each condition, by label.
-#' 	  If \code{cluster_cols = TRUE}, the columns will be ordered according to the clustering 
-#' 	  of the columns. Two numeric columns cannot be properly used for ordering since they will
-#' 	  have an individual level for each cell.
-#' 
-#' 	  The aggregation arguments \{code{aggregate}, \code{aggregate_by}, \code{aggregate_fun} 
+#'       If \code{cluster_cols = TRUE}, the columns will be ordered according to the clustering
+#'       of the columns. Two numeric columns cannot be properly used for ordering since they will
+#'       have an individual level for each cell.
+#'
+#'       The aggregation arguments \{code{aggregate}, \code{aggregate_by}, \code{aggregate_fun}
 #'    are used to control if and how the data is aggregated. If \code{aggregate = TRUE}, the data
-#'    will be aggregated by the variables in \code{aggregate_by} using the function specified by 
-#'    \code{aggregate_fun}. 
-#' 
-#' 
+#'    will be aggregated by the variables in \code{aggregate_by} using the function specified by
+#'    \code{aggregate_fun}.
+#'
+#'
 #' @importFrom SummarizedExperiment colData
 #' @importFrom scuttle aggregateAcrossCells
 #' @importFrom stats quantile
 #' @importFrom grDevices colorRampPalette colors
-#' 
+#'
 #' @export
- 
-plotHeatmap <- function(sce, 
-                        genes, 
-                        coldata_cols = NULL, 
-						order_by = coldata_cols,
+
+plotHeatmap <- function(sce,
+                        genes,
+                        coldata_cols = NULL,
+                        order_by = coldata_cols,
                         scale = TRUE,
-						exprs = "logcounts",
+                        exprs = "logcounts",
                         aggregate = FALSE,
                         aggregate_by = NULL,
-						aggregate_fun = "sum",
-                        color_pal = NULL, 
+                        aggregate_fun = "sum",
+                        color_pal = NULL,
                         annotation_pal = NULL,
                         cluster_cells = TRUE,
                         cluster_genes = TRUE,
                         gaps = NULL,
                         clip_values = 99.5,
                         raster = FALSE,
-						...){
-  
+                        ...){
+
   ### Sanity checks
-	# error prefix
-	ep = .redm("cellula::plotHeatmap() - ")
-	
+    # error prefix
+    ep = .redm("cellula::plotHeatmap() - ")
+
   dependencies = data.frame("package" = c("ComplexHeatmap", "circlize"),
                             "repo" = c("BioC", "CRAN"))
   if(checkFunctionDependencies(dependencies)) stop(paste0(ep, "Missing required packages."))
-  
+
   if(!is(sce, "SingleCellExperiment"))
     stop(paste0(ep, "Must provide a SingleCellExperiment object"))
   if(is.null(genes))
@@ -1510,156 +1510,164 @@ plotHeatmap <- function(sce,
   if(!is.null(coldata_cols)) {
     if(!all(coldata_cols %in% colnames(colData(sce))))
       stop(paste0(ep, "Some columns were not found in the colData"))
-	if(!is.null(order_by)) {
-		if(!all(order_by %in% colnames(colData(sce))))
-			stop(paste0(ep, "Some columns for ordering were not found in the colData"))
-		if(!all(order_by %in% coldata_cols))
-			stop(paste0(ep, "Some columns for ordering were not found in coldata_cols"))	
-	}
+    if(!is.null(order_by)) {
+        if(!all(order_by %in% colnames(colData(sce))))
+            stop(paste0(ep, "Some columns for ordering were not found in the colData"))
+        if(!all(order_by %in% coldata_cols))
+            stop(paste0(ep, "Some columns for ordering were not found in coldata_cols"))
+    }
     if(!is.null(gaps)) {
       if(!gaps %in% coldata_cols)
         stop(paste0(ep, "the gaps column must be included in coldata_cols"))
     }
-	if(!is(clip_values, "numeric"))
-		stop(paste0(ep, "clip_values must be a numeric value"))
-	if(clip_values <= 0 | clip_values > 100)
-		stop(paste0(ep, "clip_values must be between 0 excluded and 100 included"))	
+
   }
-  
-  feat_index <- which(rowData(sce)$Symbol %in% genes | rowData(sce)$ID %in% genes | rownames(sce) %in% genes)
-  
+
+  if(!is.null(clip_values)) {
+    if(!is.numeric(clip_values))
+      stop(paste0(ep, "clip_values must be a numeric value"))
+    if(clip_values <= 0 || clip_values > 100)
+      stop(paste0(ep, "clip_values must be between 0 excluded and 100 included"))
+  }
+
+  feat_index <- .matchFeatures(sce, genes)
+
   if(length(feat_index) == 0)
     stop(paste0(ep, "No genes were found in the object"))
-  
+
   if(aggregate) {
     if(is.null(aggregate_by))
       stop(paste0(ep, "aggregate_by must not be NULL if aggregate is TRUE"))
     if(!all(aggregate_by %in% colnames(colData(sce))))
       stop(paste0(ep, "Some columns for aggregation were not found in the colData"))
-    
+
     agg_vector = apply(colData(sce)[,aggregate_by,drop=FALSE], 1, function(x) paste(x, collapse = "__"))
     agg = aggregateAcrossCells(sce,
                                ids = agg_vector,
-                               statistics = aggregate_fun, 
+                               statistics = aggregate_fun,
                                use.assay.type = "counts")
-		if(exprs == "logcounts") {
-			agg = computeLibraryFactors(agg)
-			agg = logNormCounts(agg)
-		}
-		mat = assay(agg, exprs)[feat_index,]
-		cd = as.data.frame(colData(agg))
-		non_na_cols = colnames(cd)[unlist(lapply(cd, function(x) !all(is.na(x))))]
-		order_by = intersect(order_by, non_na_cols)
-		coldata_cols = intersect(coldata_cols, non_na_cols)
-	} else {
-		mat = as(assay(sce, exprs)[feat_index,], "matrix") #oh god forgive me
-		cd = as.data.frame(colData(sce))
-	}
+        if(exprs == "logcounts") {
+            agg = computeLibraryFactors(agg)
+            agg = logNormCounts(agg)
+        }
+        mat = assay(agg, exprs)[feat_index,]
+        cd = as.data.frame(colData(agg))
+        non_na_cols = colnames(cd)[unlist(lapply(cd, function(x) !all(is.na(x))))]
+        order_by = intersect(order_by, non_na_cols)
+        coldata_cols = intersect(coldata_cols, non_na_cols)
+    } else {
+        mat = as(assay(sce, exprs)[feat_index,], "matrix") #oh god forgive me
+        cd = as.data.frame(colData(sce))
+    }
 
-	mat[is.na(mat)] = 0
-	remove = which(rowSums(mat) == 0)
+    mat[is.na(mat)] = 0
+    remove = which(rowSums(mat) == 0)
 
-	if(length(remove) > 0) {
-		mat = mat[-remove,]
-		message("Removed ", length(remove), " genes with no expression")
-	}
+    if(length(remove) > 0) {
+        mat = mat[-remove,]
+        message("Removed ", length(remove), " genes with no expression")
+    }
 
   if(scale) mat = t(scale(t(mat)))
 
-  if(!is.null(coldata_cols) & !is.null(order_by)) {
-	if(length(order_by) > 1) {
-    	ordered_cols = do.call(order, cd[,order_by])
-	} else {
-		ordered_cols = order(cd[,order_by])
-	}
-    cd = cd[ordered_cols,]
-    mat = mat[,ordered_cols]
+  if(!is.null(coldata_cols)) {
+    if(length(order_by) > 0) {
+      if(length(order_by) > 1) {
+        ordered_cols = do.call(order, cd[,order_by])
+      } else {
+        ordered_cols = order(cd[,order_by])
+      }
+      cd = cd[ordered_cols,]
+      mat = mat[,ordered_cols]
+    }
 
-    if(is.null(annotation_pal)){	
+    if(is.null(annotation_pal)){
 
-    	categorical_cols_test = unlist(lapply(cd[,coldata_cols,drop=FALSE], function(x) 
-      		inherits(x, "character")|inherits(x, "factor")|inherits(x,"logical")))      
-    	categorical_cols = categorical_cols_test[categorical_cols_test]
-		
-		numeric_cols_test = unlist(lapply(cd[,coldata_cols,drop=FALSE], function(x) 
-      		inherits(x, "numeric")|inherits(x, "integer")))
-		numeric_cols = numeric_cols_test[numeric_cols_test]
+        categorical_cols_test = unlist(lapply(cd[,coldata_cols,drop=FALSE], function(x)
+              inherits(x, "character")|inherits(x, "factor")|inherits(x,"logical")))
+        categorical_cols = categorical_cols_test[categorical_cols_test]
 
-		# Palette for categorical columns
-		if(length(categorical_cols) > 0) {
+        numeric_cols_test = unlist(lapply(cd[,coldata_cols,drop=FALSE], function(x)
+              inherits(x, "numeric")|inherits(x, "integer")))
+        numeric_cols = numeric_cols_test[numeric_cols_test]
 
-			num_cat_cols = lapply(names(categorical_cols), function(x) {
-								length(unique(as.character(cd[,x,drop=TRUE])))
-								})
-			
-		names(num_cat_cols) = names(categorical_cols)
-			total_cols = sum(unlist(num_cat_cols))
-			
-			if(total_cols <= 30) {
-				pal_auto = .cpal_qual(n = total_cols) 
-			} else {
-				pal_auto = colors()[sample(seq_len(657), size = total_cols)]
-			}
-			if(length(num_cat_cols) > 1) {
-				indices = c(0, cumsum(unlist(num_cat_cols)))
-				col_list_categorical = lapply(seq_len(length(indices)-1), function(i) {
-						pal = pal_auto[(indices[i]+1):(indices[i+1])]
-						names(pal) = unique(as.character(cd[,names(categorical_cols)[i]]))
-						pal
-					})
-			} else {
-				names(pal_auto) = unique(as.character(cd[,names(categorical_cols)]))
-				col_list_categorical <- list(pal_auto)
-				
-			}
-				names(col_list_categorical) = names(categorical_cols)
-		} else {
-			col_list_categorical = NULL
-		}
-		
-		# Palette for numeric columns
-		if(length(numeric_cols) > 0) {
-			cols_choose = .cpal_qual_pear(length(numeric_cols))
-			col_list_numeric = lapply(seq_len(length(numeric_cols)), function(i) {
-				circlize::colorRamp2(breaks = c(0, max(cd[,names(numeric_cols)[i]], na.rm = TRUE)), 
-				colors = c("white", cols_choose[i]))
-			})
-			names(col_list_numeric) = names(numeric_cols)
-		} else {
-			col_list_numeric = NULL
-		}
-		col_list = c(col_list_categorical, col_list_numeric)
-		col_list = col_list[!unlist(lapply(col_list, is.null))]
-  	} else {
-    	col_list = annotation_pal
-  	}
-	# Final annotation
-	column_ha = ComplexHeatmap::HeatmapAnnotation(df = cd[,names(col_list), drop=FALSE],
-													  col = col_list)
-  }  
-  if(!raster | raster != "force")
-    if(nrow(mat) > 20000 | ncol(mat) > 20000) raster = TRUE
-  if(raster == "force") raster = FALSE
+        # Palette for categorical columns
+        if(length(categorical_cols) > 0) {
+
+            num_cat_cols = lapply(names(categorical_cols), function(x) {
+                                length(unique(as.character(cd[,x,drop=TRUE])))
+                                })
+
+        names(num_cat_cols) = names(categorical_cols)
+            total_cols = sum(unlist(num_cat_cols))
+
+            if(total_cols <= 30) {
+                pal_auto = .cpal_qual(n = total_cols)
+            } else {
+                pal_auto = colors()[sample(seq_len(657), size = total_cols)]
+            }
+            if(length(num_cat_cols) > 1) {
+                indices = c(0, cumsum(unlist(num_cat_cols)))
+                col_list_categorical = lapply(seq_len(length(indices)-1), function(i) {
+                        pal = pal_auto[(indices[i]+1):(indices[i+1])]
+                        names(pal) = unique(as.character(cd[,names(categorical_cols)[i]]))
+                        pal
+                    })
+            } else {
+                names(pal_auto) = unique(as.character(cd[,names(categorical_cols)]))
+                col_list_categorical <- list(pal_auto)
+
+            }
+                names(col_list_categorical) = names(categorical_cols)
+        } else {
+            col_list_categorical = NULL
+        }
+
+        # Palette for numeric columns
+        if(length(numeric_cols) > 0) {
+            cols_choose = .cpal_qual_pear(length(numeric_cols))
+            col_list_numeric = lapply(seq_len(length(numeric_cols)), function(i) {
+                circlize::colorRamp2(breaks = c(0, max(cd[,names(numeric_cols)[i]], na.rm = TRUE)),
+                colors = c("white", cols_choose[i]))
+            })
+            names(col_list_numeric) = names(numeric_cols)
+        } else {
+            col_list_numeric = NULL
+        }
+        col_list = c(col_list_categorical, col_list_numeric)
+        col_list = col_list[!unlist(lapply(col_list, is.null))]
+      } else {
+        col_list = annotation_pal
+      }
+    # Final annotation
+    column_ha = ComplexHeatmap::HeatmapAnnotation(df = cd[,names(col_list), drop=FALSE],
+                                                      col = col_list)
+  }
+  if(identical(raster, "force")) {
+    raster = FALSE
+  } else if(!isTRUE(raster) && (nrow(mat) > 20000 || ncol(mat) > 20000)) {
+    raster = TRUE
+  }
 
   if(!is.null(gaps)) {
     gaps = cd[,gaps]
   }
-	# Color mapping and clipping for the heatmap
+    # Color mapping and clipping for the heatmap
   if(scale) {
     if(!is.null(clip_values)) {
       clip_values = clip_values*10
       cr = max(abs(quantile(mat, seq(0,1,length.out=1001), na.rm = TRUE)[c(1001-clip_values, clip_values)]))
-      
+
     } else {
       cr = max(abs(range(mat[!is.na(mat)])))
     }
     color_range = c(-cr, 0, cr)
   } else {
     if(!is.null(clip_values)){
-	# Clip to percentiles with variable decimal digit precision
-	  decimal_places = nchar(strsplit(as.character(clip_values), "\\.")[[1]][2])
+    # Clip to percentiles with variable decimal digit precision
+      decimal_places = nchar(strsplit(as.character(clip_values), "\\.")[[1]][2])
       if(is.na(decimal_places)) decimal_places = 0
-	  clip_values = clip_values * 10^(decimal_places)
+      clip_values = clip_values * 10^(decimal_places)
       cr = quantile(mat, seq(0, 1, length.out = (10^(decimal_places+2)+1)), na.rm = TRUE)[clip_values]
       color_range = range(mat[!is.na(mat)])
       color_range[which.max(color_range)] = cr
@@ -1667,7 +1675,7 @@ plotHeatmap <- function(sce,
       color_range = range(mat[!is.na(mat)])
     }
   }
-  
+
   if(!is.null(color_pal)) {
       color_pal_ramp = colorRampPalette(color_pal)(25)
   } else {
@@ -1677,23 +1685,23 @@ plotHeatmap <- function(sce,
       color_pal_ramp = colorRampPalette(.cpal_seq_ylgnbu())(25)
     }
   }
-  
-  col_fun = circlize::colorRamp2(quantile(color_range, 
-                                          probs = seq(0, 1, length.out = 25)), 
-                                 		  color_pal_ramp)
-  
+
+  col_fun = circlize::colorRamp2(quantile(color_range,
+                                          probs = seq(0, 1, length.out = 25)),
+                                           color_pal_ramp)
+
   transf_name = ifelse(scale, "Z score", exprs)
 
   if(aggregate) {
-	name_scale = paste0(transf_name, "\n(", exprs, "(", aggregate_fun, "))")
+    name_scale = paste0(transf_name, "\n(", exprs, "(", aggregate_fun, "))")
   } else {
-	name_scale = transf_name
+    name_scale = transf_name
   }
 
   if(!is.null(coldata_cols)){
-    H = ComplexHeatmap::Heatmap(mat, 
-                                row_names_gp = grid::gpar(cex = 1), 
-                                column_names_gp = grid::gpar(cex = 1), 
+    H = ComplexHeatmap::Heatmap(mat,
+                                row_names_gp = grid::gpar(cex = 1),
+                                column_names_gp = grid::gpar(cex = 1),
                                 col = col_fun,
                                 top_annotation = column_ha,
                                 cluster_columns = cluster_cells,
@@ -1702,35 +1710,35 @@ plotHeatmap <- function(sce,
                                 use_raster = raster,
                                 name = name_scale,
                                 show_column_names = FALSE,
-								...)
-    
+                                ...)
+
   } else {
-    H = ComplexHeatmap::Heatmap(mat, 
-                                row_names_gp = grid::gpar(cex = 1), 
-                                column_names_gp = grid::gpar(cex = 1), 
+    H = ComplexHeatmap::Heatmap(mat,
+                                row_names_gp = grid::gpar(cex = 1),
+                                column_names_gp = grid::gpar(cex = 1),
                                 col = col_fun,
                                 cluster_columns = cluster_cells,
                                 cluster_rows = cluster_genes,
                                 use_raster = raster,
                                 name = name_scale,
                                 show_column_names = FALSE,
-								...)
-    
+                                ...)
+
   }
   ComplexHeatmap::draw(H)
 }
 
 #' Pseudotime heatmap
-#' 
-#' Draws a heatmap of pseudotime-ordered gene expression 
-#' 
+#'
+#' Draws a heatmap of pseudotime-ordered gene expression
+#'
 #' @param sce a SingleCellExperiment object
 #' @param genes character, the genes to include in the heatmap.
-#' @param pseudotime character, the column in the \code{colData} 
+#' @param pseudotime character, the column in the \code{colData}
 #'     slot of the \code{sce} object with pseudotime values.
-#' @param exprs character, the name of the assay with expression values to use. 
+#' @param exprs character, the name of the assay with expression values to use.
 #'     Default is \code{"logcounts"}
-#' @param cluster_genes logical, should the genes be clustered? 
+#' @param cluster_genes logical, should the genes be clustered?
 #'     Default is \code{FALSE}
 #' @param labels character, the column in the \code{colData} slot of the \code{sce} object
 #'    to use as labels for heatmap annotation. Default is \code{NULL}
@@ -1740,29 +1748,29 @@ plotHeatmap <- function(sce,
 #'     Default is \code{200}
 #' @param raster logical, should the heatmap be rasterized? Default is \code{FALSE}
 #' @return a heatmap of the gene expression data ordered by pseudotime with,
-#' 	   optionally, the labels of each cells as annotation on top of the heatmap.
-#' 	   Each gene is scaled between 0 and 1 and smoothed using a zero-padded moving 
-#' 	   average with the specified window size.
-#' 
+#'        optionally, the labels of each cells as annotation on top of the heatmap.
+#'        Each gene is scaled between 0 and 1 and smoothed using a zero-padded moving
+#'        average with the specified window size.
+#'
 #' @importFrom SummarizedExperiment colData
 #' @importFrom stats median
-#' 
-#' @export 
-plotPseudotimeHeatmap <- function(sce, 
-							  genes, 
-							  pseudotime, 
-							  exprs = "logcounts", 
-							  cluster_genes = FALSE,
-                              labels = NULL, 
-							  labels_pal = NULL, 
-							  smoothing_window = 200,
-							  raster = FALSE) {
+#'
+#' @export
+plotPseudotimeHeatmap <- function(sce,
+                              genes,
+                              pseudotime,
+                              exprs = "logcounts",
+                              cluster_genes = FALSE,
+                              labels = NULL,
+                              labels_pal = NULL,
+                              smoothing_window = 200,
+                              raster = FALSE) {
 
   ep = .redm("cellula::plotPseudotimeHeatmap() - ")
   dependencies = data.frame("package" = c("ComplexHeatmap", "circlize"),
                             "repo" = c("BioC", "CRAN"))
   if(checkFunctionDependencies(dependencies)) stop(paste0(ep, "Missing required packages."))
-  
+
   if(!is(sce, "SingleCellExperiment"))
     stop(paste0(ep, "Must provide a SingleCellExperiment object"))
   if(is.null(genes))
@@ -1778,8 +1786,8 @@ plotPseudotimeHeatmap <- function(sce,
   if(!is(smoothing_window, "numeric"))
     stop(paste0(ep, "The smoothing window must be a numeric"))
   if(!is.null(labels) & !is.null(labels_pal)) {
-  	if(!all(names(labels_pal) %in% colData(sce)[,labels]))
-   		stop(paste0(ep, "Not all levels in the labels_pal were found in the labels column"))
+      if(!all(names(labels_pal) %in% colData(sce)[,labels]))
+           stop(paste0(ep, "Not all levels in the labels_pal were found in the labels column"))
   }
   if(smoothing_window > length(colData(sce)[!is.na(colData(sce)[,pseudotime]),pseudotime]))
     stop(paste0(ep, "The smoothing window cannot be bigger than the number of non-NA pseudotime values"))
@@ -1788,203 +1796,202 @@ plotPseudotimeHeatmap <- function(sce,
   sce = sce[,cells_ok]
 
   genemat = assay(sce, exprs)[genes, order(colData(sce)[,pseudotime])]
-  
-  genemat = t(apply(genemat, 1, function(x) 
-    .rescalen(.mav(x, window = smoothing_window), 
+
+  genemat = t(apply(genemat, 1, function(x)
+    .rescalen(.mav(x, window = smoothing_window),
                     to = c(0,1))))
 
-  colors_pt = circlize::colorRamp2(colors = c("gray70", "purple"), 
+  colors_pt = circlize::colorRamp2(colors = c("gray70", "purple"),
                                    breaks = c(0, max(colData(sce)[,pseudotime])))
-  
+
   if(!is.null(labels)) {
     labs = unique(colData(sce)[,labels])
     pt_means = lapply(labs, function(x) median(colData(sce)[colData(sce)[,labels] == x, pseudotime]))
     names(pt_means) = labs
     pt_means = sort(unlist(pt_means))
-    
+
     if(is.null(labels_pal)) {
       labels_pal = .cpal_qual(length(labs))
       names(labels_pal) = sort(labs)
     }
-    
+
     coldf = as.data.frame(colData(sce))
-    coldf[,labels] = factor(coldf[,labels], 
+    coldf[,labels] = factor(coldf[,labels],
                          levels = names(pt_means))
-    
+
     lab_ord = colData(sce)[,labels][order(colData(sce)[,pseudotime])]
     lab_ord_mat = sapply(names(pt_means), function(x) as.numeric(lab_ord == x) + 1)
-    
+
     df = as.data.frame(cbind(pseudotime = sort(colData(sce)[,pseudotime]), as.data.frame(lab_ord_mat)))
-    
+
     col_list_group = lapply(names(pt_means), function(x) {
       cols = c("white", labels_pal[x])
       names(cols) = c("1", "2")
       cols
     })
-    
+
     names(col_list_group) = names(pt_means)
-    
-    col_list = c(list(pseudotime = colors_pt), 
-                 col_list_group) 
-    
+
+    col_list = c(list(pseudotime = colors_pt),
+                 col_list_group)
+
     column_ha = ComplexHeatmap::HeatmapAnnotation(df = df,
                                   col = col_list,
                                   show_legend = c(TRUE, rep(FALSE, length(unique(colData(sce)[,labels])))))
-    
+
   } else {
-    
+
     col_list = list(pseudotime = colors_pt)
     df = data.frame(pseudotime = sort(colData(sce)[,pseudotime]))
     column_ha = ComplexHeatmap::HeatmapAnnotation(df = df,
-                                  				  col = col_list)
+                                                    col = col_list)
   }
 
   ComplexHeatmap::Heatmap(genemat,
-						  col = .cpal_seq_parula(),
+                          col = .cpal_seq_parula(),
                           show_column_names = FALSE,
                           top_annotation = column_ha,
                           cluster_rows = cluster_genes,
                           cluster_columns = FALSE,
-						  use_raster = raster,
+                          use_raster = raster,
                           name = "Scaled expression")
-} 
+}
 
 #' Differential gene expression stripchart
-#' 
+#'
 #' Plots a stripchart of the differential gene expression results
-#' 
+#'
 #' @param dge a data frame with the differential expression results
 #'    from the \code{doPBDGE} function
 #' @param alpha numeric, the FDR threshold to use for filtering
 #' @param lfc numeric, the log-fold change threshold to use for filtering
 #' @param title character, the title of the plot
-#' 
+#'
 #' @return a stripchart with per-cluster DE results
-#' 
+#'
 #' @importFrom ggplot2 ggplot geom_vline geom_label ggtitle
 #' @importFrom ggplot2 scale_color_gradient theme_bw .data aes
 #' @importFrom ggbeeswarm geom_quasirandom
-#' 
+#'
 #' @export
 
-plotDGEStripchart <- function(dge, 
-							  alpha = 0.05, 
-							  lfc = 1, 
-							  title = NULL) {
+plotDGEStripchart <- function(dge,
+                              alpha = 0.05,
+                              lfc = 1,
+                              title = NULL) {
 
-		conds = attr(dge, "conditions")
+        conds = attr(dge, "conditions")
 
-		dge = do.call(rbind, dge)
-		dge = dge[!is.na(dge$logFC),]
+        dge = do.call(rbind, dge)
+        dge = dge[!is.na(dge$logFC),]
 
-		ndegs = unlist(lapply(split(dge, dge$label), function(x) length(which(abs(x$logFC) > lfc & x$FDR < alpha))))
-		ndegs = data.frame(label = names(ndegs), ndegs = ndegs)
+        ndegs = unlist(lapply(split(dge, dge$label), function(x) length(which(abs(x$logFC) > lfc & x$FDR < alpha))))
+        ndegs = data.frame(label = names(ndegs), ndegs = ndegs)
 
-		dge$label = factor(dge$label, levels = ndegs$label[order(ndegs$ndegs, decreasing = FALSE)])
+        dge$label = factor(dge$label, levels = ndegs$label[order(ndegs$ndegs, decreasing = FALSE)])
 
-		p = ggplot(dge[dge$FDR > alpha,], aes(x = .data[["logFC"]], y = .data[["label"]])) +
-			geom_quasirandom(method = "tukey", 
-							 color="gray", 
-							 alpha = 0.5, 
-							 orientation="y") +
-			geom_quasirandom(data = dge[dge$FDR < alpha & abs(dge$logFC) > lfc,], 
-							aes(x = .data[["logFC"]], color = -log10(.data[["FDR"]]), y = .data[["label"]]), 
-							pch = 16, 
-							inherit.aes = FALSE, 
-							method = "tukey", 
-							orientation = "y") +
-			scale_color_gradient(low = "gray60", high = "orange") +
-			geom_vline(xintercept = c(-1, 1), linetype = 2, linewidth = 0.5) +
-			geom_label(data = ndegs, mapping = aes(y = .data[["label"]], label = .data[["ndegs"]]), x = 0) + 
-			theme_bw() 
+        p = ggplot(dge[which(!(dge$FDR < alpha & abs(dge$logFC) > lfc)),], aes(x = .data[["logFC"]], y = .data[["label"]])) +
+            geom_quasirandom(method = "tukey",
+                             color="gray",
+                             alpha = 0.5,
+                             orientation="y") +
+            geom_quasirandom(data = dge[which(dge$FDR < alpha & abs(dge$logFC) > lfc),],
+                            aes(x = .data[["logFC"]], color = -log10(.data[["FDR"]]), y = .data[["label"]]),
+                            pch = 16,
+                            inherit.aes = FALSE,
+                            method = "tukey",
+                            orientation = "y") +
+            scale_color_gradient(low = "gray60", high = "orange") +
+            geom_vline(xintercept = c(-lfc, lfc), linetype = 2, linewidth = 0.5) +
+            geom_label(data = ndegs, mapping = aes(y = .data[["label"]], label = .data[["ndegs"]]), x = 0) +
+            theme_bw()
 
-		if(is.null(title)) {
-			title = paste0(conds[1], " vs ", conds[2], " - log2(FC) distribution per label")
-		}
+        if(is.null(title)) {
+            title = paste0(conds[1], " vs ", conds[2], " - log2(FC) distribution per label")
+        }
 
-	p + ggtitle(title)
+    p + ggtitle(title)
 }
 
-
 #' Differential gene expression heatmap
-#' 
+#'
 #' Draws a heatmap of aggregated genes together with their DE results
-#' 
+#'
 #' @param sce a SingleCellExperiment object
 #' @param genes character, the genes to include in the heatmap.
-#'     These will be looked up in the rownames of the object, which are also the 
-#' 	   rownames of the data frames in the DE results. At least 2 genes must be provided.
+#'     These will be looked up in the rownames of the object, which are also the
+#'        rownames of the data frames in the DE results. At least 2 genes must be provided.
 #' @param dge a data frame with the differential expression results from \code{\link{doPBDGE}}
 #' @param exprs character, the expression values to use. Default is \code{"logcounts"}
 #' @param alpha_include numeric, the FDR threshold to include a gene in the heatmap
-#' 		Default is 1 (all genes included)
+#'         Default is 1 (all genes included)
 #' @param alpha_dot numeric, the FDR threshold to mark a gene as significant in
-#' 		the heatmap using a dot. Default is 0.05
+#'         the heatmap using a dot. Default is 0.05
 #' @param condition_pal a named vector with the colors for the conditions. Default is NULL
 #' @param cluster_pal a named vector with the colors for the clusters. Default is NULL
 #' @param title character, the title of the heatmap. Default is NA, no title will be displayed.
 #' @param cluster_cols logical, should the columns be clustered? Default is \code{TRUE}
 #' @param gaps logical, should gaps be included between the columns? Default is \code{FALSE}
 #' @param scale logical, should the expression data be scaled by row? Default is \code{TRUE}
-#' 
+#'
 #' @return a composite heatmap of the pseudo-bulk aggregated genes with their DE results
-#' 
+#'
 #' @details this function generates a heatmap of genes using pseudo-bulk aggregated profiles
 #'    taken by aggregating the \code{sce} object by the variables stored in the attributes
-#'    of the \code{dge} object, and taking the assay specified by \code{exprs}. 
+#'    of the \code{dge} object, and taking the assay specified by \code{exprs}.
 #'    Then, a second heatmap is drawn on the right hand side of the first heatmap, showing
 #'    the DE results for the contrast stored in the attributes of the \code{dge} object.
-#' 		
+#'
 #'    The genes are filtered by the \code{alpha_include} threshold, and significant genes
 #'    are labelled in the right hand side heatmap using a white dot if their FDR is below
-#' 	  \code{alpha_dot}.
-#' 
+#'       \code{alpha_dot}.
+#'
 #' @importFrom SummarizedExperiment colData
 #' @importFrom scuttle aggregateAcrossCells
-#' 
-#' 
+#'
+#'
 #' @export
 
 plotDEHeatmap <- function(sce,
-                          genes, 
-                          dge, 
-                          exprs = "logcounts", 
-                          alpha_include = 1, 
+                          genes,
+                          dge,
+                          exprs = "logcounts",
+                          alpha_include = 1,
                           alpha_dot = 0.05,
-						  condition_pal = NULL,
-						  cluster_pal = NULL,
+                          condition_pal = NULL,
+                          cluster_pal = NULL,
                           title = NA,
                           cluster_cols = FALSE,
                           gaps = TRUE,
                           scale = TRUE) {
 
-	### Sanity checks
-		# error prefix
-			ep = .redm("cellula::plotDEHeatmap() - ")
-	if(!is(sce, "SingleCellExperiment")) 
-		stop(paste0(ep, "Must provide a SingleCellExperiment object."))
-	if(!is(genes, "character")) 
-		stop(paste0(ep, "genes must be a character vector"))
+    ### Sanity checks
+        # error prefix
+            ep = .redm("cellula::plotDEHeatmap() - ")
+    if(!is(sce, "SingleCellExperiment"))
+        stop(paste0(ep, "Must provide a SingleCellExperiment object."))
+    if(!is(genes, "character"))
+        stop(paste0(ep, "genes must be a character vector"))
 
-  	dependencies = data.frame("package" = c("ComplexHeatmap", "circlize"),
-                              	  "repo" = c("BioC", "CRAN"))
+      dependencies = data.frame("package" = c("ComplexHeatmap", "circlize"),
+                                    "repo" = c("BioC", "CRAN"))
     if(checkFunctionDependencies(dependencies)) stop(paste0(ep, "Missing required packages."))
 
   selected = intersect(genes, rownames(sce))
-  
-  	if(length(selected) <= 1) 
-  		stop(paste0(ep,"Need at least 2 genes that are present in the object."))
-  
-  selected_ok = Reduce(union, lapply(dge, 
+
+      if(length(selected) <= 1)
+          stop(paste0(ep,"Need at least 2 genes that are present in the object."))
+
+  selected_ok = Reduce(union, lapply(dge,
                                      function(x) {
                                        rownames(x)[rownames(x) %in% selected & x$FDR < alpha_include]
                                      })
   )
-  
-  selected_ok = selected_ok[!is.na(selected_ok)]    
-  
-  delist = lapply(names(dge), function(x) 
-    data.frame(gene = selected_ok,                    
+
+  selected_ok = selected_ok[!is.na(selected_ok)]
+
+  delist = lapply(names(dge), function(x)
+    data.frame(gene = selected_ok,
                lfc = dge[[x]][selected_ok, "logFC"],
                fdr = dge[[x]][selected_ok, "FDR"],
                cluster = x)
@@ -1998,11 +2005,11 @@ plotDEHeatmap <- function(sce,
   conditions_vector = conditions_vector[which(conditions_vector %in% conditions_used)]
 
   agg = aggregateAcrossCells(sce[,which(colData(sce)[,attr(dge, "inputs")[3]] %in% conditions_used)],
-  							 ids = paste0(conditions_vector, "__",
-										  replicates_vector, "__",
-										  labels_vector),
-									statistics = "sum", 
-									use.assay.type = "counts")
+                               ids = paste0(conditions_vector, "__",
+                                          replicates_vector, "__",
+                                          labels_vector),
+                                    statistics = "sum",
+                                    use.assay.type = "counts")
   agg = computeLibraryFactors(agg)
   agg = logNormCounts(agg)
 
@@ -2011,85 +2018,85 @@ plotDEHeatmap <- function(sce,
   agg$replicates =  as.character(colData(agg)[,attr(dge, "inputs")[1]])
 
   names(delist) = names(dge)
-  
+
   dat = assay(agg, exprs)[selected_ok,]
   dat = dat[,order(agg$label, agg$condition)]
   if(scale) dat = t(scale(t(dat)))
-  
+
   res_lfc = lapply(delist, function(x) x$lfc)
   res_FDR =  lapply(delist, function(x) x$fdr)
   names(res_lfc) = names(res_FDR) = names(delist)
-  
+
   pch_sigs = lapply(res_FDR, function(x) ifelse(x < alpha_dot, 21, NA))
-  
+
   cr = max(abs(range(unlist(res_lfc), na.rm = TRUE)))
   color_range = c(-cr, 0, cr)
-  
+
   pal_cond = condition_pal
 
   if(is.null(pal_cond)) {
-	conds = attr(dge, "conditions")
-	pal_cond = c("orange", "purple")
-	names(pal_cond) = conds
+    conds = attr(dge, "conditions")
+    pal_cond = c("orange", "purple")
+    names(pal_cond) = conds
   }
 
   pal_cluster = cluster_pal
-	
-	if(is.null(cluster_pal)) {
-		if(length(dge) == 1) {
-			pal_cluster = .cpal_qual(length(dge)+1)[1]
-		} else {
-			pal_cluster = .cpal_qual(length(dge))
-		}
-		names(pal_cluster) = unique(names(dge))
-	}
 
-	cl_labs = agg$label[order(agg$label, agg$condition)]
-	con_labs = agg$condition[order(agg$label, agg$condition)]
+    if(is.null(cluster_pal)) {
+        if(length(dge) == 1) {
+            pal_cluster = .cpal_qual(length(dge)+1)[1]
+        } else {
+            pal_cluster = .cpal_qual(length(dge))
+        }
+        names(pal_cluster) = unique(names(dge))
+    }
 
-	if(gaps) colgaps = cl_labs else colgaps = NULL
+    cl_labs = agg$label[order(agg$label, agg$condition)]
+    con_labs = agg$condition[order(agg$label, agg$condition)]
 
-	column_ha = ComplexHeatmap::HeatmapAnnotation(label = cl_labs,
-												condition =  con_labs,
-												col = list(label = pal_cluster,
-															condition = pal_cond))
-	cf = circlize::colorRamp2(color_range, 
-							c(pal_cond[2], "gray", pal_cond[1]))
-	
-	ras = lapply(names(delist), function(x) {
-		res_lfc[[x]][is.na(res_lfc[[x]])] = 0
-		ComplexHeatmap::anno_simple(res_lfc[[x]], 
-						which = "row",
-						col = cf,
-						pch = pch_sigs[[x]],
-						pt_gp = grid::gpar(bg = "white"),
-						pt_size = unit(1.5, "mm"))
-	})
-	names(ras) = names(delist)
-	sig_anno = do.call(eval(parse(text="ComplexHeatmap::rowAnnotation")), ras)
-	
-	lgd = ComplexHeatmap::Legend(col_fun = cf, title = "log2(FC)")
+    if(gaps) colgaps = cl_labs else colgaps = NULL
 
-	H = ComplexHeatmap::Heatmap(dat, 
-								row_names_gp = grid::gpar(cex = 1), 
-								column_names_gp = grid::gpar(cex = 1), 
-								top_annotation = column_ha,
-								cluster_columns = cluster_cols,
-								right_annotation = sig_anno,
-								column_split = colgaps,
-								column_title = title,
-								show_column_names = FALSE,
-								name = "Z score"
-					)
-	
-	ComplexHeatmap::draw(H, annotation_legend_list = list(lgd))
+    column_ha = ComplexHeatmap::HeatmapAnnotation(label = cl_labs,
+                                                condition =  con_labs,
+                                                col = list(label = pal_cluster,
+                                                            condition = pal_cond))
+    cf = circlize::colorRamp2(color_range,
+                            c(pal_cond[2], "gray", pal_cond[1]))
+
+    ras = lapply(names(delist), function(x) {
+        res_lfc[[x]][is.na(res_lfc[[x]])] = 0
+        ComplexHeatmap::anno_simple(res_lfc[[x]],
+                        which = "row",
+                        col = cf,
+                        pch = pch_sigs[[x]],
+                        pt_gp = grid::gpar(bg = "white"),
+                        pt_size = unit(1.5, "mm"))
+    })
+    names(ras) = names(delist)
+    sig_anno = do.call(eval(parse(text="ComplexHeatmap::rowAnnotation")), ras)
+
+    lgd = ComplexHeatmap::Legend(col_fun = cf, title = "log2(FC)")
+
+    H = ComplexHeatmap::Heatmap(dat,
+                                row_names_gp = grid::gpar(cex = 1),
+                                column_names_gp = grid::gpar(cex = 1),
+                                top_annotation = column_ha,
+                                cluster_columns = cluster_cols,
+                                right_annotation = sig_anno,
+                                column_split = colgaps,
+                                column_title = title,
+                                show_column_names = FALSE,
+                                name = "Z score"
+                    )
+
+    ComplexHeatmap::draw(H, annotation_legend_list = list(lgd))
 }
 
 #' Per-label PCA plot
-#' 
+#'
 #' Plot a PCA plot of the aggregated data per label using
 #' the first 2 components and top 1000 HVGs
-#' 
+#'
 #' @param sce a SingleCellExperiment object
 #' @param replicates character, column in \code{colData(sce)}
 #'     that contains the replicate information
@@ -2097,141 +2104,140 @@ plotDEHeatmap <- function(sce,
 #'     that contains the label information
 #' @param condition character, column in \code{colData(sce)}
 #'     that contains the condition information
-#' 
-#' @return a PC1 vs PC2 faceted plot for pseudobulk profiles 
+#'
+#' @return a PC1 vs PC2 faceted plot for pseudobulk profiles
 #'     where each panel corresponds to a label
-#' 
-#' @importFrom scuttle aggregateAcrossCells computeLibraryFactors logNormCounts 
+#'
+#' @importFrom scuttle aggregateAcrossCells computeLibraryFactors logNormCounts
 #' @importFrom scran modelGeneVar getTopHVGs
 #' @importFrom ggplot2 ggplot aes geom_point facet_wrap theme_bw geom_hline geom_vline
 #' @importFrom stats prcomp
-#' 
-#' @export 
+#'
+#' @export
 
-plotLabelPCA <- function(sce, 
-						replicates,
-						labels,
-						condition){
+plotLabelPCA <- function(sce,
+                        replicates,
+                        labels,
+                        condition){
 
-		### Sanity checks
-		# error prefix	
-			ep = .redm("cellula::plotLabelPCA() - ")
+        ### Sanity checks
+        # error prefix
+            ep = .redm("cellula::plotLabelPCA() - ")
 
-			if(!is(sce, "SingleCellExperiment"))
-				stop(paste0(ep, "Must provide a SingleCellExperiment object."))
-			if(!is.character(replicates))
-				stop(paste0(ep, "replicates must be a character."))
-			if(!is.character(labels))
-				stop(paste0(ep, "labels must be a character."))
-			if(!is.character(condition))
-				stop(paste0(ep, "condition must be a character."))
-			if(!condition %in% colnames(colData(sce)))
-				stop(paste0(ep, "The condition column was not found in the colData."))
-			if(!replicates %in% colnames(colData(sce)))
-				stop(paste0(ep, "The replicates column was not found in the colData."))
-			if(!labels %in% colnames(colData(sce)))
-				stop(paste0(ep, "The labels column was not found in the colData."))
+            if(!is(sce, "SingleCellExperiment"))
+                stop(paste0(ep, "Must provide a SingleCellExperiment object."))
+            if(!is.character(replicates))
+                stop(paste0(ep, "replicates must be a character."))
+            if(!is.character(labels))
+                stop(paste0(ep, "labels must be a character."))
+            if(!is.character(condition))
+                stop(paste0(ep, "condition must be a character."))
+            if(!condition %in% colnames(colData(sce)))
+                stop(paste0(ep, "The condition column was not found in the colData."))
+            if(!replicates %in% colnames(colData(sce)))
+                stop(paste0(ep, "The replicates column was not found in the colData."))
+            if(!labels %in% colnames(colData(sce)))
+                stop(paste0(ep, "The labels column was not found in the colData."))
 
+            conditions_vector = colData(sce)[,condition]
+            replicates_vector = colData(sce)[,replicates]
+            labels_vector = colData(sce)[,labels]
 
-			conditions_vector = colData(sce)[,condition]
-			replicates_vector = colData(sce)[,replicates]
-			labels_vector = colData(sce)[,labels]
+            agg = aggregateAcrossCells(sce,
+                                    ids = paste0(conditions_vector, "__",
+                                                 replicates_vector, "__",
+                                                 labels_vector),
+                                    statistics = "sum",
+                                    use.assay.type = "counts")
 
-			agg = aggregateAcrossCells(sce,
-									ids = paste0(conditions_vector, "__",
-												 replicates_vector, "__",
-												 labels_vector),
-									statistics = "sum", 
-									use.assay.type = "counts")
+            agg = computeLibraryFactors(agg)
+            agg = logNormCounts(agg)
 
-			agg = computeLibraryFactors(agg)
-			agg = logNormCounts(agg)
+            agg$label = colData(agg)[,labels]
+            agg$condition = colData(agg)[,condition]
+            agg$replicate = colData(agg)[,replicates]
 
-			agg$label = colData(agg)[,labels]
-			agg$condition = colData(agg)[,condition]
-			agg$replicate = colData(agg)[,replicates]
-			
-			vargenes = modelGeneVar(agg, block = agg$label)
+            vargenes = modelGeneVar(agg, block = agg$label)
 
-			hvglist = lapply(vargenes$per.block, getTopHVGs, n = 1000)
-			names(hvglist) = names(vargenes$per.block)
+            hvglist = lapply(vargenes$per.block, getTopHVGs, n = 1000)
+            names(hvglist) = names(vargenes$per.block)
 
-			pcalist = lapply(names(hvglist), function(x) {
-				prcomp(t(assay(agg, "logcounts")[hvglist[[x]], agg$label == x]), scale = TRUE)
-			})
+            pcalist = lapply(names(hvglist), function(x) {
+                prcomp(t(assay(agg, "logcounts")[hvglist[[x]], agg$label == x]), scale = TRUE)
+            })
 
-			pcalist = lapply(pcalist, function(x) as.data.frame(x$x[,1:2]))
-			names(pcalist) = names(hvglist)
-			for(i in seq_along(pcalist)) {
-				pcalist[[i]]$label = names(pcalist)[i]
-				pcalist[[i]]$condition = agg$condition[agg$label == names(pcalist)[i]]
-				pcalist[[i]]$replicate = agg$replicate[agg$label == names(pcalist)[i]]
-			}
-			pcadf = do.call(rbind, pcalist)
+            pcalist = lapply(pcalist, function(x) as.data.frame(x$x[,1:2]))
+            names(pcalist) = names(hvglist)
+            for(i in seq_along(pcalist)) {
+                pcalist[[i]]$label = names(pcalist)[i]
+                pcalist[[i]]$condition = agg$condition[agg$label == names(pcalist)[i]]
+                pcalist[[i]]$replicate = agg$replicate[agg$label == names(pcalist)[i]]
+            }
+            pcadf = do.call(rbind, pcalist)
 
-	 ggplot(pcadf, aes(x = .data[["PC1"]], y = .data[["PC2"]])) +
-			geom_point(aes(color = .data[["condition"]])) +
-			facet_wrap("label")+
-			theme_bw()
+     ggplot(pcadf, aes(x = .data[["PC1"]], y = .data[["PC2"]])) +
+            geom_point(aes(color = .data[["condition"]])) +
+            facet_wrap("label")+
+            theme_bw()
 }
 
 #' Per-label Mean-Difference plot
-#' 
+#'
 #' Plot a Mean-Difference plot of the DE results per label
-#' 
+#'
 #' @param dge a data frame with the differential expression results
 #'    from the \code{doPBDGE} function
 #' @param ntop numeric, the number of top genes to show in the plot
 #' @param alpha numeric, the FDR threshold to use for filtering
 #' @param lfc numeric, the log-fold change threshold to use for filtering
-#' 
-#' @return a faceted plot where each panel shows the mean (log(CPM)) vs logFC 
+#'
+#' @return a faceted plot where each panel shows the mean (log(CPM)) vs logFC
 #'    for all genes in a label that do not have NA DE test results.
-#' 
+#'
 #' @importFrom ggplot2 ggplot aes geom_point facet_wrap theme_bw geom_hline geom_vline
 #' @importFrom ggrepel geom_text_repel
-#' 
-#' @export 
+#'
+#' @export
 
-plotLabelMD <- function(dge, 
-						ntop = 5, 
-						alpha = 0.05, 
-						lfc = 1) {
+plotLabelMD <- function(dge,
+                        ntop = 5,
+                        alpha = 0.05,
+                        lfc = 1) {
 
-	for(i in seq_along(dge)) {
-		dge[[i]] = dge[[i]][!is.na(dge[[i]]$logFC),]
-		dge[[i]]$gene = rownames(dge[[i]])
-	}
+    for(i in seq_along(dge)) {
+        dge[[i]] = dge[[i]][!is.na(dge[[i]]$logFC),]
+        dge[[i]]$gene = rownames(dge[[i]])
+    }
 
-	top_genes = lapply(dge, function(x) {
-		x = x[abs(x$logFC) > lfc & x$FDR < alpha,]
-		x = x[order(abs(x$logFC), decreasing = TRUE),]
-		x = x[seq_len(min(ntop, nrow(x))),]
-		x
-	})
-	top_genes = do.call(rbind, top_genes)
+    top_genes = lapply(dge, function(x) {
+        x = x[abs(x$logFC) > lfc & x$FDR < alpha,]
+        x = x[order(abs(x$logFC), decreasing = TRUE),]
+        x = x[seq_len(min(ntop, nrow(x))),]
+        x
+    })
+    top_genes = do.call(rbind, top_genes)
 
-	des = do.call(rbind, dge)
-	des = des[order(des$FDR, decreasing = TRUE),]
+    des = do.call(rbind, dge)
+    des = des[order(des$FDR, decreasing = TRUE),]
 
-	 ggplot(des, aes(x = .data[["logCPM"]], y = .data[["logFC"]])) +
-			geom_point(aes(color = -log10(.data[["FDR"]]))) +
-			geom_hline(yintercept = 0, linetype = 2, linewidth = 0.2) +
-			geom_vline(xintercept = 0, linetype = 2, linewidth = 0.2) +
-			geom_text_repel(data = top_genes, 
-							aes(label = .data[["gene"]]), 
-							box.padding = 0.5,
-							size = 2.4,
-							segment.size = 0.2) +
-			scale_color_gradient(low = "gray60", high = "orange") +
-			facet_wrap("label")+
-			theme_bw()
+     ggplot(des, aes(x = .data[["logCPM"]], y = .data[["logFC"]])) +
+            geom_point(aes(color = -log10(.data[["FDR"]]))) +
+            geom_hline(yintercept = 0, linetype = 2, linewidth = 0.2) +
+            geom_vline(xintercept = 0, linetype = 2, linewidth = 0.2) +
+            geom_text_repel(data = top_genes,
+                            aes(label = .data[["gene"]]),
+                            box.padding = 0.5,
+                            size = 2.4,
+                            segment.size = 0.2) +
+            scale_color_gradient(low = "gray60", high = "orange") +
+            facet_wrap("label")+
+            theme_bw()
 }
 
 #' plot Receiver-Operator Characteristic curves
-#' 
+#'
 #' plot ROC curves with other classification statistics
-#' 
+#'
 #' @param sce a SingleCellExperiment object
 #' @param gene character, the gene to use for the ROC curve
 #' @param label character, the column in the \code{colData} slot of the \code{sce} object
@@ -2239,175 +2245,174 @@ plotLabelMD <- function(dge,
 #' @param exprs character, the name of the assay with expression values to use.
 #'    Default is \code{"logcounts"}
 #' @param plot logical, should the ROC curves be plotted? Default is \code{TRUE}
-#' 
-# @return if \code{plot = TRUE}, a facetted plot with ROC curves 
-#'    for each label in the \code{label} column#ogether with other 
-#'    classifica#on statistics (see#etails). 
-#' 	  If#code{plot = FALSE}, a list with the ROC#urve data and other
+#'
+#' @return if \code{plot = TRUE}, a facetted plot with ROC curves
+#'    for each label in the \code{label} column together with other
+#'    classification statistics (see Details).
+#'    If \code{plot = FALSE}, a list with the ROC curve data and other
 #'    statistics is returned.
-#' 
-#' @details the function calculates the ROC curve for the gene specified 
-#'     in the \code{gene} argument, showing the classification performance 
-#' 	   of the gene for the label against all other labels. The function
-#' 	   calculates the Area Under the Curve (AUC), Youden's J statistic,
-#' 	   the entropy of the gene expression distribution, and the Jensen-Shannon
-#' 	   Divergence between the gene expression distribution and an idealized 
+#'
+#' @details the function calculates the ROC curve for the gene specified
+#'     in the \code{gene} argument, showing the classification performance
+#'        of the gene for the label against all other labels. The function
+#'        calculates the Area Under the Curve (AUC), Youden's J statistic,
+#'        the entropy of the gene expression distribution, and the Jensen-Shannon
+#'        Divergence between the gene expression distribution and an idealized
 #'     distribution where the gene is only expressed in one label.
-#' 
+#'
 #' @importFrom SummarizedExperiment colData assay
 #' @importFrom ggplot2 ggplot geom_path geom_abline facet_wrap theme_bw
-#' @importFrom ggplot2 .data aes 
+#' @importFrom ggplot2 .data aes
 #' @importFrom stats embed
-#' 
+#'
 #' @export
 
-plotROC <- function(sce, 
-					gene,
-					label, 
-					exprs = "logcounts", 
-					plot = TRUE){
+plotROC <- function(sce,
+                    gene,
+                    label,
+                    exprs = "logcounts",
+                    plot = TRUE){
 
-	rocs = lapply(unique(colData(sce)[,label]), function(x) {
-		gin = colData(sce)[,label] == x
-		truepos <- gin[order(assay(sce, exprs)[gene,], decreasing = FALSE)]
-		TPR <- rev((sum(truepos) - cumsum(truepos))/sum(truepos))
-		FPR <- rev(1-(cumsum(!truepos)/sum(!truepos)))
+    rocs = lapply(unique(colData(sce)[,label]), function(x) {
+        gin = colData(sce)[,label] == x
+        truepos <- gin[order(assay(sce, exprs)[gene,], decreasing = FALSE)]
+        TPR <- rev((sum(truepos) - cumsum(truepos))/sum(truepos))
+        FPR <- rev(1-(cumsum(!truepos)/sum(!truepos)))
 
-		# AUC
-		h <- diff(FPR)
-		ab = rowSums(embed(TPR, 2))
-		auc = sum((ab*h)/2)
-		message(x, " AUC: ", round(auc, 4))
-		
-		# Youden's J: max(sens + spec - 1)
-		# FPR = 1 - spec
-		# spec = 1 - FPR
-		# sens + spec - 1 = TPR + 1 - FPR - 1
-		# sens + spec = TPR - FPR
-		
-		youden = which.max(TPR - FPR)
-		thresh = sort(assay(sce, exprs)[gene, colData(sce)[,label] == x], decreasing = TRUE)
-		youden_j = thresh[youden]
-		
-		# Entropy and Jensen-Shannon Divergence
-		entropy = function(x) {
-			x <- x[x > 0]
-			x <- x/sum(x)
-			-sum(x * log(x, 2))
-		}
-		
-		real = unlist(lapply(split(assay(sce, "logcounts")[gene,], colData(sce)[,label]), mean))
-		
-		ideal = rep((1/(length(real)-1))/(length(real)-1), length(real))
-		names(ideal) = names(real)
-		ideal[x] = 1-1/(length(real)-1)
-		ent = entropy(real/sum(real))
-		mixture = ((real/sum(real)) + ideal) * 0.5
-		jsd = entropy(mixture) - ((entropy(real) + entropy(ideal))*0.5)
-		
-		roc_curve = cbind(FPR, TPR)
-		colnames(roc_curve) = c("FPR", "TPR")
-		list(roc_curve = roc_curve,
-			auc = auc,
-			youden_j = youden_j,
-			ent = ent,
-			jsd = jsd)
-	})	
+        # AUC
+        h <- diff(FPR)
+        ab = rowSums(embed(TPR, 2))
+        auc = sum((ab*h)/2)
+        message(x, " AUC: ", round(auc, 4))
 
-		rocdf = as.data.frame(do.call(rbind, lapply(rocs, function(x) x$roc)))
-		rocdf$label = rep(unique(colData(sce)[,label]), unlist(lapply(rocs, function(y) nrow(y$roc))))
-		rocdf$label = factor(rocdf$label, levels = unique(colData(sce)[,label]))
-		if(!plot) return(rocs)
+        # Youden's J: max(sens + spec - 1)
+        # FPR = 1 - spec
+        # spec = 1 - FPR
+        # sens + spec - 1 = TPR + 1 - FPR - 1
+        # sens + spec = TPR - FPR
 
-	# Plot
-	if(plot) { 
-			ggplot(rocdf, aes(x = .data[["FPR"]], 
-							  y = .data[["TPR"]], 
-							  color = .data[["label"]])) +
-				geom_path() +
-				geom_abline(intercept = 0, slope = 1, linetype = 2) +
-				facet_wrap("label") +
-				theme_bw() 
-	}
- 
-}	
+        youden = which.max(TPR - FPR)
+        thresh = sort(assay(sce, exprs)[gene,], decreasing = TRUE)
+        youden_j = thresh[max(youden - 1, 1)]
 
+        # Entropy and Jensen-Shannon Divergence
+        entropy = function(x) {
+            x <- x[x > 0]
+            x <- x/sum(x)
+            -sum(x * log(x, 2))
+        }
+
+        real = unlist(lapply(split(assay(sce, exprs)[gene,], colData(sce)[,label]), mean))
+
+        ideal = rep((1/(length(real)-1))/(length(real)-1), length(real))
+        names(ideal) = names(real)
+        ideal[x] = 1-1/(length(real)-1)
+        ent = entropy(real/sum(real))
+        mixture = ((real/sum(real)) + ideal) * 0.5
+        jsd = entropy(mixture) - ((entropy(real) + entropy(ideal))*0.5)
+
+        roc_curve = cbind(FPR, TPR)
+        colnames(roc_curve) = c("FPR", "TPR")
+        list(roc_curve = roc_curve,
+            auc = auc,
+            youden_j = youden_j,
+            ent = ent,
+            jsd = jsd)
+    })
+
+        rocdf = as.data.frame(do.call(rbind, lapply(rocs, function(x) x$roc)))
+        rocdf$label = rep(unique(colData(sce)[,label]), unlist(lapply(rocs, function(y) nrow(y$roc))))
+        rocdf$label = factor(rocdf$label, levels = unique(colData(sce)[,label]))
+        if(!plot) return(rocs)
+
+    # Plot
+    if(plot) {
+            ggplot(rocdf, aes(x = .data[["FPR"]],
+                              y = .data[["TPR"]],
+                              color = .data[["label"]])) +
+                geom_path() +
+                geom_abline(intercept = 0, slope = 1, linetype = 2) +
+                facet_wrap("label") +
+                theme_bw()
+    }
+
+}
 
 #' Plot clustering tree
-#' 
+#'
 #' Plot a clustering tree using clustering or any other labels
-#' 
+#'
 #' @param sce a SingleCellExperiment object
 #' @param prefix character, the prefix of the clustering labels. Default is \code{"SNN_"}
 #' @param additional_labels character, additional labels to include in the tree. Default is \code{NULL}
 #' @param color_palette named character vector, the color palette to use for the clusters. Default is \code{NULL}
-#' 
+#'
 #' @return a \code{ggraph} object with the clustering tree
-#' 
-#' @details the function generates a tree of the clustering labels as implemented 
-#'     in the \code{clustree} package by Zappia and Oshlack (2018) (\url{https://doi.org/10.1093/gigascience/giy083}). 
-#' 	   
+#'
+#' @details the function generates a tree of the clustering labels as implemented
+#'     in the \code{clustree} package by Zappia and Oshlack (2018) (\url{https://doi.org/10.1093/gigascience/giy083}).
+#'
 #' The function generates a graph of the clustering labels using the \code{igraph}
-#'     package, and plots it using the \code{ggraph} package. 
-#' 
-#' 	   This is a much simpler implementation of the principle behind \code{clustree}, with fewer options and 
+#'     package, and plots it using the \code{ggraph} package.
+#'
+#'        This is a much simpler implementation of the principle behind \code{clustree}, with fewer options and
 #'     possibilities compared to the original package.
-#' 
-#'     The nodes are colored by the resolution and/or label parameter, and the size of 
-#'     the nodes is proportional to the number of cells in each cluster. The edges are colored 
-#'     by the number of cells in each cluster that overlap between two consecutive clustering 
-#'     resolutions, and shaded by the proportion of overlapping cells. 
-#' 
-#'     Groupings identified by the prefix are assumed to have a numeric resolution value 
+#'
+#'     The nodes are colored by the resolution and/or label parameter, and the size of
+#'     the nodes is proportional to the number of cells in each cluster. The edges are colored
+#'     by the number of cells in each cluster that overlap between two consecutive clustering
+#'     resolutions, and shaded by the proportion of overlapping cells.
+#'
+#'     Groupings identified by the prefix are assumed to have a numeric resolution value
 #'     after the prefix, and the function will sort these grouping by this value.
-#' 
-#'     Additional labels (specified in the \code{additional_labels} argument) will be included in the tree 
-#'     in the order in which they were provided. 
-#' 
+#'
+#'     Additional labels (specified in the \code{additional_labels} argument) will be included in the tree
+#'     in the order in which they were provided.
+#'
 #' @importFrom igraph graph_from_data_frame V E set_vertex_attr set_edge_attr
-#' @importFrom ggplot2 .data aes scale_size theme_minimal element_blank scale_color_manual 
+#' @importFrom ggplot2 .data aes scale_size theme_minimal element_blank scale_color_manual
 #' @importFrom SummarizedExperiment colData
-#' 
+#'
 #' @export
 
-plotClusTree <- function(sce, 
-                         prefix = "SNN_", 
-                         additional_labels = NULL, 
+plotClusTree <- function(sce,
+                         prefix = "SNN_",
+                         additional_labels = NULL,
                          color_palette = NULL) {
 
-	## Sanity checks
-	ep = .redm("cellula::plotClusTree() - ")
+    ## Sanity checks
+    ep = .redm("cellula::plotClusTree() - ")
 
-	dependencies = data.frame("package" = "ggraph", "repo" = "CRAN")
-    if(checkFunctionDependencies(dependencies)) 
-		stop(paste0(ep, "Missing required packages."))
-	if(!is(sce, "SingleCellExperiment"))
-		stop(paste0(ep, "Must provide a SingleCellExperiment object"))			
-	if(!any(grepl(prefix, colnames(colData(sce)))))
-		stop(paste0(ep, "No columns in the colData found with the prefix provided."))
-	if(!is.null(additional_labels) & any(!(additional_labels %in% colnames(colData(sce)))))
-		stop(paste0(ep, "additional_labels must be a character vector in the colData"))
-	if(!is.null(color_palette) & length(color_palette) != length(grep(prefix, colnames(colData(sce))) + length(additional_labels)))
-		stop(paste0(ep, "color_palette must have the same number of colors as the number of clusterings + additional_labels"))			
-  
+    dependencies = data.frame("package" = "ggraph", "repo" = "CRAN")
+    if(checkFunctionDependencies(dependencies))
+        stop(paste0(ep, "Missing required packages."))
+    if(!is(sce, "SingleCellExperiment"))
+        stop(paste0(ep, "Must provide a SingleCellExperiment object"))
+    if(!any(grepl(prefix, colnames(colData(sce)))))
+        stop(paste0(ep, "No columns in the colData found with the prefix provided."))
+    if(!is.null(additional_labels) & any(!(additional_labels %in% colnames(colData(sce)))))
+        stop(paste0(ep, "additional_labels must be a character vector in the colData"))
+    if(!is.null(color_palette) && length(color_palette) != length(grep(prefix, colnames(colData(sce)))) + length(additional_labels))
+        stop(paste0(ep, "color_palette must have the same number of colors as the number of clusterings + additional_labels"))
+
   clusterings = colnames(colData(sce))[grep(prefix, colnames(colData(sce)))]
-  
+
   clusterings_numeric = as.numeric(gsub(pattern = prefix, replacement = "", clusterings))
   clusterings = clusterings[order(clusterings_numeric)]
-  
+
   if(!is.null(additional_labels)) clusterings = c(additional_labels, clusterings)
 
   # Compute overlaps between successive layers of clustering and proportions of overlap
   overlaps = .computeOverlaps(sce, clusterings)
-  
+
   proportions_df = do.call(rbind, overlaps$prop)
   rownames(proportions_df) = paste0(proportions_df$from, "_", proportions_df$to)
-  
+
   gr_df = do.call(rbind, overlaps$gl)
-  
+
   # Build the graph
   gr = graph_from_data_frame(gr_df)
-  
+
   # Add resolution
   resolution_values = .subsplit(V(gr)$name, prefix, 2)
   gr = set_vertex_attr(gr, "resolution", value = resolution_values)
@@ -2415,7 +2420,7 @@ plotClusTree <- function(sce,
   # Add additional labels if provided as resolution attribute
   if(!is.null(additional_labels)) {
     for(i in additional_labels) {
-		gr = set_vertex_attr(gr, "resolution", index = grep(i, V(gr)$name), value = i)
+        gr = set_vertex_attr(gr, "resolution", index = grep(i, V(gr)$name), value = i)
     }
   }
   # Add size
@@ -2428,7 +2433,7 @@ plotClusTree <- function(sce,
   }
   names(sizes) = NULL
   sizes = unlist(sizes, use.names = TRUE)
-  
+
   # Remove the clustering suffix from the vertex names
   gr = set_vertex_attr(gr, "size", value = sizes[names(V(gr))])
   gr = set_vertex_attr(gr, "name", value = gsub(pattern = prefix, replacement = "", names(V(gr))))
@@ -2439,20 +2444,20 @@ plotClusTree <- function(sce,
   if(!is.null(additional_labels)) {
     for(i in additional_labels) {
       new_vnames = gsub(pattern = paste0("_", i), replacement = "", names(V(gr)))
-	  gr = set_vertex_attr(	gr, "name", value = new_vnames)
+      gr = set_vertex_attr(    gr, "name", value = new_vnames)
     }
   }
   # Extremely hacky way to keep same proportions ordered - make up rownames
   proportions_ordered = proportions_df[paste0(gr_df$from, "_", gr_df$to), "prop_in"]
   gr = set_edge_attr(gr, "proportions", value = proportions_ordered)
-  
+
   # Plot the graph
-  p = ggraph::ggraph(gr, layout = "sugiyama") + 
+  p = ggraph::ggraph(gr, layout = "sugiyama") +
     ggraph::geom_edge_link(aes(edge_colour = I(E(gr)$weight), colour = I(E(gr)$weight), alpha = .data[["proportions"]]),
                    width = 1.5,
                    arrow = grid::arrow(length = unit(4, 'mm')),
-                   end_cap = ggraph::circle(3, 'mm')) + 
-    ggraph::geom_node_point(aes(color = .data[["resolution"]], size = .data[["size"]])) + 
+                   end_cap = ggraph::circle(3, 'mm')) +
+    ggraph::geom_node_point(aes(color = .data[["resolution"]], size = .data[["size"]])) +
     ggraph::geom_node_text(aes(label = .data[["name"]])) +
     ggraph::scale_edge_color_continuous() +
     scale_size(range = c(3, 15)) +
@@ -2461,23 +2466,22 @@ plotClusTree <- function(sce,
           axis.text = element_blank(),
           panel.grid = element_blank(),
           axis.title = element_blank())
-  
+
   if(!is.null(color_palette)) {
     p = p + scale_color_manual(values = color_palette)
   }
   p
 }
 
-
 #' Compute overlaps between successive layers of clustering
-#' 
+#'
 #' @param sce a SingleCellExperiment object
 #' @param clusterings character, the names of the clusterings to use
 #' @return a list with two elements:
 #'    - gl: a list of data frames with the overlaps between successive layers
 #'    - prop: a list of data frames with the proportions of overlap between successive layers
 #' @details this function is used internally in \code{\link{plotClusTree}} to compute the overlaps
-#' 
+#'
 #' @importFrom SummarizedExperiment colData
 #' @noRd
 
@@ -2495,7 +2499,7 @@ plotClusTree <- function(sce,
     combinations = combinations[combinations$weight > 0,]
     combinations
   })
-  
+
   proportions = lapply(graph_list, function(x) {
     from_clusters = as.character(unique(x$from))
     props = lapply(from_clusters, function(y) {
@@ -2514,16 +2518,37 @@ plotClusTree <- function(sce,
    return(list("gl" = graph_list, "prop" = proportions))
 }
 
+# Internal helpers for feature lookup ------------------------------------------
+
+# Indices of the features matching `features` in rownames, rowData$Symbol or
+# rowData$ID. Missing rowData columns are ignored.
+.matchFeatures <- function(sce, features) {
+    rd <- rowData(sce)
+    hits <- rownames(sce) %in% features
+    if ("Symbol" %in% colnames(rd)) hits <- hits | rd$Symbol %in% features
+    if ("ID" %in% colnames(rd)) hits <- hits | rd$ID %in% features
+    which(hits)
+}
+
+# Labels for the features at `index`: rowData$Symbol if present, rownames otherwise.
+.featureLabels <- function(sce, index) {
+    if ("Symbol" %in% colnames(rowData(sce))) {
+        rowData(sce)$Symbol[index]
+    } else {
+        rownames(sce)[index]
+    }
+}
+
 #' Plot UMAP
-#' 
+#'
 #' Alias for plot_DR for consistency with previous iterations
-#' 
+#'
 #' @param ... see \code{\link{plot_DR}}
-#' 
+#'
 #' @return see \code{\link{plot_DR}}
-#' 
-#' @export 
-#' 
+#'
+#' @export
+#'
  plot_UMAP <- function(...){
-	plot_DR(...)
+    plot_DR(...)
  }
